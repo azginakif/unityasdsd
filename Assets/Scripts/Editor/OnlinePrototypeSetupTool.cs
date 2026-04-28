@@ -1,0 +1,258 @@
+using MobilOfl.Case;
+using MobilOfl.Gameplay;
+using MobilOfl.Online;
+using Unity.Netcode;
+using Unity.Netcode.Components;
+using Unity.Netcode.Transports.UTP;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+
+namespace MobilOfl.EditorTools
+{
+    public static class OnlinePrototypeSetupTool
+    {
+        private const string CaseAssetPath = "Assets/Data/Cases/ExamTheftCase.asset";
+        private const string GeneratedPrefabsFolder = "Assets/Prefabs/Generated";
+        private const string PlayerPrefabPath = GeneratedPrefabsFolder + "/NetworkPlayer.prefab";
+
+        [MenuItem("Mobil OFL/Setup/Configure Online Prototype")]
+        public static void ConfigureOnlinePrototypeMenu()
+        {
+            ConfigureOnlinePrototypeInScene(true);
+        }
+
+        public static void ConfigureOnlinePrototypeInScene(bool showDialog)
+        {
+            EnsureFolder("Assets/Prefabs");
+            EnsureFolder(GeneratedPrefabsFolder);
+
+            var caseDefinition = AssetDatabase.LoadAssetAtPath<CaseDefinition>(CaseAssetPath);
+            if (caseDefinition == null)
+            {
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog(
+                        "Mobil OFL",
+                        "ExamTheftCase asset'i bulunamadi. Once ana setup aracini calistir.",
+                        "Tamam");
+                }
+
+                return;
+            }
+
+            var playerPrefab = CreateOrUpdateNetworkPlayerPrefab();
+            var caseState = EnsureNetworkCaseState(caseDefinition);
+            var bootstrap = EnsureNetworkManager(playerPrefab, caseState);
+            EnsureOnlineHud(bootstrap);
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog(
+                    "Mobil OFL",
+                    "Online prototip kurulumu tamamlandi.",
+                    "Tamam");
+            }
+        }
+
+        private static GameObject CreateOrUpdateNetworkPlayerPrefab()
+        {
+            var root = new GameObject("NetworkPlayer");
+            root.tag = "Untagged";
+
+            var controller = root.AddComponent<CharacterController>();
+            controller.height = 1.8f;
+            controller.radius = 0.35f;
+            controller.center = new Vector3(0f, 0.9f, 0f);
+            controller.stepOffset = 0.3f;
+
+            var movement = root.AddComponent<PrototypeFirstPersonController>();
+            var interaction = root.AddComponent<PlayerInteractionController>();
+            root.AddComponent<NetworkObject>();
+            root.AddComponent<NetworkTransform>();
+            var avatar = root.AddComponent<NetworkPlayerAvatar>();
+
+            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "AvatarBody";
+            body.transform.SetParent(root.transform, false);
+            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            body.transform.localScale = new Vector3(0.75f, 0.9f, 0.75f);
+            var bodyCollider = body.GetComponent<Collider>();
+            if (bodyCollider != null)
+            {
+                Object.DestroyImmediate(bodyCollider);
+            }
+
+            var bodyRenderer = body.GetComponent<Renderer>();
+            if (bodyRenderer != null)
+            {
+                var shader = Shader.Find("Universal Render Pipeline/Lit");
+                if (shader == null)
+                {
+                    shader = Shader.Find("Standard");
+                }
+
+                if (shader == null)
+                {
+                    shader = Shader.Find("Sprites/Default");
+                }
+
+                bodyRenderer.sharedMaterial = new Material(shader)
+                {
+                    color = new Color(0.22f, 0.62f, 0.82f)
+                };
+            }
+
+            var cameraObject = new GameObject("PlayerCamera");
+            cameraObject.transform.SetParent(root.transform, false);
+            cameraObject.transform.localPosition = new Vector3(0f, 0.75f, 0f);
+
+            var camera = cameraObject.AddComponent<Camera>();
+            camera.tag = "Untagged";
+            var listener = cameraObject.AddComponent<AudioListener>();
+
+            var movementSerializedObject = new SerializedObject(movement);
+            movementSerializedObject.FindProperty("cameraPivot").objectReferenceValue = cameraObject.transform;
+            movementSerializedObject.FindProperty("lookSmoothing").floatValue = 24f;
+            movementSerializedObject.FindProperty("maxLookDelta").floatValue = 34f;
+            movementSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var interactionSerializedObject = new SerializedObject(interaction);
+            interactionSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
+            interactionSerializedObject.FindProperty("interactDistance").floatValue = 4f;
+            interactionSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var avatarSerializedObject = new SerializedObject(avatar);
+            avatarSerializedObject.FindProperty("movementController").objectReferenceValue = movement;
+            avatarSerializedObject.FindProperty("interactionController").objectReferenceValue = interaction;
+            avatarSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
+            avatarSerializedObject.FindProperty("audioListener").objectReferenceValue = listener;
+            avatarSerializedObject.FindProperty("localBodyRenderers").arraySize = 1;
+            avatarSerializedObject.FindProperty("localBodyRenderers").GetArrayElementAtIndex(0).objectReferenceValue = bodyRenderer;
+            avatarSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var prefab = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
+            Object.DestroyImmediate(root);
+            return prefab;
+        }
+
+        private static NetworkCaseState EnsureNetworkCaseState(CaseDefinition caseDefinition)
+        {
+            var gameObject = GameObject.Find("NetworkCaseState");
+            if (gameObject == null)
+            {
+                gameObject = new GameObject("NetworkCaseState");
+            }
+
+            if (gameObject.GetComponent<NetworkObject>() == null)
+            {
+                gameObject.AddComponent<NetworkObject>();
+            }
+
+            var caseState = gameObject.GetComponent<NetworkCaseState>();
+            if (caseState == null)
+            {
+                caseState = gameObject.AddComponent<NetworkCaseState>();
+            }
+
+            var serializedObject = new SerializedObject(caseState);
+            serializedObject.FindProperty("caseDefinition").objectReferenceValue = caseDefinition;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(caseState);
+
+            return caseState;
+        }
+
+        private static RelayNetworkBootstrap EnsureNetworkManager(GameObject playerPrefab, NetworkCaseState caseState)
+        {
+            var gameObject = GameObject.Find("NetworkManager");
+            if (gameObject == null)
+            {
+                gameObject = new GameObject("NetworkManager");
+            }
+
+            var networkManager = gameObject.GetComponent<NetworkManager>();
+            if (networkManager == null)
+            {
+                networkManager = gameObject.AddComponent<NetworkManager>();
+            }
+
+            var transport = gameObject.GetComponent<UnityTransport>();
+            if (transport == null)
+            {
+                transport = gameObject.AddComponent<UnityTransport>();
+            }
+
+            if (networkManager.NetworkConfig != null)
+            {
+                networkManager.NetworkConfig.PlayerPrefab = playerPrefab;
+                networkManager.NetworkConfig.NetworkTransport = transport;
+                networkManager.NetworkConfig.EnableSceneManagement = true;
+            }
+
+            var bootstrap = gameObject.GetComponent<RelayNetworkBootstrap>();
+            if (bootstrap == null)
+            {
+                bootstrap = gameObject.AddComponent<RelayNetworkBootstrap>();
+            }
+
+            var serializedObject = new SerializedObject(bootstrap);
+            serializedObject.FindProperty("networkManager").objectReferenceValue = networkManager;
+            serializedObject.FindProperty("unityTransport").objectReferenceValue = transport;
+            serializedObject.FindProperty("networkCaseState").objectReferenceValue = caseState;
+            serializedObject.FindProperty("offlineScenePlayerRoot").objectReferenceValue = GameObject.Find("Player");
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(bootstrap);
+
+            return bootstrap;
+        }
+
+        private static void EnsureOnlineHud(RelayNetworkBootstrap bootstrap)
+        {
+            var gameObject = GameObject.Find("OnlineSessionHUD");
+            if (gameObject == null)
+            {
+                gameObject = new GameObject("OnlineSessionHUD");
+            }
+
+            var hud = gameObject.GetComponent<OnlineSessionHud>();
+            if (hud == null)
+            {
+                hud = gameObject.AddComponent<OnlineSessionHud>();
+            }
+
+            var serializedObject = new SerializedObject(hud);
+            serializedObject.FindProperty("bootstrap").objectReferenceValue = bootstrap;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            hud.enabled = false;
+            EditorUtility.SetDirty(hud);
+        }
+
+        private static void EnsureFolder(string folderPath)
+        {
+            if (AssetDatabase.IsValidFolder(folderPath))
+            {
+                return;
+            }
+
+            var parts = folderPath.Split('/');
+            var current = parts[0];
+
+            for (var i = 1; i < parts.Length; i++)
+            {
+                var next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                {
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                }
+
+                current = next;
+            }
+        }
+    }
+}
+

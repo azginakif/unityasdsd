@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2db5aa833b3c644fbb43260ee333e8d, type: 3}
+  m_Name: ExamTheftCase
+  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Case.CaseDefinition
+  caseId: case.exam-theft
+  caseTitle: Sinav Sorulari Calindi
+  openingBrief: Okulda sinav sorulari calindi. Takim delilleri toplayip gercegi ortaya
+    cikarmali.
+  evidenceItems:
+  - id: evidence.security-log
+    title: Guvenlik Oda Kaydi
+    description: Guvenlik terminalinde laboratuvar koridorunda gece hareket oldugunu
+      gosteren kayit bulundu.
+    category: 1
+    icon: {fileID: 0}
+    isCritical: 1
+  - id: evidence.answer-key-note
+    title: Cevap Anahtari Notu
+    description: Kutuphane masasinda sinav cevaplariyla ilgili el yazili bir not
+      bulundu.
+    category: 0
+    icon: {fileID: 0}
+    isCritical: 1
+  - id: evidence.locker-key
+    title: Yedek Dolap Anahtari
+    description: Ogretmenler odasinda gizlenmis bir yedek dolap anahtari bulundu.
+    category: 2
+    icon: {fileID: 0}
+    isCritical: 0
+  - id: evidence.guard-testimony
+    title: Guvenlik Ifadesi
+    description: Guvenlik gorevlisi gece 22:15'te bilisim kulubu ogrencisini laboratuvar
+      koridorunda gordugunu soyledi.
+    category: 3
+    icon: {fileID: 0}
+    isCritical: 1
+  - id: evidence.student-testimony
+    title: Ogrenci Ifadesi
+    description: Bir ogrenci cevap anahtari notunun kutuphanede bilisim kulubu ogrencisinin
+      defterinden dustugunu soyledi.
+    category: 3
+    icon: {fileID: 0}
+    isCritical: 1
+  - id: evidence.archive-ledger
+    title: Arsiv Giris Defteri
+    description: Arsiv kanadindaki giris defterinde bilisim kulubu ogrencisinin sinavdan
+      bir gun once odaya girdigi goruluyor.
+    category: 0
+    icon: {fileID: 0}
+    isCritical: 1
+  - id: evidence.canteen-testimony
+    title: Kantin Ifadesi
+    description: Kantin calisani, gece bilisim kulubu ogrencisinin enerji icecegi
+      alip laboratuvar koridoruna kostugunu anlatti.
+    category: 3
+    icon: {fileID: 0}
+    isCritical: 0
+  suspects:
+  - id: suspect.tech-club
+    displayName: Bilisim Kulubu Ogrencisi
+    summary: Okul sistemine erisimi olan ve guvenlik agini taniyan ogrenci.
+    requiredEvidenceIds:
+    - evidence.security-log
+    - evidence.answer-key-note
+    - evidence.guard-testimony
+    - evidence.student-testimony
+    - evidence.archive-ledger
+    - evidence.canteen-testimony
+  - id: suspect.teacher-assistant
+    displayName: Ogretmen Yardimcisi
+    summary: Sinav programina ve soru dolabina erisimi olan personel.
+    requiredEvidenceIds:
+    - evidence.locker-key
+    - evidence.archive-ledger
+  - id: suspect.canteen-worker
+    displayName: Kantin Calisani
+    summary: Okul icinde serbest dolasan ama dogrudan sistem erisimi olmayan calisan.
+    requiredEvidenceIds:
+    - evidence.locker-key
+    - evidence.canteen-testimony
+  culpritSuspectId: suspect.tech-club
+  culpritMotive: Sinavdan once sorulari satip para kazanmak istedi.
+  culpritTimeline: Gece laboratuvar koridoruna girdi, notlari aldi, arsivde onceki
+    kayitlari inceledi ve ogretmenler odasindaki dolabi acmak icin yedek anahtari
+    kullandi.
