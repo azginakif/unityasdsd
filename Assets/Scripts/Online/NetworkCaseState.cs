@@ -11,6 +11,13 @@ namespace MobilOfl.Online
     [RequireComponent(typeof(NetworkObject))]
     public class NetworkCaseState : NetworkBehaviour
     {
+        public enum SessionPhase
+        {
+            Lobby = 0,
+            Investigation = 1,
+            Results = 2
+        }
+
         public readonly struct ReadyPlayerState
         {
             public ReadyPlayerState(ulong clientId, bool isReady, string displayName)
@@ -30,15 +37,34 @@ namespace MobilOfl.Online
         [SerializeField] private CaseDefinition caseDefinition;
 
         private readonly NetworkList<FixedString64Bytes> _collectedEvidenceIds = new NetworkList<FixedString64Bytes>();
+        private readonly NetworkList<FixedString128Bytes> _toolEntries = new NetworkList<FixedString128Bytes>();
         private readonly NetworkList<FixedString512Bytes> _conversationEntries = new NetworkList<FixedString512Bytes>();
         private readonly NetworkList<FixedString512Bytes> _teamNoteEntries = new NetworkList<FixedString512Bytes>();
         private readonly NetworkList<FixedString128Bytes> _readyEntries = new NetworkList<FixedString128Bytes>();
         private readonly NetworkVariable<FixedString64Bytes> _relayJoinCode = new NetworkVariable<FixedString64Bytes>();
         private readonly NetworkVariable<bool> _caseResolved = new NetworkVariable<bool>();
         private readonly NetworkVariable<FixedString512Bytes> _resolutionMessage = new NetworkVariable<FixedString512Bytes>();
+        private readonly NetworkVariable<int> _sessionPhase = new NetworkVariable<int>((int)SessionPhase.Lobby);
+        private readonly NetworkVariable<int> _sessionRevision = new NetworkVariable<int>(0);
+        private readonly NetworkVariable<Vector3> _sharedPingPosition = new NetworkVariable<Vector3>();
+        private readonly NetworkVariable<FixedString64Bytes> _sharedPingLabel = new NetworkVariable<FixedString64Bytes>();
+        private readonly NetworkVariable<int> _sharedPingRevision = new NetworkVariable<int>(0);
+
+        private float _localPingVisibleUntil;
 
         public string RelayJoinCode => _relayJoinCode.Value.ToString();
         public bool IsOnlineSessionActive => NetworkManager != null && NetworkManager.IsListening;
+        public SessionPhase CurrentPhase => (SessionPhase)_sessionPhase.Value;
+        public bool IsLobbyPhase => CurrentPhase == SessionPhase.Lobby;
+        public bool IsGameplayPhase => CurrentPhase == SessionPhase.Investigation;
+        public bool IsResultsPhase => CurrentPhase == SessionPhase.Results;
+        public bool HasActiveSharedPing => _sharedPingRevision.Value > 0 && Time.time <= _localPingVisibleUntil && !string.IsNullOrWhiteSpace(_sharedPingLabel.Value.ToString());
+        public Vector3 SharedPingPosition => _sharedPingPosition.Value;
+        public string SharedPingLabel => _sharedPingLabel.Value.ToString();
+        public string CurrentPhaseLabel =>
+            CurrentPhase == SessionPhase.Lobby ? "Lobi" :
+            CurrentPhase == SessionPhase.Investigation ? "Operasyon" :
+            "Sonuc";
         public int RegisteredPlayerCount => _readyEntries.Count;
         public int ReadyPlayerCount
         {
@@ -84,10 +110,14 @@ namespace MobilOfl.Online
             }
 
             _collectedEvidenceIds.OnListChanged += HandleEvidenceListChanged;
+            _toolEntries.OnListChanged += HandleToolListChanged;
             _conversationEntries.OnListChanged += HandleConversationListChanged;
             _teamNoteEntries.OnListChanged += HandleTeamNoteListChanged;
             _readyEntries.OnListChanged += HandleReadyEntriesChanged;
             _caseResolved.OnValueChanged += HandleCaseResolvedChanged;
+            _sessionPhase.OnValueChanged += HandleSessionPhaseChanged;
+            _sessionRevision.OnValueChanged += HandleSessionRevisionChanged;
+            _sharedPingRevision.OnValueChanged += HandleSharedPingRevisionChanged;
 
             if (IsServer)
             {
@@ -107,10 +137,14 @@ namespace MobilOfl.Online
         {
             base.OnNetworkDespawn();
             _collectedEvidenceIds.OnListChanged -= HandleEvidenceListChanged;
+            _toolEntries.OnListChanged -= HandleToolListChanged;
             _conversationEntries.OnListChanged -= HandleConversationListChanged;
             _teamNoteEntries.OnListChanged -= HandleTeamNoteListChanged;
             _readyEntries.OnListChanged -= HandleReadyEntriesChanged;
             _caseResolved.OnValueChanged -= HandleCaseResolvedChanged;
+            _sessionPhase.OnValueChanged -= HandleSessionPhaseChanged;
+            _sessionRevision.OnValueChanged -= HandleSessionRevisionChanged;
+            _sharedPingRevision.OnValueChanged -= HandleSharedPingRevisionChanged;
 
             if (IsServer)
             {
@@ -132,6 +166,22 @@ namespace MobilOfl.Online
             }
 
             RequestCollectEvidenceServerRpc(evidenceId);
+            return true;
+        }
+
+        public bool RequestUnlockTool(string toolId, string displayName, string pickupMessage)
+        {
+            if (CaseSessionManager.Instance == null || string.IsNullOrWhiteSpace(toolId))
+            {
+                return false;
+            }
+
+            if (IsServer)
+            {
+                return CaseSessionManager.Instance.TryUnlockTool(toolId, displayName, pickupMessage);
+            }
+
+            RequestUnlockToolServerRpc(toolId, displayName ?? string.Empty, pickupMessage ?? string.Empty);
             return true;
         }
 
@@ -204,6 +254,62 @@ namespace MobilOfl.Online
             return true;
         }
 
+        public bool RequestStartInvestigation()
+        {
+            if (!IsOnlineSessionActive)
+            {
+                return false;
+            }
+
+            if (IsServer)
+            {
+                return StartInvestigationServerLogic();
+            }
+
+            RequestStartInvestigationServerRpc();
+            return true;
+        }
+
+        public bool RequestRestartSession()
+        {
+            if (CaseSessionManager.Instance == null)
+            {
+                return false;
+            }
+
+            if (!IsOnlineSessionActive)
+            {
+                CaseSessionManager.Instance.RestartCurrentCase();
+                return true;
+            }
+
+            if (IsServer)
+            {
+                RestartSessionServerLogic();
+                return true;
+            }
+
+            RequestRestartSessionServerRpc();
+            return true;
+        }
+
+        public bool RequestSharedPing(Vector3 worldPosition, string label)
+        {
+            if (!IsOnlineSessionActive)
+            {
+                return false;
+            }
+
+            if (IsServer)
+            {
+                SetSharedPing(worldPosition, label);
+                return true;
+            }
+
+            RequestSharedPingServerRpc(worldPosition, label ?? string.Empty);
+            return true;
+        }
+
         public bool RequestSetReady(bool isReady)
         {
             if (!IsOnlineSessionActive || NetworkManager == null)
@@ -258,11 +364,15 @@ namespace MobilOfl.Online
         private void BootstrapServerState()
         {
             _collectedEvidenceIds.Clear();
+            _toolEntries.Clear();
             _conversationEntries.Clear();
             _teamNoteEntries.Clear();
-            _readyEntries.Clear();
             _caseResolved.Value = false;
             _resolutionMessage.Value = default;
+            _sessionPhase.Value = (int)SessionPhase.Lobby;
+            _sharedPingLabel.Value = default;
+            _sharedPingPosition.Value = Vector3.zero;
+            _sharedPingRevision.Value = 0;
 
             if (CaseSessionManager.Instance == null)
             {
@@ -272,6 +382,11 @@ namespace MobilOfl.Online
             foreach (var evidenceId in CaseSessionManager.Instance.CollectedEvidenceIds)
             {
                 _collectedEvidenceIds.Add(new FixedString64Bytes(evidenceId));
+            }
+
+            foreach (var toolId in CaseSessionManager.Instance.UnlockedToolIds)
+            {
+                _toolEntries.Add(new FixedString128Bytes(BuildToolPayload(toolId, CaseSessionManager.Instance.GetToolDisplayName(toolId))));
             }
 
             foreach (var noteEntry in CaseSessionManager.Instance.TeamNotes)
@@ -294,6 +409,7 @@ namespace MobilOfl.Online
 
             UnsubscribeFromSession();
             CaseSessionManager.Instance.EvidenceCollected += HandleLocalEvidenceCollected;
+            CaseSessionManager.Instance.ToolUnlocked += HandleLocalToolUnlocked;
             CaseSessionManager.Instance.CaseResolved += HandleLocalCaseResolved;
             CaseSessionManager.Instance.NpcConversationRegistered += HandleLocalNpcConversation;
             CaseSessionManager.Instance.TeamNoteAdded += HandleLocalTeamNoteAdded;
@@ -307,6 +423,7 @@ namespace MobilOfl.Online
             }
 
             CaseSessionManager.Instance.EvidenceCollected -= HandleLocalEvidenceCollected;
+            CaseSessionManager.Instance.ToolUnlocked -= HandleLocalToolUnlocked;
             CaseSessionManager.Instance.CaseResolved -= HandleLocalCaseResolved;
             CaseSessionManager.Instance.NpcConversationRegistered -= HandleLocalNpcConversation;
             CaseSessionManager.Instance.TeamNoteAdded -= HandleLocalTeamNoteAdded;
@@ -351,6 +468,29 @@ namespace MobilOfl.Online
             _collectedEvidenceIds.Add(new FixedString64Bytes(evidence.Id));
         }
 
+        private void HandleLocalToolUnlocked(string toolId, string displayName)
+        {
+            if (!IsServer || string.IsNullOrWhiteSpace(toolId))
+            {
+                return;
+            }
+
+            for (var i = 0; i < _toolEntries.Count; i++)
+            {
+                if (!TryParseToolPayload(_toolEntries[i].ToString(), out var existingToolId, out _))
+                {
+                    continue;
+                }
+
+                if (existingToolId == toolId)
+                {
+                    return;
+                }
+            }
+
+            _toolEntries.Add(new FixedString128Bytes(BuildToolPayload(toolId, displayName)));
+        }
+
         private void HandleLocalCaseResolved(bool success, string message)
         {
             if (!IsServer)
@@ -360,6 +500,10 @@ namespace MobilOfl.Online
 
             _caseResolved.Value = success;
             _resolutionMessage.Value = new FixedString512Bytes(message);
+            if (success)
+            {
+                _sessionPhase.Value = (int)SessionPhase.Results;
+            }
         }
 
         private void HandleLocalNpcConversation(string npcId, string npcDisplayName, string line, bool _)
@@ -393,6 +537,26 @@ namespace MobilOfl.Online
             {
                 CaseSessionManager.Instance.TryApplyNetworkEvidence(changeEvent.Value.ToString(), true);
             }
+        }
+
+        private void HandleToolListChanged(NetworkListEvent<FixedString128Bytes> changeEvent)
+        {
+            if (IsServer || CaseSessionManager.Instance == null)
+            {
+                return;
+            }
+
+            if (changeEvent.Type != NetworkListEvent<FixedString128Bytes>.EventType.Add)
+            {
+                return;
+            }
+
+            if (!TryParseToolPayload(changeEvent.Value.ToString(), out var toolId, out var displayName))
+            {
+                return;
+            }
+
+            CaseSessionManager.Instance.TryApplyNetworkTool(toolId, displayName, true);
         }
 
         private void HandleConversationListChanged(NetworkListEvent<FixedString512Bytes> changeEvent)
@@ -458,6 +622,55 @@ namespace MobilOfl.Online
             CaseSessionManager.Instance.ApplyNetworkResolution(true, _resolutionMessage.Value.ToString());
         }
 
+        private void HandleSessionPhaseChanged(int previousValue, int newValue)
+        {
+            if (previousValue == newValue)
+            {
+                return;
+            }
+
+            var menu = MainMenuHud.Instance;
+            if (menu == null)
+            {
+                return;
+            }
+
+            if ((SessionPhase)newValue == SessionPhase.Investigation)
+            {
+                menu.CloseMenu();
+                return;
+            }
+
+            menu.OpenMenu((SessionPhase)newValue == SessionPhase.Results
+                ? "Operasyon tamamlandi."
+                : "Lobi hazir. Tum ekip senkron bekliyor.");
+        }
+
+        private void HandleSessionRevisionChanged(int previousValue, int newValue)
+        {
+            if (IsServer || previousValue == newValue || CaseSessionManager.Instance == null || caseDefinition == null)
+            {
+                return;
+            }
+
+            CaseSessionManager.Instance.SetActiveCase(caseDefinition);
+            ApplyFullStateFromNetwork();
+        }
+
+        private void HandleSharedPingRevisionChanged(int previousValue, int newValue)
+        {
+            if (previousValue == newValue || string.IsNullOrWhiteSpace(_sharedPingLabel.Value.ToString()))
+            {
+                return;
+            }
+
+            _localPingVisibleUntil = Time.time + 5f;
+            if (CaseSessionManager.Instance != null)
+            {
+                CaseSessionManager.Instance.PublishMessage("Takim pingi: " + _sharedPingLabel.Value);
+            }
+        }
+
         private void HandleClientDisconnected(ulong clientId)
         {
             RemoveReadyEntry(clientId);
@@ -473,6 +686,14 @@ namespace MobilOfl.Online
             foreach (var evidenceId in _collectedEvidenceIds)
             {
                 CaseSessionManager.Instance.TryApplyNetworkEvidence(evidenceId.ToString(), false);
+            }
+
+            foreach (var toolEntry in _toolEntries)
+            {
+                if (TryParseToolPayload(toolEntry.ToString(), out var toolId, out var displayName))
+                {
+                    CaseSessionManager.Instance.TryApplyNetworkTool(toolId, displayName, false);
+                }
             }
 
             foreach (var conversationEntry in _conversationEntries)
@@ -511,6 +732,57 @@ namespace MobilOfl.Online
             }
 
             RequestSetReadyServerRpc(isReady, PlayerProfileSettings.LoadPlayerName());
+        }
+
+        private bool StartInvestigationServerLogic()
+        {
+            if (CaseSessionManager.Instance == null)
+            {
+                return false;
+            }
+
+            if (!IsLobbyPhase)
+            {
+                CaseSessionManager.Instance.PublishMessage("Operasyon zaten aktif.");
+                return false;
+            }
+
+            if (!AreAllRegisteredPlayersReady)
+            {
+                CaseSessionManager.Instance.PublishMessage("Tum oyuncular hazir olmadan operasyon baslatilamaz.");
+                return false;
+            }
+
+            _sessionPhase.Value = (int)SessionPhase.Investigation;
+            CaseSessionManager.Instance.PublishMessage("Tum ekip hazir. Operasyon ayni anda basladi.");
+            return true;
+        }
+
+        private void RestartSessionServerLogic()
+        {
+            if (CaseSessionManager.Instance == null)
+            {
+                return;
+            }
+
+            CaseSessionManager.Instance.RestartCurrentCase();
+            BootstrapServerState();
+            ResetReadyEntriesToWaiting();
+            _sessionRevision.Value++;
+            CaseSessionManager.Instance.PublishMessage("Vaka sifirlandi. Herkes yeniden hazirlik vermeli.");
+        }
+
+        private void SetSharedPing(Vector3 worldPosition, string label)
+        {
+            _sharedPingPosition.Value = worldPosition;
+            _sharedPingLabel.Value = new FixedString64Bytes(PlayerProfileSettings.Sanitize(string.IsNullOrWhiteSpace(label) ? "Takim pingi" : label));
+            _sharedPingRevision.Value++;
+            _localPingVisibleUntil = Time.time + 5f;
+
+            if (CaseSessionManager.Instance != null)
+            {
+                CaseSessionManager.Instance.PublishMessage("Takim pingi: " + _sharedPingLabel.Value);
+            }
         }
 
         private bool TryGetReadyState(ulong clientId, out bool isReady)
@@ -557,6 +829,19 @@ namespace MobilOfl.Online
             _readyEntries.Add(payload);
         }
 
+        private void ResetReadyEntriesToWaiting()
+        {
+            for (var i = 0; i < _readyEntries.Count; i++)
+            {
+                if (!TryParseReadyPayload(_readyEntries[i].ToString(), out var clientId, out _, out var playerName))
+                {
+                    continue;
+                }
+
+                _readyEntries[i] = new FixedString128Bytes(BuildReadyPayload(clientId, false, playerName));
+            }
+        }
+
         private void RemoveReadyEntry(ulong clientId)
         {
             for (var i = _readyEntries.Count - 1; i >= 0; i--)
@@ -582,6 +867,17 @@ namespace MobilOfl.Online
             }
 
             CaseSessionManager.Instance.TryCollectEvidence(caseDefinition, evidenceId);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void RequestUnlockToolServerRpc(string toolId, string displayName, string pickupMessage)
+        {
+            if (CaseSessionManager.Instance == null)
+            {
+                return;
+            }
+
+            CaseSessionManager.Instance.TryUnlockTool(toolId, displayName, pickupMessage);
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -630,6 +926,34 @@ namespace MobilOfl.Online
         private void RequestSetReadyServerRpc(bool isReady, string playerName, RpcParams rpcParams = default)
         {
             UpsertReadyEntry(rpcParams.Receive.SenderClientId, isReady, playerName);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void RequestStartInvestigationServerRpc(RpcParams rpcParams = default)
+        {
+            if (NetworkManager == null || rpcParams.Receive.SenderClientId != NetworkManager.ServerClientId)
+            {
+                return;
+            }
+
+            StartInvestigationServerLogic();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void RequestRestartSessionServerRpc(RpcParams rpcParams = default)
+        {
+            if (NetworkManager == null || rpcParams.Receive.SenderClientId != NetworkManager.ServerClientId)
+            {
+                return;
+            }
+
+            RestartSessionServerLogic();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void RequestSharedPingServerRpc(Vector3 worldPosition, string label)
+        {
+            SetSharedPing(worldPosition, label);
         }
 
         private bool ExecuteNpcInteractionServerLogic(
@@ -683,6 +1007,33 @@ namespace MobilOfl.Online
         private static string BuildConversationPayload(string npcId, string npcDisplayName, string line)
         {
             return $"{npcId}\t{npcDisplayName}\t{line}";
+        }
+
+        private static string BuildToolPayload(string toolId, string displayName)
+        {
+            return $"{toolId}\t{PlayerProfileSettings.Sanitize(displayName)}";
+        }
+
+        private static bool TryParseToolPayload(string payload, out string toolId, out string displayName)
+        {
+            toolId = string.Empty;
+            displayName = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            var separatorIndex = payload.IndexOf('\t');
+            if (separatorIndex < 0)
+            {
+                toolId = payload;
+                return !string.IsNullOrWhiteSpace(toolId);
+            }
+
+            toolId = payload.Substring(0, separatorIndex);
+            displayName = PlayerProfileSettings.Sanitize(payload.Substring(separatorIndex + 1));
+            return !string.IsNullOrWhiteSpace(toolId);
         }
 
         private static bool TryParseConversationPayload(string payload, out string npcId, out string npcDisplayName, out string line)

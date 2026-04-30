@@ -29,12 +29,18 @@ namespace MobilOfl.UI
         private Text _missionStatsText;
         private Text _controlsText;
         private Text _hintText;
+        private Text _intelPrimaryText;
+        private Text _intelSecondaryText;
+        private Text _commandDeckStatusText;
+        private Text _commandDeckCodeText;
+        private Text _commandDeckHintText;
         private Text _modeMetricText;
         private Text _caseMetricText;
         private Text _playerMetricText;
         private Text _readyMetricText;
         private Button _hostButton;
         private Button _joinButton;
+        private Button _reconnectButton;
         private Button _readyButton;
         private Text _readyButtonText;
         private RectTransform _rosterContent;
@@ -210,16 +216,50 @@ namespace MobilOfl.UI
             _windowRoot.anchorMin = new Vector2(0.5f, 0.5f);
             _windowRoot.anchorMax = new Vector2(0.5f, 0.5f);
             _windowRoot.pivot = new Vector2(0.5f, 0.5f);
-            _windowRoot.sizeDelta = new Vector2(1380f, 820f);
+            _windowRoot.sizeDelta = new Vector2(1240f, 740f);
             _windowRoot.anchoredPosition = Vector2.zero;
 
-            var layout = RuntimeUiFactory.AddVerticalLayout(_windowRoot, 16f, new RectOffset(26, 26, 26, 26));
+            var layout = RuntimeUiFactory.AddVerticalLayout(_windowRoot, 14f, new RectOffset(22, 22, 22, 22));
             layout.childForceExpandHeight = false;
 
             BuildHeader(_windowRoot);
             BuildMetrics(_windowRoot);
             BuildBody(_windowRoot);
             BuildFooter(_windowRoot);
+        }
+
+        private void BuildAtmosphereDecor()
+        {
+            var topWash = RuntimeUiFactory.CreateUiRoot("TopWash", _overlayRoot);
+            topWash.anchorMin = new Vector2(0f, 1f);
+            topWash.anchorMax = new Vector2(1f, 1f);
+            topWash.pivot = new Vector2(0.5f, 1f);
+            topWash.sizeDelta = new Vector2(0f, 140f);
+            RuntimeUiFactory.AddImage(topWash.gameObject, new Color(0.12f, 0.18f, 0.2f, 0.18f));
+        }
+
+        private void BuildIntelStrip()
+        {
+            var strip = RuntimeUiFactory.CreateCard("IntelStrip", _overlayRoot, new Color(0.07f, 0.09f, 0.12f, 0.94f), ModernGuiTheme.AccentColor);
+            strip.anchorMin = new Vector2(0.5f, 0f);
+            strip.anchorMax = new Vector2(0.5f, 0f);
+            strip.pivot = new Vector2(0.5f, 0f);
+            strip.anchoredPosition = new Vector2(0f, 18f);
+            strip.sizeDelta = new Vector2(700f, 60f);
+            var layout = RuntimeUiFactory.AddHorizontalLayout(strip, 10f, new RectOffset(18, 18, 16, 14), true);
+            layout.childForceExpandWidth = false;
+
+            var left = RuntimeUiFactory.CreateUiRoot("Primary", strip);
+            RuntimeUiFactory.EnsureLayoutElement(left, flexibleWidth: 1f);
+            RuntimeUiFactory.AddVerticalLayout(left, 2f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.CreateText("PrimaryLabel", left, "CANLI INTEL", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _intelPrimaryText = RuntimeUiFactory.CreateText("PrimaryText", left, string.Empty, 15, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+
+            var right = RuntimeUiFactory.CreateUiRoot("Secondary", strip);
+            RuntimeUiFactory.EnsureLayoutElement(right, preferredWidth: 296f);
+            RuntimeUiFactory.AddVerticalLayout(right, 2f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.CreateText("SecondaryLabel", right, "OTURUM OZETI", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _intelSecondaryText = RuntimeUiFactory.CreateText("SecondaryText", right, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
         }
 
         private void BuildHeader(RectTransform parent)
@@ -231,8 +271,8 @@ namespace MobilOfl.UI
             var titleBlock = RuntimeUiFactory.CreateUiRoot("TitleBlock", header);
             RuntimeUiFactory.EnsureLayoutElement(titleBlock, flexibleWidth: 1f);
             RuntimeUiFactory.AddVerticalLayout(titleBlock, 4f, new RectOffset(0, 0, 0, 0), false);
-            RuntimeUiFactory.CreateText("Title", titleBlock, "MOBIL OFL", 56, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            RuntimeUiFactory.CreateText("Subtitle", titleBlock, "Okul ici suc dosyasi, co-op arastirma ve mobil odakli prototip.", 18, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            RuntimeUiFactory.CreateText("Title", titleBlock, "MOBIL OFL", 42, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            RuntimeUiFactory.CreateText("Subtitle", titleBlock, "Okul ici suc dosyasi ve co-op arastirma prototipi.", 15, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
             var heroBadge = RuntimeUiFactory.CreateCard("HeroBadge", titleBlock, new Color(0.1f, 0.13f, 0.16f, 0.95f), ModernGuiTheme.AccentWarmColor);
             RuntimeUiFactory.EnsureLayoutElement(heroBadge, preferredHeight: 54f);
@@ -241,7 +281,7 @@ namespace MobilOfl.UI
             _heroMetaText = RuntimeUiFactory.CreateText("HeroMeta", heroBadge, "Tek oyuncu ya da co-op oturumunu buradan baslat.", 13, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
             var profileCard = RuntimeUiFactory.CreateCard("ProfileCard", header, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(profileCard, preferredWidth: 340f, preferredHeight: 112f);
+            RuntimeUiFactory.EnsureLayoutElement(profileCard, preferredWidth: 312f, preferredHeight: 96f);
             RuntimeUiFactory.AddVerticalLayout(profileCard, 10f, new RectOffset(16, 16, 18, 16), false);
             RuntimeUiFactory.CreateText("ProfileLabel", profileCard, "OYUNCU PROFILI", 13, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _playerNameField = RuntimeUiFactory.CreateInputField("PlayerNameField", profileCard, "Oyuncu adi", 20);
@@ -252,7 +292,7 @@ namespace MobilOfl.UI
         private void BuildMetrics(RectTransform parent)
         {
             var metricsRow = RuntimeUiFactory.CreateUiRoot("MetricsRow", parent);
-            RuntimeUiFactory.EnsureLayoutElement(metricsRow, preferredHeight: 88f);
+            RuntimeUiFactory.EnsureLayoutElement(metricsRow, preferredHeight: 74f);
             var row = RuntimeUiFactory.AddHorizontalLayout(metricsRow, 12f, new RectOffset(0, 0, 0, 0), true);
             row.childForceExpandWidth = true;
 
@@ -265,29 +305,30 @@ namespace MobilOfl.UI
         private Text CreateMetricCard(Transform parent, string label)
         {
             var card = RuntimeUiFactory.CreateCard(label + "Card", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
-            RuntimeUiFactory.EnsureLayoutElement(card, flexibleWidth: 1f, preferredHeight: 88f);
-            RuntimeUiFactory.AddVerticalLayout(card, 6f, new RectOffset(16, 16, 16, 14), false);
+            RuntimeUiFactory.EnsureLayoutElement(card, flexibleWidth: 1f, preferredHeight: 72f);
+            RuntimeUiFactory.AddVerticalLayout(card, 4f, new RectOffset(14, 14, 12, 10), false);
             RuntimeUiFactory.CreateText(label + "Label", card, label, 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            return RuntimeUiFactory.CreateText(label + "Value", card, "-", 26, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            return RuntimeUiFactory.CreateText(label + "Value", card, "-", 20, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
         }
 
         private void BuildBody(RectTransform parent)
         {
             var body = RuntimeUiFactory.CreateUiRoot("Body", parent);
-            RuntimeUiFactory.EnsureLayoutElement(body, preferredHeight: 500f, flexibleHeight: 1f);
-            var row = RuntimeUiFactory.AddHorizontalLayout(body, 16f, new RectOffset(0, 0, 0, 0), true);
+            RuntimeUiFactory.EnsureLayoutElement(body, preferredHeight: 440f, flexibleHeight: 1f);
+            var row = RuntimeUiFactory.AddHorizontalLayout(body, 14f, new RectOffset(0, 0, 0, 0), true);
             row.childForceExpandWidth = true;
             row.childForceExpandHeight = true;
 
             var leftColumn = RuntimeUiFactory.CreateUiRoot("LeftColumn", body);
-            RuntimeUiFactory.EnsureLayoutElement(leftColumn, preferredWidth: 430f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(leftColumn, 14f, new RectOffset(0, 0, 0, 0));
+            RuntimeUiFactory.EnsureLayoutElement(leftColumn, preferredWidth: 380f, flexibleHeight: 1f);
+            RuntimeUiFactory.AddVerticalLayout(leftColumn, 12f, new RectOffset(0, 0, 0, 0));
             BuildSessionCard(leftColumn);
+            BuildCommandDeckCard(leftColumn);
             BuildControlsCard(leftColumn);
 
             var rightColumn = RuntimeUiFactory.CreateUiRoot("RightColumn", body);
             RuntimeUiFactory.EnsureLayoutElement(rightColumn, flexibleWidth: 1f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(rightColumn, 14f, new RectOffset(0, 0, 0, 0));
+            RuntimeUiFactory.AddVerticalLayout(rightColumn, 12f, new RectOffset(0, 0, 0, 0));
             BuildMissionCard(rightColumn);
             BuildRosterCard(rightColumn);
         }
@@ -295,7 +336,7 @@ namespace MobilOfl.UI
         private void BuildSessionCard(Transform parent)
         {
             var card = RuntimeUiFactory.CreateCard("SessionCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 286f);
+            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 252f);
             RuntimeUiFactory.AddVerticalLayout(card, 10f, new RectOffset(18, 18, 18, 18), false);
             RuntimeUiFactory.CreateText("SessionTitle", card, "OTURUM", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _statusText = RuntimeUiFactory.CreateText("StatusText", card, "Hazir.", 15, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
@@ -328,9 +369,39 @@ namespace MobilOfl.UI
             RuntimeUiFactory.EnsureLayoutElement(_joinButton.transform, flexibleWidth: 1f, preferredHeight: 46f);
             _joinButton.onClick.AddListener(() => logic?.JoinCurrentCodeFromUi());
 
+            _reconnectButton = RuntimeUiFactory.CreateButton("ReconnectButton", secondaryActions, "Yeniden Baglan", new Color(0.19f, 0.15f, 0.08f, 1f), 15);
+            RuntimeUiFactory.EnsureLayoutElement(_reconnectButton.transform, flexibleWidth: 1f, preferredHeight: 46f);
+            _reconnectButton.onClick.AddListener(() => logic?.ReconnectFromUi());
+
             var copyButton = RuntimeUiFactory.CreateButton("CopyButton", secondaryActions, "Kodu Kopyala", new Color(0.11f, 0.12f, 0.15f, 1f), 15);
             RuntimeUiFactory.EnsureLayoutElement(copyButton.transform, flexibleWidth: 1f, preferredHeight: 46f);
             copyButton.onClick.AddListener(CopyJoinCode);
+        }
+
+        private void BuildCommandDeckCard(Transform parent)
+        {
+            var card = RuntimeUiFactory.CreateCard("CommandDeckCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
+            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 154f);
+            RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(18, 18, 18, 16), false);
+
+            RuntimeUiFactory.CreateText("DeckTitle", card, "KOMUTA GUVERTESI", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _commandDeckStatusText = RuntimeUiFactory.CreateText("DeckStatus", card, "Baglanti hazir.", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+
+            var codeShell = RuntimeUiFactory.CreateCard("CodeShell", card, new Color(0.08f, 0.11f, 0.14f, 0.95f), ModernGuiTheme.AccentColor);
+            RuntimeUiFactory.EnsureLayoutElement(codeShell, preferredHeight: 46f);
+            var shellLayout = RuntimeUiFactory.AddHorizontalLayout(codeShell, 10f, new RectOffset(14, 14, 10, 10), true);
+            shellLayout.childForceExpandWidth = false;
+
+            RuntimeUiFactory.CreateText("CodeLabel", codeShell, "JOIN", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.MiddleLeft);
+            _commandDeckCodeText = RuntimeUiFactory.CreateText("CodeValue", codeShell, "YOK", 20, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleLeft);
+            RuntimeUiFactory.EnsureLayoutElement(_commandDeckCodeText.transform, flexibleWidth: 1f);
+
+            var pulse = RuntimeUiFactory.CreateUiRoot("SignalPulse", codeShell);
+            RuntimeUiFactory.EnsureLayoutElement(pulse, preferredWidth: 18f, preferredHeight: 18f);
+            var pulseImage = RuntimeUiFactory.AddImage(pulse.gameObject, ModernGuiTheme.AccentWarmColor);
+            AddFloatMotion(pulse, pulseImage, new Vector2(0f, 1.5f), 1.6f, 0.12f, 0.08f, 0.2f);
+
+            _commandDeckHintText = RuntimeUiFactory.CreateText("DeckHint", card, "Host acildiginda kod ve oyuncu akisi burada odaklanir.", 13, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
         }
 
         private void BuildControlsCard(Transform parent)
@@ -433,6 +504,22 @@ namespace MobilOfl.UI
                 "PC: WASD hareket, Mouse bakis, E etkilesim, Tab dosya, Esc menu.\n" +
                 "Mobil: Joystick hareket, sag alan bakis, AL etkilesim, DOSYA vaka dosyasi.";
             _hintText.text = session == null ? "Aktif oturum bekleniyor." : session.GetRecommendedNextStep();
+            if (_intelPrimaryText != null)
+            {
+                _intelPrimaryText.text = session == null
+                    ? "Sahne kurulumundan sonra ilk dijital izi topla."
+                    : CompactIntelLine(session);
+            }
+
+            if (_intelSecondaryText != null)
+            {
+                _intelSecondaryText.text = bootstrap == null
+                    ? "Offline akis hazir. Tek kisilik test icin uygun."
+                    : CompactSessionLine(bootstrap, networkCaseState);
+            }
+            _commandDeckStatusText.text = BuildCommandDeckStatus(bootstrap, networkCaseState);
+            _commandDeckCodeText.text = bootstrap == null || string.IsNullOrWhiteSpace(bootstrap.CurrentJoinCode) ? "YOK" : bootstrap.CurrentJoinCode;
+            _commandDeckHintText.text = BuildCommandDeckHint(bootstrap, networkCaseState);
 
             _caseMetricText.text = session != null && session.ActiveCase != null ? session.ActiveCase.CaseTitle : "Hazir";
             _playerMetricText.text = string.IsNullOrWhiteSpace(logic.PlayerName) ? "Dedektif" : logic.PlayerName;
@@ -457,6 +544,10 @@ namespace MobilOfl.UI
 
             _hostButton.interactable = bootstrap == null || !bootstrap.IsBusy;
             _joinButton.interactable = bootstrap == null || !bootstrap.IsBusy;
+            if (_reconnectButton != null)
+            {
+                _reconnectButton.interactable = bootstrap != null && bootstrap.CanReconnectLastSession && !bootstrap.IsBusy;
+            }
 
             RebuildRoster(networkCaseState, bootstrap);
         }
@@ -486,8 +577,16 @@ namespace MobilOfl.UI
                 }
             }
 
-            _readyButton.interactable = true;
-            _readyButtonText.text = IsLocalPlayerReady(networkCaseState) ? "Beklemeye Al" : "Hazirim";
+            var canStart = bootstrap != null &&
+                bootstrap.IsOnlineSessionActive &&
+                bootstrap.CurrentMode == "Host" &&
+                networkCaseState.IsLobbyPhase &&
+                networkCaseState.AreAllRegisteredPlayersReady;
+
+            _readyButton.interactable = networkCaseState.IsLobbyPhase;
+            _readyButtonText.text = canStart
+                ? "Operasyonu Baslat"
+                : (IsLocalPlayerReady(networkCaseState) ? "Beklemeye Al" : "Hazirim");
         }
 
         private void CreateRosterLine(string text, Color color, bool ready)
@@ -522,6 +621,23 @@ namespace MobilOfl.UI
         {
             var networkCaseState = NetworkCaseState.Instance;
             if (networkCaseState == null)
+            {
+                return;
+            }
+
+            var bootstrap = logic != null ? logic.Bootstrap : null;
+            if (bootstrap != null &&
+                bootstrap.IsOnlineSessionActive &&
+                bootstrap.CurrentMode == "Host" &&
+                networkCaseState.IsLobbyPhase &&
+                networkCaseState.AreAllRegisteredPlayersReady)
+            {
+                networkCaseState.RequestStartInvestigation();
+                RefreshImmediate();
+                return;
+            }
+
+            if (!networkCaseState.IsLobbyPhase)
             {
                 return;
             }
@@ -589,6 +705,125 @@ namespace MobilOfl.UI
             _overlayGroup.blocksRaycasts = _openBlend > 0.02f;
             _windowRoot.localScale = Vector3.Lerp(new Vector3(0.965f, 0.985f, 1f), Vector3.one, _openBlend);
             _windowRoot.anchoredPosition = Vector2.Lerp(new Vector2(0f, 28f), Vector2.zero, _openBlend);
+        }
+
+        private void CreateAmbientCard(
+            string name,
+            Vector2 anchor,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            string title,
+            string body,
+            Color panelColor,
+            Color accentColor,
+            Vector2 motionAmplitude,
+            float speed,
+            float phase)
+        {
+            var card = RuntimeUiFactory.CreateCard(name, _overlayRoot, panelColor, accentColor);
+            card.anchorMin = anchor;
+            card.anchorMax = anchor;
+            card.pivot = new Vector2(0.5f, 0.5f);
+            card.anchoredPosition = anchoredPosition;
+            card.sizeDelta = size;
+            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(16, 16, 18, 14), false);
+            RuntimeUiFactory.CreateText("Title", card, title, 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            RuntimeUiFactory.CreateText("Body", card, body, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            AddFloatMotion(card, card.GetComponent<Image>(), motionAmplitude, speed, 0.05f, 0.02f, phase);
+        }
+
+        private static void AddFloatMotion(RectTransform target, Graphic graphic, Vector2 amplitude, float speed, float alphaPulse, float scalePulse, float phase)
+        {
+            var motion = target.gameObject.GetComponent<UiFloatMotion>();
+            if (motion == null)
+            {
+                motion = target.gameObject.AddComponent<UiFloatMotion>();
+            }
+            motion.Configure(target, graphic, amplitude, speed, alphaPulse, scalePulse, phase);
+        }
+
+        private static string CompactIntelLine(CaseSessionManager session)
+        {
+            var evidence = session.CollectedEvidenceIds.Count;
+            var totalEvidence = session.ActiveCase == null ? 0 : session.ActiveCase.EvidenceItems.Count;
+            return $"Delil {evidence}/{totalEvidence}  |  Sorgu {session.InterviewedNpcCount}  |  Not {session.TeamNotes.Count}";
+        }
+
+        private static string CompactSessionLine(RelayNetworkBootstrap bootstrap, NetworkCaseState networkCaseState)
+        {
+            if (bootstrap == null)
+            {
+                return "Ag katmani hazir degil.";
+            }
+
+            if (networkCaseState == null)
+            {
+                return bootstrap.CurrentStatus;
+            }
+
+            var joinCode = string.IsNullOrWhiteSpace(bootstrap.CurrentJoinCode) ? "JOIN YOK" : bootstrap.CurrentJoinCode;
+            return $"{bootstrap.CurrentMode}  |  {networkCaseState.CurrentPhaseLabel}  |  Oyuncu {networkCaseState.RegisteredPlayerCount}  |  {joinCode}";
+        }
+
+        private static string BuildCommandDeckStatus(RelayNetworkBootstrap bootstrap, NetworkCaseState networkCaseState)
+        {
+            if (bootstrap == null)
+            {
+                return "Offline operasyon hazir.";
+            }
+
+            if (bootstrap.IsBusy)
+            {
+                return "Baglanti islemi suruyor...";
+            }
+
+            if (!bootstrap.IsOnlineSessionActive)
+            {
+                return bootstrap.CanReconnectLastSession
+                    ? "Baglanti koptu. Son relay oturumuna yeniden baglanabilirsin."
+                    : "Online oturum acik degil. Host baslat veya bir koda katil.";
+            }
+
+            if (networkCaseState == null)
+            {
+                return $"{bootstrap.CurrentMode} aktif. Oyuncu rosteri bekleniyor.";
+            }
+
+            return $"{bootstrap.CurrentMode} aktif  |  Faz: {networkCaseState.CurrentPhaseLabel}  |  {networkCaseState.ReadyPlayerCount}/{networkCaseState.RegisteredPlayerCount} hazir";
+        }
+
+        private static string BuildCommandDeckHint(RelayNetworkBootstrap bootstrap, NetworkCaseState networkCaseState)
+        {
+            if (bootstrap == null)
+            {
+                return "Tek kisilik test icin dogrudan baslayabilirsin.";
+            }
+
+            if (!bootstrap.IsOnlineSessionActive)
+            {
+                return bootstrap.CanReconnectLastSession
+                    ? "Baglanti koptuysa ayni panelden yeniden baglanmayi deneyebilirsin."
+                    : "Host acarsan join code uretilir; client isen kodu girip dogrudan katil.";
+            }
+
+            if (networkCaseState == null || networkCaseState.RegisteredPlayerCount <= 1)
+            {
+                return "Kod hazir. Takim arkadaslarina gonderip lobiyi doldur.";
+            }
+
+            if (networkCaseState.ReadyPlayerCount < networkCaseState.RegisteredPlayerCount)
+            {
+                return "Butun oyuncular hazir olunca soru zincirini ayni anda baslatmak daha temiz olur.";
+            }
+
+            if (bootstrap.CurrentMode == "Host" && networkCaseState.IsLobbyPhase)
+            {
+                return "Tum ekip hazir. Host artik 'Operasyonu Baslat' ile ayni anda sahaya indirebilir.";
+            }
+
+            return networkCaseState.IsGameplayPhase
+                ? "Operasyon canli. Takim ayni anda sahada."
+                : "Takim hazir. Hostun operasyonu baslatmasi bekleniyor.";
         }
     }
 }

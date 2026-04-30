@@ -13,7 +13,9 @@ namespace MobilOfl.Gameplay
         [SerializeField] private CaseDefinition activeCase;
 
         private readonly HashSet<string> _collectedEvidenceIds = new HashSet<string>();
+        private readonly HashSet<string> _unlockedToolIds = new HashSet<string>();
         private readonly Dictionary<string, EvidenceData> _evidenceById = new Dictionary<string, EvidenceData>();
+        private readonly Dictionary<string, string> _toolDisplayNames = new Dictionary<string, string>();
         private readonly List<string> _messageHistory = new List<string>();
         private readonly List<string> _conversationHistory = new List<string>();
         private readonly List<string> _teamNotes = new List<string>();
@@ -27,9 +29,11 @@ namespace MobilOfl.Gameplay
         public event Action<bool, string> CaseResolved;
         public event Action<string, string, string, bool> NpcConversationRegistered;
         public event Action<string, string> TeamNoteAdded;
+        public event Action<string, string> ToolUnlocked;
 
         public CaseDefinition ActiveCase => activeCase;
         public IReadOnlyCollection<string> CollectedEvidenceIds => _collectedEvidenceIds;
+        public IReadOnlyCollection<string> UnlockedToolIds => _unlockedToolIds;
         public IReadOnlyList<string> MessageHistory => _messageHistory;
         public IReadOnlyList<string> ConversationHistory => _conversationHistory;
         public IReadOnlyList<string> TeamNotes => _teamNotes;
@@ -57,7 +61,9 @@ namespace MobilOfl.Gameplay
         {
             activeCase = caseDefinition;
             _collectedEvidenceIds.Clear();
+            _unlockedToolIds.Clear();
             _evidenceById.Clear();
+            _toolDisplayNames.Clear();
             _messageHistory.Clear();
             _conversationHistory.Clear();
             _teamNotes.Clear();
@@ -142,6 +148,57 @@ namespace MobilOfl.Gameplay
             if (publishSyncMessage)
             {
                 PublishMessage($"Takim delili senkronize edildi: {evidence.Title}");
+            }
+
+            return true;
+        }
+
+        public bool TryUnlockTool(string toolId, string displayName, string pickupMessage)
+        {
+            if (IsCaseResolved)
+            {
+                PublishMessage("Vaka tamamlandi. Yeni ekipman toplanamaz.");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(toolId))
+            {
+                return false;
+            }
+
+            if (!_unlockedToolIds.Add(toolId))
+            {
+                return false;
+            }
+
+            var resolvedName = ResolveToolDisplayName(toolId, displayName);
+            _toolDisplayNames[toolId] = resolvedName;
+            RegisterProgress();
+            ToolUnlocked?.Invoke(toolId, resolvedName);
+            PublishMessage(string.IsNullOrWhiteSpace(pickupMessage) ? $"Ekipman alindi: {resolvedName}" : pickupMessage);
+            return true;
+        }
+
+        public bool TryApplyNetworkTool(string toolId, string displayName, bool publishSyncMessage)
+        {
+            if (string.IsNullOrWhiteSpace(toolId))
+            {
+                return false;
+            }
+
+            if (!_unlockedToolIds.Add(toolId))
+            {
+                return false;
+            }
+
+            var resolvedName = ResolveToolDisplayName(toolId, displayName);
+            _toolDisplayNames[toolId] = resolvedName;
+            RegisterProgress();
+            ToolUnlocked?.Invoke(toolId, resolvedName);
+
+            if (publishSyncMessage)
+            {
+                PublishMessage($"Takim ekipmani senkronize edildi: {resolvedName}");
             }
 
             return true;
@@ -238,6 +295,16 @@ namespace MobilOfl.Gameplay
         public bool HasEvidence(string evidenceId)
         {
             return _collectedEvidenceIds.Contains(evidenceId);
+        }
+
+        public bool HasTool(string toolId)
+        {
+            return !string.IsNullOrWhiteSpace(toolId) && _unlockedToolIds.Contains(toolId);
+        }
+
+        public string GetToolDisplayName(string toolId)
+        {
+            return ResolveToolDisplayName(toolId, string.Empty);
         }
 
         public EvidenceData GetEvidence(string evidenceId)
@@ -341,9 +408,14 @@ namespace MobilOfl.Gameplay
                 return "Kutuphane ogrencisiyle tekrar konus; notun kaynagi netlesecek.";
             }
 
+            if (!HasTool("tool.archive-pass"))
+            {
+                return "Ogretmenler odasina gec ve arsiv gecis kartini al. Arsiv raflari bu kart olmadan acilmaz.";
+            }
+
             if (!HasEvidence("evidence.archive-ledger"))
             {
-                return "Arsiv kanadina gec. Giris defteri suphelinin onceki erisim izini sakliyor.";
+                return "Arsiv gecis kartini kullanip arsiv kanadina gir. Gizli kutuyu arayip giris defterini ortaya cikar.";
             }
 
             if (!HasEvidence("evidence.canteen-testimony"))
@@ -351,9 +423,14 @@ namespace MobilOfl.Gameplay
                 return "Kantin calisaniyla konus. Gec saat hareketi burada teyit edilecek.";
             }
 
+            if (!HasTool("tool.lockpick"))
+            {
+                return "Guvenlik odasina geri don ve ekipman dolabindan maymuncuk setini al. Zor cekmeceyi bununla acacaksin.";
+            }
+
             if (!HasEvidence("evidence.locker-key"))
             {
-                return "Ogretmenler odasindaki yedek anahtari bularak erisim zincirini tamamla.";
+                return "Maymuncuk setiyle ogretmenler odasindaki cekmeceyi ara; yedek anahtar erisim zincirini tamamlayacak.";
             }
 
             var readySuspect = activeCase.Suspects.FirstOrDefault(item => item != null && CanAccuse(item.Id));
@@ -499,6 +576,16 @@ namespace MobilOfl.Gameplay
                 segments.Add("Yedek anahtar, soru dolabina fiziksel erisimin nasil saglandigini acikliyor.");
             }
 
+            if (HasTool("tool.archive-pass"))
+            {
+                segments.Add("Arsiv gecis karti, kisitli okul alanlarina planli erisim saglandigini gosteriyor.");
+            }
+
+            if (HasTool("tool.lockpick"))
+            {
+                segments.Add("Maymuncuk seti, kilitli cekmece ve dolaplarin zorlanarak acilabildigini kanitliyor.");
+            }
+
             if (segments.Count == 0)
             {
                 return "Henuz yeterli veri yok. Ilk delili toplayip olay zincirini kurmaya basla.";
@@ -520,6 +607,26 @@ namespace MobilOfl.Gameplay
         private bool IsCriticalEvidence(string evidenceId)
         {
             return _evidenceById.TryGetValue(evidenceId, out var evidence) && evidence != null && evidence.IsCritical;
+        }
+
+        private string ResolveToolDisplayName(string toolId, string preferredDisplayName)
+        {
+            if (!string.IsNullOrWhiteSpace(preferredDisplayName))
+            {
+                return preferredDisplayName.Trim();
+            }
+
+            if (_toolDisplayNames.TryGetValue(toolId, out var cachedDisplayName) && !string.IsNullOrWhiteSpace(cachedDisplayName))
+            {
+                return cachedDisplayName;
+            }
+
+            return toolId switch
+            {
+                "tool.archive-pass" => "Arsiv Gecis Karti",
+                "tool.lockpick" => "Maymuncuk Seti",
+                _ => string.IsNullOrWhiteSpace(toolId) ? "Ekipman" : toolId
+            };
         }
 
         private static void TrimHistory(List<string> history, int maxEntries)

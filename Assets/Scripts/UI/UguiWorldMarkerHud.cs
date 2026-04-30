@@ -1,4 +1,5 @@
 using MobilOfl.Gameplay;
+using MobilOfl.Online;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,7 @@ namespace MobilOfl.UI
     {
         [SerializeField] private Camera targetCamera;
         [SerializeField] private float maxDistance = 28f;
+        [SerializeField] private float scanBonusDistance = 18f;
 
         private RectTransform _root;
         private bool _built;
@@ -88,7 +90,10 @@ namespace MobilOfl.UI
 
             RuntimeUiFactory.ClearChildren(_root);
             DrawEvidenceMarkers();
+            DrawToolMarkers();
             DrawNpcMarkers();
+            DrawPlayerMarkers();
+            DrawSharedPingMarker();
         }
 
         private void DrawEvidenceMarkers()
@@ -103,6 +108,18 @@ namespace MobilOfl.UI
                 }
 
                 DrawMarker(evidence.transform.position + Vector3.up * 1.1f, evidence.MarkerLabel, evidence.MarkerColor);
+            }
+
+            var searchSpotList = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (var i = 0; i < searchSpotList.Length; i++)
+            {
+                var searchSpot = searchSpotList[i];
+                if (searchSpot == null || !searchSpot.IsMarkerVisible)
+                {
+                    continue;
+                }
+
+                DrawMarker(searchSpot.transform.position + Vector3.up * 1.1f, searchSpot.MarkerLabel, searchSpot.MarkerColor);
             }
         }
 
@@ -121,11 +138,53 @@ namespace MobilOfl.UI
             }
         }
 
+        private void DrawToolMarkers()
+        {
+            var toolPickups = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (var i = 0; i < toolPickups.Length; i++)
+            {
+                var toolPickup = toolPickups[i];
+                if (toolPickup == null || !toolPickup.IsMarkerVisible)
+                {
+                    continue;
+                }
+
+                DrawMarker(toolPickup.transform.position + Vector3.up * 1.05f, toolPickup.MarkerLabel, toolPickup.MarkerColor);
+            }
+        }
+
+        private void DrawPlayerMarkers()
+        {
+            var players = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (var i = 0; i < players.Length; i++)
+            {
+                var player = players[i];
+                if (player == null || !player.ShouldShowWorldLabel)
+                {
+                    continue;
+                }
+
+                DrawMarker(player.MarkerWorldPosition, player.DisplayName, new Color(0.58f, 0.86f, 1f, 1f));
+            }
+        }
+
+        private void DrawSharedPingMarker()
+        {
+            var networkCaseState = NetworkCaseState.Instance;
+            if (networkCaseState == null || !networkCaseState.HasActiveSharedPing)
+            {
+                return;
+            }
+
+            DrawMarker(networkCaseState.SharedPingPosition + Vector3.up * 0.8f, "PING: " + networkCaseState.SharedPingLabel, new Color(1f, 0.84f, 0.3f, 1f));
+        }
+
         private void DrawMarker(Vector3 worldPosition, string label, Color color)
         {
             var cameraPosition = targetCamera.transform.position;
+            var effectiveMaxDistance = InvestigationScanner.IsScanActive ? maxDistance + scanBonusDistance : maxDistance;
             var distance = Vector3.Distance(cameraPosition, worldPosition);
-            if (distance > maxDistance)
+            if (distance > effectiveMaxDistance)
             {
                 return;
             }
@@ -137,12 +196,17 @@ namespace MobilOfl.UI
             }
 
             var anchor = new Vector2(viewport.x, viewport.y);
-            var card = RuntimeUiFactory.CreateCard("Marker", _root, new Color(0.05f, 0.08f, 0.11f, 0.84f), color);
+            var scanBoost = InvestigationScanner.IsScanActive ? 1f : 0f;
+            var card = RuntimeUiFactory.CreateCard(
+                "Marker",
+                _root,
+                Color.Lerp(new Color(0.05f, 0.08f, 0.11f, 0.84f), new Color(0.04f, 0.16f, 0.18f, 0.9f), scanBoost),
+                Color.Lerp(color, new Color(0.28f, 0.95f, 0.85f, 1f), scanBoost * 0.5f));
             card.anchorMin = anchor;
             card.anchorMax = anchor;
             card.pivot = new Vector2(0.5f, 0.5f);
             card.anchoredPosition = new Vector2(0f, 0f);
-            card.sizeDelta = new Vector2(180f, 30f);
+            card.sizeDelta = Vector2.Lerp(new Vector2(180f, 30f), new Vector2(206f, 36f), scanBoost);
             RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(10, 10, 8, 6), false);
             var text = RuntimeUiFactory.CreateText("Label", card, $"{label}  [{distance:0}m]", 13, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             text.alignment = TextAnchor.MiddleCenter;

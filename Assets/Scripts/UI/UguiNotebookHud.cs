@@ -26,11 +26,15 @@ namespace MobilOfl.UI
         private CanvasGroup _overlayGroup;
         private float _openBlend;
         private RectTransform _contentArea;
+        private RectTransform _tabRootHost;
         private Button[] _tabButtons;
         private Text[] _tabButtonTexts;
+        private readonly string[] _tabBaseLabels = { "Genel Durum", "Deliller", "Sorgular", "Notlar", "Supheliler" };
         private Text _caseTitleText;
         private Text _statsText;
         private Text _reasoningText;
+        private Text _dossierStatusText;
+        private Text _dossierMetaText;
         private RectTransform _overviewContent;
         private RectTransform _evidenceListContent;
         private RectTransform _interviewContent;
@@ -185,7 +189,7 @@ namespace MobilOfl.UI
 
             var frame = RuntimeUiFactory.CreateUiRoot("Frame", _panelRoot);
             RuntimeUiFactory.Stretch(frame);
-            var bodyLayout = RuntimeUiFactory.AddHorizontalLayout(frame, 18f, new RectOffset(24, 24, 24, 24), true);
+            var bodyLayout = RuntimeUiFactory.AddHorizontalLayout(frame, 14f, new RectOffset(20, 20, 20, 20), true);
             bodyLayout.childForceExpandWidth = true;
             bodyLayout.childForceExpandHeight = true;
 
@@ -193,18 +197,28 @@ namespace MobilOfl.UI
             BuildContent(frame);
         }
 
+        private void BuildAtmosphereDecor()
+        {
+            var topWash = RuntimeUiFactory.CreateUiRoot("TopWash", _panelRoot);
+            topWash.anchorMin = new Vector2(0f, 1f);
+            topWash.anchorMax = new Vector2(1f, 1f);
+            topWash.pivot = new Vector2(0.5f, 1f);
+            topWash.sizeDelta = new Vector2(0f, 110f);
+            RuntimeUiFactory.AddImage(topWash.gameObject, new Color(0.12f, 0.18f, 0.2f, 0.12f));
+        }
+
         private void BuildSidebar(Transform parent)
         {
             var sidebar = RuntimeUiFactory.CreateCard("Sidebar", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
-            RuntimeUiFactory.EnsureLayoutElement(sidebar, preferredWidth: 290f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(sidebar, 12f, new RectOffset(18, 18, 18, 18), false);
+            RuntimeUiFactory.EnsureLayoutElement(sidebar, preferredWidth: 248f, flexibleHeight: 1f);
+            RuntimeUiFactory.AddVerticalLayout(sidebar, 10f, new RectOffset(16, 16, 16, 16), false);
 
-            RuntimeUiFactory.CreateText("SidebarTitle", sidebar, "VAKA DOSYASI", 34, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _caseTitleText = RuntimeUiFactory.CreateText("CaseTitle", sidebar, "-", 17, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            RuntimeUiFactory.CreateText("SidebarTitle", sidebar, "VAKA DOSYASI", 26, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _caseTitleText = RuntimeUiFactory.CreateText("CaseTitle", sidebar, "-", 15, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
 
             var statsCard = RuntimeUiFactory.CreateCard("StatsCard", sidebar, new Color(0.08f, 0.1f, 0.13f, 0.95f), ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(statsCard, preferredHeight: 140f);
-            RuntimeUiFactory.AddVerticalLayout(statsCard, 6f, new RectOffset(14, 14, 16, 14), false);
+            RuntimeUiFactory.EnsureLayoutElement(statsCard, preferredHeight: 118f);
+            RuntimeUiFactory.AddVerticalLayout(statsCard, 5f, new RectOffset(12, 12, 14, 12), false);
             RuntimeUiFactory.CreateText("StatsLabel", statsCard, "OTURUM OZETI", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _statsText = RuntimeUiFactory.CreateText("StatsText", statsCard, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
@@ -231,8 +245,8 @@ namespace MobilOfl.UI
 
         private void CreateTabButton(Transform parent, NotebookTab tab, string label)
         {
-            var button = RuntimeUiFactory.CreateButton(tab + "TabButton", parent, label, new Color(0.11f, 0.13f, 0.16f, 1f), 16);
-            RuntimeUiFactory.EnsureLayoutElement(button.transform, preferredHeight: 50f);
+            var button = RuntimeUiFactory.CreateButton(tab + "TabButton", parent, label, new Color(0.11f, 0.13f, 0.16f, 1f), 14);
+            RuntimeUiFactory.EnsureLayoutElement(button.transform, preferredHeight: 42f);
             button.onClick.AddListener(() => SetSelectedTab(tab, true));
             _tabButtons[(int)tab] = button;
             _tabButtonTexts[(int)tab] = button.GetComponentInChildren<Text>();
@@ -241,13 +255,39 @@ namespace MobilOfl.UI
         {
             _contentArea = RuntimeUiFactory.CreateUiRoot("ContentArea", parent);
             RuntimeUiFactory.EnsureLayoutElement(_contentArea, flexibleWidth: 1f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(_contentArea, 0f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.AddVerticalLayout(_contentArea, 12f, new RectOffset(0, 0, 0, 0), false);
+
+            BuildDossierStrip();
+
+            _tabRootHost = RuntimeUiFactory.CreateUiRoot("TabRootHost", _contentArea);
+            RuntimeUiFactory.EnsureLayoutElement(_tabRootHost, flexibleWidth: 1f, flexibleHeight: 1f);
+            RuntimeUiFactory.Stretch(_tabRootHost);
 
             BuildOverviewTab();
             BuildEvidenceTab();
             BuildInterviewsTab();
             BuildNotesTab();
             BuildSuspectsTab();
+        }
+
+        private void BuildDossierStrip()
+        {
+            var strip = RuntimeUiFactory.CreateCard("DossierStrip", _contentArea, new Color(0.08f, 0.1f, 0.13f, 0.95f), ModernGuiTheme.AccentColor);
+            RuntimeUiFactory.EnsureLayoutElement(strip, preferredHeight: 68f);
+            var layout = RuntimeUiFactory.AddHorizontalLayout(strip, 12f, new RectOffset(16, 16, 12, 10), true);
+            layout.childForceExpandWidth = false;
+
+            var left = RuntimeUiFactory.CreateUiRoot("StatusBlock", strip);
+            RuntimeUiFactory.EnsureLayoutElement(left, flexibleWidth: 1f);
+            RuntimeUiFactory.AddVerticalLayout(left, 2f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.CreateText("StatusLabel", left, "DOSYA DURUMU", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _dossierStatusText = RuntimeUiFactory.CreateText("StatusText", left, "Analiz bekleniyor.", 15, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+
+            var right = RuntimeUiFactory.CreateUiRoot("MetaBlock", strip);
+            RuntimeUiFactory.EnsureLayoutElement(right, preferredWidth: 300f);
+            RuntimeUiFactory.AddVerticalLayout(right, 2f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.CreateText("MetaLabel", right, "KISA OZET", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _dossierMetaText = RuntimeUiFactory.CreateText("MetaText", right, "-", 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
         }
 
         private void BuildOverviewTab()
@@ -342,7 +382,7 @@ namespace MobilOfl.UI
 
         private RectTransform CreateTabRoot(string name)
         {
-            var tabRoot = RuntimeUiFactory.CreateUiRoot(name, _contentArea);
+            var tabRoot = RuntimeUiFactory.CreateUiRoot(name, _tabRootHost);
             RuntimeUiFactory.EnsureLayoutElement(tabRoot, flexibleWidth: 1f, flexibleHeight: 1f);
             RuntimeUiFactory.Stretch(tabRoot);
             return tabRoot;
@@ -356,9 +396,9 @@ namespace MobilOfl.UI
                 logic?.SetTabIndex((int)tab);
             }
 
-            for (var i = 0; i < _contentArea.childCount; i++)
+            for (var i = 0; i < _tabRootHost.childCount; i++)
             {
-                _contentArea.GetChild(i).gameObject.SetActive(i == (int)_selectedTab);
+                _tabRootHost.GetChild(i).gameObject.SetActive(i == (int)_selectedTab);
             }
 
             for (var i = 0; i < _tabButtons.Length; i++)
@@ -401,6 +441,8 @@ namespace MobilOfl.UI
                 $"Kritik: {session.CollectedCriticalEvidenceCount}/{session.TotalCriticalEvidenceCount}\n" +
                 $"Takim notu: {session.TeamNotes.Count}";
             _reasoningText.text = session.GetReasoningSummary();
+            _dossierStatusText.text = BuildDossierStatus(session);
+            _dossierMetaText.text = BuildDossierMeta(session);
             RefreshTabLabels(session);
 
             if (_noteInput != null)
@@ -568,6 +610,7 @@ namespace MobilOfl.UI
                 var card = RuntimeUiFactory.CreateCard("SuspectCard" + suspect.Id, _suspectsContent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
                 RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(16, 16, 16, 14), false);
                 RuntimeUiFactory.CreateText("Name", card, suspect.DisplayName, 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+                CreateStatusChip(card, session.CanAccuse(suspect.Id) ? "SUCLAMA HAZIR" : "EK DELIL GEREKIYOR", session.CanAccuse(suspect.Id) ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.BorderColor);
                 RuntimeUiFactory.CreateText("Summary", card, suspect.Summary, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
                 var matchCount = session.GetSuspectEvidenceMatchCount(suspect);
@@ -575,6 +618,7 @@ namespace MobilOfl.UI
                 RuntimeUiFactory.CreateText("EvidenceMatch", card, $"Eslesen delil: {matchCount}/{suspect.RequiredEvidenceIds.Count}", 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
                 RuntimeUiFactory.CreateText("Confidence", card, $"Suphe yogunlugu: %{confidence}", 14, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
                 CreateProgressBar(card, confidence / 100f, $"Guven %{confidence}");
+                CreateEvidenceRequirementList(card, suspect, session);
                 RuntimeUiFactory.CreateText("Missing", card, session.GetMissingEvidenceSummary(suspect), 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
                 var accuseButton = RuntimeUiFactory.CreateButton(
@@ -596,6 +640,37 @@ namespace MobilOfl.UI
             RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(16, 16, 16, 14), false);
             RuntimeUiFactory.CreateText(title + "Title", card, title, 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             RuntimeUiFactory.CreateText(title + "Body", card, body, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+        }
+
+        private void CreateStatusChip(Transform parent, string label, Color accent)
+        {
+            var chip = RuntimeUiFactory.CreateCard("Chip" + label, parent, new Color(0.08f, 0.1f, 0.12f, 0.96f), accent);
+            RuntimeUiFactory.EnsureLayoutElement(chip, preferredWidth: 206f, preferredHeight: 38f);
+            RuntimeUiFactory.AddVerticalLayout(chip, 0f, new RectOffset(12, 12, 10, 8), false);
+            RuntimeUiFactory.CreateText("ChipLabel", chip, label, 12, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+        }
+
+        private void CreateEvidenceRequirementList(Transform parent, SuspectData suspect, CaseSessionManager session)
+        {
+            var host = RuntimeUiFactory.CreateUiRoot("RequirementHost", parent);
+            RuntimeUiFactory.AddHorizontalLayout(host, 8f, new RectOffset(0, 0, 0, 0), true).childForceExpandWidth = false;
+
+            for (var i = 0; i < suspect.RequiredEvidenceIds.Count; i++)
+            {
+                var evidenceId = suspect.RequiredEvidenceIds[i];
+                var evidence = session.GetEvidence(evidenceId);
+                var title = evidence != null ? evidence.Title : evidenceId;
+                var hasEvidence = session.HasEvidence(evidenceId);
+
+                var chip = RuntimeUiFactory.CreateCard(
+                    "EvidenceChip" + i,
+                    host,
+                    hasEvidence ? new Color(0.11f, 0.18f, 0.16f, 0.96f) : new Color(0.11f, 0.12f, 0.15f, 0.96f),
+                    hasEvidence ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.BorderColor);
+                RuntimeUiFactory.EnsureLayoutElement(chip, preferredHeight: 34f, preferredWidth: Mathf.Clamp(title.Length * 8f, 120f, 220f));
+                RuntimeUiFactory.AddVerticalLayout(chip, 0f, new RectOffset(10, 10, 8, 6), false);
+                RuntimeUiFactory.CreateText("ChipTitle", chip, title, 11, hasEvidence ? ModernGuiTheme.TextColor : ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            }
         }
 
         private void CreateProgressBar(Transform parent, float normalized, string label)
@@ -717,6 +792,51 @@ namespace MobilOfl.UI
             _overlayGroup.blocksRaycasts = _openBlend > 0.02f;
             _panelRoot.localScale = Vector3.Lerp(new Vector3(0.95f, 0.98f, 1f), Vector3.one, _openBlend);
             _panelRoot.anchoredPosition = Vector2.Lerp(new Vector2(0f, 18f), Vector2.zero, _openBlend);
+        }
+
+        private void CreateAmbientNote(string name, Vector2 anchor, Vector2 position, Vector2 size, string title, string body, Color panelColor, Color accentColor, Vector2 motionAmplitude, float speed, float phase)
+        {
+            var card = RuntimeUiFactory.CreateCard(name, _panelRoot, panelColor, accentColor);
+            card.anchorMin = anchor;
+            card.anchorMax = anchor;
+            card.pivot = new Vector2(0.5f, 0.5f);
+            card.anchoredPosition = position;
+            card.sizeDelta = size;
+            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(14, 14, 16, 12), false);
+            RuntimeUiFactory.CreateText("Title", card, title, 11, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            RuntimeUiFactory.CreateText("Body", card, body, 13, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            AddFloatMotion(card, card.GetComponent<Image>(), motionAmplitude, speed, 0.05f, 0.02f, phase);
+        }
+
+        private static void AddFloatMotion(RectTransform target, Graphic graphic, Vector2 amplitude, float speed, float alphaPulse, float scalePulse, float phase)
+        {
+            var motion = target.gameObject.GetComponent<UiFloatMotion>();
+            if (motion == null)
+            {
+                motion = target.gameObject.AddComponent<UiFloatMotion>();
+            }
+
+            motion.Configure(target, graphic, amplitude, speed, alphaPulse, scalePulse, phase);
+        }
+
+        private static string BuildDossierStatus(CaseSessionManager session)
+        {
+            if (session.IsCaseResolved)
+            {
+                return "DOSYA KAPATILDI";
+            }
+
+            if (session.HasAnyAccusableSuspect())
+            {
+                return "SUCLAMA ICIN DOSYA YETERLI";
+            }
+
+            return "KANIT ZINCIRI TOPLANIYOR";
+        }
+
+        private static string BuildDossierMeta(CaseSessionManager session)
+        {
+            return $"Kritik {session.CollectedCriticalEvidenceCount}/{session.TotalCriticalEvidenceCount}  |  Kayit {session.ConversationHistory.Count}  |  Not {session.TeamNotes.Count}";
         }
 
         private static string FormatTime(float seconds)

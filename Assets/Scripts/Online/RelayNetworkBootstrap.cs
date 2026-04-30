@@ -8,6 +8,7 @@ using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
+using MobilOfl.UI;
 
 namespace MobilOfl.Online
 {
@@ -35,15 +36,32 @@ namespace MobilOfl.Online
         public bool UsesLegacyRelayFlow => true;
         public string BackendLabel => UsesLegacyRelayFlow ? CurrentBackendLabel : RecommendedBackendLabel;
         public string BackendUpgradeHint => "Unity 6 icin sonraki dogru adim: com.unity.services.multiplayer tabanli Session/MPS akisina gecis.";
+        public bool CanReconnectLastSession =>
+            !IsBusy &&
+            !IsOnlineSessionActive &&
+            _lastSessionWasRelayClient &&
+            !string.IsNullOrWhiteSpace(_lastRelayJoinCode);
+        public string LastDisconnectReason { get; private set; } = string.Empty;
         public string CurrentMode =>
             networkManager == null ? "Offline" :
             networkManager.IsHost ? "Host" :
             networkManager.IsClient ? "Client" :
             "Offline";
 
+        private NetworkManager _subscribedNetworkManager;
+        private string _lastRelayJoinCode = string.Empty;
+        private bool _intentionalShutdown;
+        private bool _lastSessionWasRelayClient;
+        private bool _unexpectedStopHandled;
+
         private void Awake()
         {
             EnsureReferences();
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeFromNetworkEvents();
         }
 
         public void StartOfflineHost()
@@ -64,6 +82,9 @@ namespace MobilOfl.Online
 
             CurrentJoinCode = string.Empty;
             JoinCodeChanged?.Invoke(CurrentJoinCode);
+            ResetUnexpectedStopGuard();
+            ClearReconnectState();
+            _intentionalShutdown = false;
 
             if (networkManager.StartHost())
             {
@@ -96,6 +117,10 @@ namespace MobilOfl.Online
             try
             {
                 IsBusy = true;
+                ResetUnexpectedStopGuard();
+                _intentionalShutdown = false;
+                _lastSessionWasRelayClient = false;
+                LastDisconnectReason = string.Empty;
                 PublishStatus("Unity Services baslatiliyor...");
 
                 if (autoInitializeUnityServices)
@@ -106,6 +131,7 @@ namespace MobilOfl.Online
                 PublishStatus("Relay allocation olusturuluyor...");
                 var allocation = await RelayService.Instance.CreateAllocationAsync(Mathf.Max(1, maxPlayers - 1));
                 CurrentJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+                _lastRelayJoinCode = CurrentJoinCode;
                 JoinCodeChanged?.Invoke(CurrentJoinCode);
 
                 var relayServerData = new RelayServerData(allocation, relayConnectionType);
@@ -169,6 +195,10 @@ namespace MobilOfl.Online
             try
             {
                 IsBusy = true;
+                ResetUnexpectedStopGuard();
+                _intentionalShutdown = false;
+                _lastSessionWasRelayClient = true;
+                LastDisconnectReason = string.Empty;
                 PublishStatus("Unity Services baslatiliyor...");
 
                 if (autoInitializeUnityServices)
@@ -182,6 +212,7 @@ namespace MobilOfl.Online
                 unityTransport.SetRelayServerData(relayServerData);
 
                 CurrentJoinCode = joinCode.Trim().ToUpperInvariant();
+                _lastRelayJoinCode = CurrentJoinCode;
                 JoinCodeChanged?.Invoke(CurrentJoinCode);
 
                 if (!networkManager.StartClient())
@@ -211,9 +242,24 @@ namespace MobilOfl.Online
             }
         }
 
+        public async Task<bool> AttemptReconnectToLastSessionAsync()
+        {
+            if (!CanReconnectLastSession)
+            {
+                PublishStatus("Yeniden baglanilabilecek bir onceki oturum yok.");
+                return false;
+            }
+
+            PublishStatus("Son oturuma yeniden baglanma deneniyor...");
+            return await JoinRelaySessionAsync(_lastRelayJoinCode);
+        }
+
         public void ShutdownSession()
         {
             EnsureReferences();
+            _intentionalShutdown = true;
+            ResetUnexpectedStopGuard();
+            ClearReconnectState();
 
             if (networkManager != null && networkManager.IsListening)
             {
@@ -223,6 +269,7 @@ namespace MobilOfl.Online
             CurrentJoinCode = string.Empty;
             JoinCodeChanged?.Invoke(CurrentJoinCode);
             SetOfflineScenePlayerActive(true);
+            LastDisconnectReason = string.Empty;
             PublishStatus("Oturum kapatildi.");
         }
 
@@ -276,6 +323,8 @@ namespace MobilOfl.Online
                     offlineScenePlayerRoot = scenePlayer;
                 }
             }
+
+            SubscribeToNetworkEvents();
         }
 
         private void SetOfflineScenePlayerActive(bool isActive)
@@ -284,6 +333,163 @@ namespace MobilOfl.Online
             {
                 offlineScenePlayerRoot.SetActive(isActive);
             }
+        }
+
+        private void SubscribeToNetworkEvents()
+        {
+            if (networkManager == null || _subscribedNetworkManager == networkManager)
+            {
+                return;
+            }
+
+            UnsubscribeFromNetworkEvents();
+            _subscribedNetworkManager = networkManager;
+            _subscribedNetworkManager.OnClientConnectedCallback += HandleClientConnected;
+            _subscribedNetworkManager.OnClientDisconnectCallback += HandleClientDisconnected;
+            _subscribedNetworkManager.OnClientStopped += HandleClientStopped;
+            _subscribedNetworkManager.OnServerStopped += HandleServerStopped;
+            _subscribedNetworkManager.OnTransportFailure += HandleTransportFailure;
+        }
+
+        private void UnsubscribeFromNetworkEvents()
+        {
+            if (_subscribedNetworkManager == null)
+            {
+                return;
+            }
+
+            _subscribedNetworkManager.OnClientConnectedCallback -= HandleClientConnected;
+            _subscribedNetworkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
+            _subscribedNetworkManager.OnClientStopped -= HandleClientStopped;
+            _subscribedNetworkManager.OnServerStopped -= HandleServerStopped;
+            _subscribedNetworkManager.OnTransportFailure -= HandleTransportFailure;
+            _subscribedNetworkManager = null;
+        }
+
+        private void HandleClientConnected(ulong clientId)
+        {
+            if (networkManager == null || clientId != networkManager.LocalClientId)
+            {
+                return;
+            }
+
+            ResetUnexpectedStopGuard();
+            _intentionalShutdown = false;
+            LastDisconnectReason = string.Empty;
+            SetOfflineScenePlayerActive(false);
+        }
+
+        private void HandleClientDisconnected(ulong clientId)
+        {
+            if (networkManager == null || clientId != networkManager.LocalClientId)
+            {
+                return;
+            }
+
+            if (_intentionalShutdown)
+            {
+                return;
+            }
+
+            HandleUnexpectedSessionStop(_lastSessionWasRelayClient
+                ? "Baglanti koptu. Istersen son relay oturumuna yeniden baglanabilirsin."
+                : "Yerel istemci oturumu beklenmedik sekilde durdu.");
+        }
+
+        private void HandleClientStopped(bool wasHost)
+        {
+            if (_intentionalShutdown)
+            {
+                return;
+            }
+
+            HandleUnexpectedSessionStop(wasHost
+                ? "Host tarafindaki istemci katmani durdu."
+                : (_lastSessionWasRelayClient
+                    ? "Istemci oturumu durdu. Son relay oturumuna yeniden baglanabilirsin."
+                    : "Istemci oturumu durdu."));
+        }
+
+        private void HandleServerStopped(bool wasClient)
+        {
+            if (_intentionalShutdown)
+            {
+                return;
+            }
+
+            HandleUnexpectedSessionStop(wasClient
+                ? "Host oturumu kapandi. Takim dagildi."
+                : "Sunucu oturumu beklenmedik sekilde kapandi.");
+        }
+
+        private void HandleTransportFailure()
+        {
+            if (string.IsNullOrWhiteSpace(LastDisconnectReason))
+            {
+                LastDisconnectReason = "Transport baglantisi zaman asimina ugradi veya relay ile iletisim koptu.";
+            }
+        }
+
+        private void HandleUnexpectedSessionStop(string fallbackStatus)
+        {
+            if (_unexpectedStopHandled)
+            {
+                return;
+            }
+
+            _unexpectedStopHandled = true;
+            IsBusy = false;
+            SetOfflineScenePlayerActive(true);
+
+            var disconnectReason = ResolveDisconnectReason();
+            var hasReason = !string.IsNullOrWhiteSpace(disconnectReason);
+            var finalStatus = hasReason ? $"{fallbackStatus} Neden: {disconnectReason}" : fallbackStatus;
+
+            if (!_lastSessionWasRelayClient)
+            {
+                CurrentJoinCode = string.Empty;
+                JoinCodeChanged?.Invoke(CurrentJoinCode);
+            }
+            else if (!string.IsNullOrWhiteSpace(_lastRelayJoinCode))
+            {
+                CurrentJoinCode = _lastRelayJoinCode;
+                JoinCodeChanged?.Invoke(CurrentJoinCode);
+            }
+
+            PublishStatus(finalStatus);
+
+            var menu = MainMenuHud.Instance;
+            if (menu != null)
+            {
+                menu.OpenMenu(finalStatus);
+            }
+        }
+
+        private string ResolveDisconnectReason()
+        {
+            if (!string.IsNullOrWhiteSpace(LastDisconnectReason))
+            {
+                return LastDisconnectReason;
+            }
+
+            if (networkManager != null && !string.IsNullOrWhiteSpace(networkManager.DisconnectReason))
+            {
+                LastDisconnectReason = networkManager.DisconnectReason;
+                return LastDisconnectReason;
+            }
+
+            return string.Empty;
+        }
+
+        private void ResetUnexpectedStopGuard()
+        {
+            _unexpectedStopHandled = false;
+        }
+
+        private void ClearReconnectState()
+        {
+            _lastSessionWasRelayClient = false;
+            _lastRelayJoinCode = string.Empty;
         }
     }
 }

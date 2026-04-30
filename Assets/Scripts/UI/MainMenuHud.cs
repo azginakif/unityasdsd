@@ -21,7 +21,20 @@ namespace MobilOfl.UI
         public string PlayerName
         {
             get => _playerName;
-            set => _playerName = PlayerProfileSettings.Sanitize(value);
+            set
+            {
+                _playerName = PlayerProfileSettings.Sanitize(value);
+                PlayerProfileSettings.SavePlayerName(_playerName);
+
+                var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                for (var i = 0; i < avatars.Length; i++)
+                {
+                    if (avatars[i] != null && avatars[i].IsOwner)
+                    {
+                        avatars[i].SubmitDisplayName(_playerName);
+                    }
+                }
+            }
         }
 
         public string JoinCodeInput
@@ -173,6 +186,11 @@ namespace MobilOfl.UI
             await RunOnlineAction(false);
         }
 
+        public async void ReconnectFromUi()
+        {
+            await ReconnectLastSessionAsync();
+        }
+
         private void DrawCollapsedButton()
         {
             var rect = new Rect(18f, Screen.height - 76f, 146f, 46f);
@@ -276,6 +294,17 @@ namespace MobilOfl.UI
                 _ = RunOnlineAction(isHost: false);
             }
             GUI.enabled = true;
+
+            if (bootstrap != null && bootstrap.CanReconnectLastSession)
+            {
+                GUILayout.Space(6f);
+                GUI.enabled = !bootstrap.IsBusy;
+                if (GUILayout.Button("Son Oturuma Yeniden Baglan", _buttonStyle, GUILayout.Height(34f)))
+                {
+                    _ = ReconnectLastSessionAsync();
+                }
+                GUI.enabled = true;
+            }
 
             if (bootstrap != null && !string.IsNullOrWhiteSpace(bootstrap.CurrentJoinCode))
             {
@@ -416,8 +445,30 @@ namespace MobilOfl.UI
             {
                 CaseSessionManager.Instance.RestartCurrentCase();
             }
+            OpenMenu(bootstrap.IsHost
+                ? "Online lobi hazir. Herkes hazir olunca host operasyonu baslatabilir."
+                : "Oturuma katildin. Hazirlik verip hostun operasyonu baslatmasini bekle.");
+        }
 
-            CloseMenu();
+        private async Task ReconnectLastSessionAsync()
+        {
+            SaveProfile();
+            EnsureBootstrap();
+            if (bootstrap == null || !bootstrap.CanReconnectLastSession)
+            {
+                _status = "Yeniden baglanilabilecek bir onceki relay oturumu bulunamadi.";
+                OpenMenu(_status);
+                return;
+            }
+
+            var success = await bootstrap.AttemptReconnectToLastSessionAsync();
+            _status = bootstrap.CurrentStatus;
+            OpenMenu(_status);
+
+            if (!success)
+            {
+                return;
+            }
         }
 
         private void StartSoloGame()

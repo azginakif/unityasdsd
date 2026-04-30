@@ -1,6 +1,5 @@
 using MobilOfl.Gameplay;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace MobilOfl.UI
@@ -199,13 +198,25 @@ namespace MobilOfl.UI
 
         private void RestartCase()
         {
+            var networkCaseState = NetworkCaseState.Instance;
+            if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
+            {
+                networkCaseState.RequestRestartSession();
+                _hasResult = false;
+                _success = false;
+                _resultMessage = string.Empty;
+                return;
+            }
+
             var session = CaseSessionManager.Instance;
             if (session != null)
             {
                 session.RestartCurrentCase();
             }
 
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            _hasResult = false;
+            _success = false;
+            _resultMessage = string.Empty;
         }
 
         private void DisableLegacy()

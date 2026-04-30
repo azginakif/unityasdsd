@@ -4,13 +4,13 @@ namespace MobilOfl.UI
 {
     public static class ModernGuiTheme
     {
-        public static readonly Color PanelColor = new Color(0.06f, 0.08f, 0.11f, 0.965f);
-        public static readonly Color PanelSoftColor = new Color(0.11f, 0.13f, 0.16f, 0.94f);
-        public static readonly Color BorderColor = new Color(0.42f, 0.37f, 0.26f, 0.95f);
-        public static readonly Color AccentColor = new Color(0.88f, 0.71f, 0.31f, 1f);
-        public static readonly Color AccentWarmColor = new Color(0.26f, 0.76f, 0.72f, 1f);
-        public static readonly Color TextColor = new Color(0.97f, 0.95f, 0.9f, 1f);
-        public static readonly Color MutedTextColor = new Color(0.73f, 0.76f, 0.74f, 1f);
+        public static readonly Color PanelColor = new Color(0.07f, 0.09f, 0.12f, 0.975f);
+        public static readonly Color PanelSoftColor = new Color(0.11f, 0.14f, 0.18f, 0.95f);
+        public static readonly Color BorderColor = new Color(0.2f, 0.29f, 0.34f, 0.96f);
+        public static readonly Color AccentColor = new Color(0.89f, 0.77f, 0.45f, 1f);
+        public static readonly Color AccentWarmColor = new Color(0.33f, 0.82f, 0.78f, 1f);
+        public static readonly Color TextColor = new Color(0.96f, 0.97f, 0.94f, 1f);
+        public static readonly Color MutedTextColor = new Color(0.7f, 0.77f, 0.8f, 1f);
 
         private static Texture2D _whiteTexture;
         private static Texture2D _panelTexture;
@@ -22,9 +22,9 @@ namespace MobilOfl.UI
         public static Texture2D WhiteTexture => _whiteTexture != null ? _whiteTexture : (_whiteTexture = Texture2D.whiteTexture);
         public static Texture2D PanelTexture => _panelTexture != null ? _panelTexture : (_panelTexture = MakeTexture(PanelColor));
         public static Texture2D PanelSoftTexture => _panelSoftTexture != null ? _panelSoftTexture : (_panelSoftTexture = MakeTexture(PanelSoftColor));
-        public static Texture2D ButtonTexture => _buttonTexture != null ? _buttonTexture : (_buttonTexture = MakeTexture(new Color(0.14f, 0.16f, 0.19f, 1f)));
-        public static Texture2D ButtonActiveTexture => _buttonActiveTexture != null ? _buttonActiveTexture : (_buttonActiveTexture = MakeTexture(new Color(0.3f, 0.24f, 0.12f, 1f)));
-        public static Texture2D InputTexture => _inputTexture != null ? _inputTexture : (_inputTexture = MakeTexture(new Color(0.09f, 0.11f, 0.13f, 1f)));
+        public static Texture2D ButtonTexture => _buttonTexture != null ? _buttonTexture : (_buttonTexture = MakeTexture(new Color(0.12f, 0.16f, 0.19f, 1f)));
+        public static Texture2D ButtonActiveTexture => _buttonActiveTexture != null ? _buttonActiveTexture : (_buttonActiveTexture = MakeTexture(new Color(0.22f, 0.27f, 0.21f, 1f)));
+        public static Texture2D InputTexture => _inputTexture != null ? _inputTexture : (_inputTexture = MakeTexture(new Color(0.08f, 0.11f, 0.14f, 1f)));
 
         public static GUIStyle CreatePanelStyle(RectOffset padding = null)
         {

@@ -1,0 +1,143 @@
+using MobilOfl.Online;
+using MobilOfl.UI;
+using UnityEngine;
+
+namespace MobilOfl.Gameplay
+{
+    public class NpcPatrolController : MonoBehaviour
+    {
+        [SerializeField] private NpcInteractable npcInteractable;
+        [SerializeField] private bool patrolEnabled = true;
+        [SerializeField] private Vector3[] patrolOffsets =
+        {
+            Vector3.zero,
+            new Vector3(0f, 0f, 1.8f),
+            new Vector3(0f, 0f, -1.8f)
+        };
+        [SerializeField] private float moveSpeed = 1.25f;
+        [SerializeField] private float turnSpeed = 5.4f;
+        [SerializeField] private float waitDuration = 1.15f;
+        [SerializeField] private float arrivalDistance = 0.18f;
+        [SerializeField] private float viewDistance = 6.8f;
+        [SerializeField] private float viewAngle = 62f;
+        [SerializeField] private float sightPressurePerSecond = 0.52f;
+        [SerializeField] private float eyeHeight = 1.35f;
+        [SerializeField] private LayerMask occlusionMask = ~0;
+
+        private PlayerStealthController _playerStealth;
+        private Vector3 _anchorPosition;
+        private int _currentPatrolIndex;
+        private float _waitUntil;
+
+        private void Awake()
+        {
+            _anchorPosition = transform.position;
+            ResolveReferences();
+        }
+
+        private void Update()
+        {
+            ResolveReferences();
+
+            if (MainMenuHud.IsBlockingGameplay || CaseNotebookHud.IsAnyNotebookOpen)
+            {
+                return;
+            }
+
+            if (CaseSessionManager.Instance != null && CaseSessionManager.Instance.IsCaseResolved)
+            {
+                return;
+            }
+
+            if (NetworkCaseState.Instance != null &&
+                NetworkCaseState.Instance.IsOnlineSessionActive &&
+                !NetworkCaseState.Instance.IsGameplayPhase)
+            {
+                return;
+            }
+
+            UpdatePatrol();
+            UpdateSightPressure();
+        }
+
+        private void UpdatePatrol()
+        {
+            if (!patrolEnabled || patrolOffsets == null || patrolOffsets.Length <= 1)
+            {
+                return;
+            }
+
+            if (Time.time < _waitUntil)
+            {
+                return;
+            }
+
+            var targetPosition = _anchorPosition + patrolOffsets[_currentPatrolIndex];
+            var toTarget = targetPosition - transform.position;
+            toTarget.y = 0f;
+
+            if (toTarget.magnitude <= arrivalDistance)
+            {
+                _currentPatrolIndex = (_currentPatrolIndex + 1) % patrolOffsets.Length;
+                _waitUntil = Time.time + waitDuration;
+                return;
+            }
+
+            var moveStep = Mathf.Min(moveSpeed * Time.deltaTime, toTarget.magnitude);
+            transform.position += toTarget.normalized * moveStep;
+
+            if (toTarget.sqrMagnitude > 0.001f)
+            {
+                var targetRotation = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 1f - Mathf.Exp(-turnSpeed * Time.deltaTime));
+            }
+        }
+
+        private void UpdateSightPressure()
+        {
+            if (_playerStealth == null || !_playerStealth.isActiveAndEnabled)
+            {
+                return;
+            }
+
+            var playerPosition = _playerStealth.transform.position + Vector3.up * 1f;
+            var eyePosition = transform.position + Vector3.up * eyeHeight;
+            var toPlayer = playerPosition - eyePosition;
+            var distance = toPlayer.magnitude;
+            if (distance > viewDistance || distance <= 0.05f)
+            {
+                return;
+            }
+
+            var direction = toPlayer / distance;
+            if (Vector3.Angle(transform.forward, direction) > viewAngle * 0.5f)
+            {
+                return;
+            }
+
+            if (Physics.Raycast(eyePosition, direction, out var hit, distance, occlusionMask, QueryTriggerInteraction.Ignore))
+            {
+                if (!(hit.transform.IsChildOf(transform) || hit.transform == transform) &&
+                    !hit.transform.IsChildOf(_playerStealth.transform) &&
+                    hit.transform != _playerStealth.transform)
+                {
+                    return;
+                }
+            }
+
+            _playerStealth.RegisterNpcSightPressure(sightPressurePerSecond * Time.deltaTime, npcInteractable != null ? npcInteractable.NpcDisplayName : name);
+        }
+
+        private void ResolveReferences()
+        {
+            if (npcInteractable == null || !npcInteractable.isActiveAndEnabled)
+            {
+                npcInteractable = GetComponent<NpcInteractable>();
+            }
+
+            if (_playerStealth == null || !_playerStealth.isActiveAndEnabled)
+            {
+                _playerStealth = Object.FindFirstObjectByType<PlayerStealthController>();
+            }
+        }
+    }

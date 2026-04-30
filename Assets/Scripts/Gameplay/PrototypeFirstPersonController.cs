@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using MobilOfl.UI;
+using MobilOfl.Online;
 
 namespace MobilOfl.Gameplay
 {
@@ -16,20 +17,58 @@ namespace MobilOfl.Gameplay
         [SerializeField] private float lookSmoothing = 18f;
         [SerializeField] private float maxLookDelta = 42f;
         [SerializeField] private float maxLookAngle = 80f;
+        [SerializeField] private Key crouchKey = Key.C;
+        [SerializeField] private float crouchHeight = 1.2f;
+        [SerializeField] private float crouchSpeed = 2.8f;
+        [SerializeField] private float crouchTransitionSpeed = 10f;
+        [SerializeField] private float sprintStaminaDrainPerSecond = 0.32f;
+        [SerializeField] private float sprintStaminaRecoverPerSecond = 0.24f;
+        [SerializeField] private float sprintRecoveryDelay = 1.1f;
+        [SerializeField] private float headBobAmplitude = 0.035f;
+        [SerializeField] private float sprintBobAmplitude = 0.055f;
+        [SerializeField] private float crouchBobAmplitude = 0.02f;
+        [SerializeField] private float headBobFrequency = 7.5f;
         [SerializeField] private MobileJoystick mobileMoveJoystick;
         [SerializeField] private MobileLookArea mobileLookArea;
         [SerializeField] private MobileButton mobileSprintButton;
         [SerializeField] private MobileButton mobileJumpButton;
+        [SerializeField] private MobileButton mobileCrouchButton;
 
         private CharacterController _characterController;
+        private float _currentBobAmplitude;
         private float _verticalVelocity;
         private float _pitch;
+        private float _headBobTime;
+        private float _lastSprintTime;
+        private float _standingHeight;
+        private Vector3 _standingCenter;
+        private Vector3 _cameraBaseLocalPosition;
         private Vector2 _smoothedLookDelta;
         private Vector2 _pendingLookDelta;
+        private float _sprintStamina = 1f;
+        private bool _isSprinting;
+        private bool _isCrouching;
+
+        public float SprintStamina01 => _sprintStamina;
+        public bool IsSprinting => _isSprinting;
+        public bool IsCrouching => _isCrouching;
+
+        public void RestoreSprintStamina(float amount)
+        {
+            _sprintStamina = Mathf.Clamp01(_sprintStamina + amount);
+        }
 
         private void Awake()
         {
             _characterController = GetComponent<CharacterController>();
+            _standingHeight = _characterController.height;
+            _standingCenter = _characterController.center;
+            _currentBobAmplitude = headBobAmplitude;
+
+            if (cameraPivot != null)
+            {
+                _cameraBaseLocalPosition = cameraPivot.localPosition;
+            }
         }
 
         private void OnEnable()
@@ -45,17 +84,33 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
+            if (NetworkCaseState.Instance != null &&
+                NetworkCaseState.Instance.IsOnlineSessionActive &&
+                !NetworkCaseState.Instance.IsGameplayPhase)
+            {
+                return;
+            }
+
             if (CaseNotebookHud.IsAnyNotebookOpen)
             {
                 return;
             }
 
+            UpdateStance();
             UpdateMovement();
+            UpdateCameraLocalPose();
         }
 
         private void LateUpdate()
         {
             if (MainMenuHud.IsBlockingGameplay || (CaseSessionManager.Instance != null && CaseSessionManager.Instance.IsCaseResolved))
+            {
+                return;
+            }
+
+            if (NetworkCaseState.Instance != null &&
+                NetworkCaseState.Instance.IsOnlineSessionActive &&
+                !NetworkCaseState.Instance.IsGameplayPhase)
             {
                 return;
             }
@@ -120,7 +175,17 @@ namespace MobilOfl.Gameplay
             var isSprinting =
                 (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed) ||
                 (mobileSprintButton != null && mobileSprintButton.IsPressed);
-            var speed = isSprinting ? sprintSpeed : walkSpeed;
+            if (_isCrouching)
+            {
+                isSprinting = false;
+            }
+
+            if (_sprintStamina <= 0.01f)
+            {
+                isSprinting = false;
+            }
+
+            var speed = _isCrouching ? crouchSpeed : (isSprinting ? sprintSpeed : walkSpeed);
             var move = transform.TransformDirection(moveInput) * speed;
             var jumpPressed =
                 (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||
@@ -135,6 +200,7 @@ namespace MobilOfl.Gameplay
 
                 if (jumpPressed)
                 {
+                    _isCrouching = false;
                     _verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
                 }
             }
@@ -143,6 +209,104 @@ namespace MobilOfl.Gameplay
             move.y = _verticalVelocity;
 
             _characterController.Move(move * Time.deltaTime);
+            UpdateSprintStamina(moveInput, isSprinting);
+            UpdateHeadBob(moveInput, isSprinting);
+        }
+
+        private void UpdateStance()
+        {
+            var crouchPressed =
+                (Keyboard.current != null && Keyboard.current[crouchKey].wasPressedThisFrame) ||
+                (mobileCrouchButton != null && mobileCrouchButton.ConsumeWasPressedThisFrame());
+
+            if (crouchPressed)
+            {
+                if (_isCrouching)
+                {
+                    if (CanStandUp())
+                    {
+                        _isCrouching = false;
+                    }
+                }
+                else
+                {
+                    _isCrouching = true;
+                }
+            }
+
+            var targetHeight = _isCrouching ? crouchHeight : _standingHeight;
+            _characterController.height = Mathf.Lerp(
+                _characterController.height,
+                targetHeight,
+                1f - Mathf.Exp(-crouchTransitionSpeed * Time.deltaTime));
+
+            var center = _characterController.center;
+            center.y = _characterController.height * 0.5f;
+            _characterController.center = Vector3.Lerp(
+                center,
+                new Vector3(_standingCenter.x, _characterController.height * 0.5f, _standingCenter.z),
+                1f - Mathf.Exp(-crouchTransitionSpeed * Time.deltaTime));
+        }
+
+        private void UpdateCameraLocalPose()
+        {
+            if (cameraPivot == null)
+            {
+                return;
+            }
+
+            var crouchOffset = _isCrouching ? -0.34f : 0f;
+            var bobOffset = Mathf.Sin(_headBobTime) * _currentBobAmplitude;
+            var targetPosition = _cameraBaseLocalPosition + new Vector3(0f, crouchOffset + bobOffset, 0f);
+            cameraPivot.localPosition = Vector3.Lerp(
+                cameraPivot.localPosition,
+                targetPosition,
+                1f - Mathf.Exp(-crouchTransitionSpeed * Time.deltaTime));
+        }
+
+        private void UpdateHeadBob(Vector3 moveInput, bool isSprinting)
+        {
+            if (moveInput.sqrMagnitude <= 0.001f || !_characterController.isGrounded)
+            {
+                _headBobTime = Mathf.Lerp(_headBobTime, 0f, 1f - Mathf.Exp(-8f * Time.deltaTime));
+                _currentBobAmplitude = Mathf.Lerp(_currentBobAmplitude, 0f, 1f - Mathf.Exp(-10f * Time.deltaTime));
+                return;
+            }
+
+            var frequency = headBobFrequency * (_isCrouching ? 0.72f : (isSprinting ? 1.22f : 1f));
+            _headBobTime += Time.deltaTime * frequency;
+            var targetAmplitude = _isCrouching ? crouchBobAmplitude : (isSprinting ? sprintBobAmplitude : headBobAmplitude);
+            _currentBobAmplitude = Mathf.Lerp(_currentBobAmplitude, targetAmplitude, 1f - Mathf.Exp(-10f * Time.deltaTime));
+        }
+
+        private void UpdateSprintStamina(Vector3 moveInput, bool isSprinting)
+        {
+            var activelyMoving = moveInput.sqrMagnitude > 0.01f && _characterController.isGrounded;
+            _isSprinting = isSprinting && activelyMoving;
+
+            if (_isSprinting)
+            {
+                _lastSprintTime = Time.time;
+                _sprintStamina = Mathf.Max(0f, _sprintStamina - sprintStaminaDrainPerSecond * Time.deltaTime);
+                return;
+            }
+
+            if (Time.time < _lastSprintTime + sprintRecoveryDelay)
+            {
+                return;
+            }
+
+            _sprintStamina = Mathf.Min(1f, _sprintStamina + sprintStaminaRecoverPerSecond * Time.deltaTime);
+        }
+
+        private bool CanStandUp()
+        {
+            var desiredHeight = _standingHeight;
+            var radius = Mathf.Max(0.05f, _characterController.radius - 0.02f);
+            var worldCenter = transform.position + _standingCenter;
+            var bottom = worldCenter + Vector3.down * ((desiredHeight * 0.5f) - radius);
+            var top = worldCenter + Vector3.up * ((desiredHeight * 0.5f) - radius);
+            return !Physics.CheckCapsule(bottom, top, radius, ~0, QueryTriggerInteraction.Ignore);
         }
 
         private static Vector2 ReadLookInput()

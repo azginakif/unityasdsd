@@ -177,10 +177,22 @@ MonoBehaviour:
   lookSmoothing: 24
   maxLookDelta: 34
   maxLookAngle: 80
+  crouchKey: 17
+  crouchHeight: 1.2
+  crouchSpeed: 2.8
+  crouchTransitionSpeed: 10
+  sprintStaminaDrainPerSecond: 0.32
+  sprintStaminaRecoverPerSecond: 0.24
+  sprintRecoveryDelay: 1.1
+  headBobAmplitude: 0.035
+  sprintBobAmplitude: 0.055
+  crouchBobAmplitude: 0.02
+  headBobFrequency: 7.5
   mobileMoveJoystick: {fileID: 0}
   mobileLookArea: {fileID: 0}
   mobileSprintButton: {fileID: 0}
   mobileJumpButton: {fileID: 0}
+  mobileCrouchButton: {fileID: 0}
 --- !u!114 &814082020620784088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,7 +224,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 498020826
+  GlobalObjectIdHash: 617985242
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1

@@ -69,6 +69,7 @@ namespace MobilOfl.EditorTools
             EnsureResultHud();
             EnsureDirectionalLight();
             EnsureSampleSchoolBlock();
+            EnsureHideSpots();
             EnsureInvestigationDeskInteractable();
             EnsureAtmosphereLights();
             EnsureEvidenceObjects(caseDefinition);
@@ -104,6 +105,8 @@ namespace MobilOfl.EditorTools
             public Camera Camera;
             public PlayerInteractionController Interaction;
             public PrototypeFirstPersonController Movement;
+            public InvestigationScanner Scanner;
+            public PlayerStealthController Stealth;
         }
 
         private static void EnsureFolder(string folderPath)
@@ -356,6 +359,18 @@ namespace MobilOfl.EditorTools
                 movement = playerRoot.AddComponent<PrototypeFirstPersonController>();
             }
 
+            var scanner = playerRoot.GetComponent<InvestigationScanner>();
+            if (scanner == null)
+            {
+                scanner = playerRoot.AddComponent<InvestigationScanner>();
+            }
+
+            var stealth = playerRoot.GetComponent<PlayerStealthController>();
+            if (stealth == null)
+            {
+                stealth = playerRoot.AddComponent<PlayerStealthController>();
+            }
+
             var camera = Camera.main;
             if (camera == null)
             {
@@ -402,15 +417,39 @@ namespace MobilOfl.EditorTools
             movementSerializedObject.FindProperty("cameraPivot").objectReferenceValue = camera.transform;
             movementSerializedObject.FindProperty("lookSmoothing").floatValue = 24f;
             movementSerializedObject.FindProperty("maxLookDelta").floatValue = 34f;
+            movementSerializedObject.FindProperty("sprintStaminaDrainPerSecond").floatValue = 0.28f;
+            movementSerializedObject.FindProperty("sprintStaminaRecoverPerSecond").floatValue = 0.22f;
+            movementSerializedObject.FindProperty("sprintRecoveryDelay").floatValue = 1f;
             movementSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(movement);
+
+            var scannerSerializedObject = new SerializedObject(scanner);
+            scannerSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
+            scannerSerializedObject.FindProperty("playerInteraction").objectReferenceValue = interaction;
+            scannerSerializedObject.FindProperty("scanRadius").floatValue = 10.5f;
+            scannerSerializedObject.FindProperty("scanDuration").floatValue = 2.35f;
+            scannerSerializedObject.FindProperty("scanCooldown").floatValue = 6f;
+            scannerSerializedObject.FindProperty("maxReportedSignals").intValue = 3;
+            scannerSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(scanner);
+
+            var stealthSerializedObject = new SerializedObject(stealth);
+            stealthSerializedObject.FindProperty("movementController").objectReferenceValue = movement;
+            stealthSerializedObject.FindProperty("scanner").objectReferenceValue = scanner;
+            stealthSerializedObject.FindProperty("npcAwarenessRadius").floatValue = 7.2f;
+            stealthSerializedObject.FindProperty("forcedCalmInteractionThreshold").floatValue = 0.72f;
+            stealthSerializedObject.FindProperty("scanNoiseBoost").floatValue = 0.18f;
+            stealthSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(stealth);
 
             return new PlayerSetup
             {
                 Root = playerRoot,
                 Camera = camera,
                 Interaction = interaction,
-                Movement = movement
+                Movement = movement,
+                Scanner = scanner,
+                Stealth = stealth
             };
         }
 
@@ -449,6 +488,7 @@ namespace MobilOfl.EditorTools
             }
 
             var canvasRect = canvasObject.GetComponent<RectTransform>();
+            EnsureMobileHudChrome(canvasRect);
             var joystick = EnsureJoystick(canvasRect);
             var lookArea = EnsureLookArea(canvasRect);
             var sprintButton = EnsureMobileButton(
@@ -456,41 +496,64 @@ namespace MobilOfl.EditorTools
                 "SprintButton",
                 "KOS",
                 new Vector2(1f, 0f),
-                new Vector2(-300f, 170f),
-                new Vector2(145f, 145f),
-                new Color(0.25f, 0.55f, 0.9f, 0.55f));
+                new Vector2(-332f, 182f),
+                new Vector2(158f, 158f),
+                new Color(0.15f, 0.28f, 0.36f, 0.82f));
             var jumpButton = EnsureMobileButton(
                 canvasRect,
                 "JumpButton",
                 "ZIPLA",
                 new Vector2(1f, 0f),
-                new Vector2(-150f, 300f),
-                new Vector2(145f, 145f),
-                new Color(0.9f, 0.7f, 0.25f, 0.6f));
+                new Vector2(-166f, 322f),
+                new Vector2(150f, 150f),
+                new Color(0.36f, 0.27f, 0.12f, 0.86f));
             var interactButton = EnsureMobileButton(
                 canvasRect,
                 "InteractButton",
                 "AL",
                 new Vector2(1f, 0f),
-                new Vector2(-150f, 150f),
-                new Vector2(155f, 155f),
-                new Color(0.25f, 0.85f, 0.45f, 0.65f));
+                new Vector2(-152f, 150f),
+                new Vector2(170f, 170f),
+                new Color(0.11f, 0.34f, 0.31f, 0.9f));
+            var crouchButton = EnsureMobileButton(
+                canvasRect,
+                "CrouchButton",
+                "EGIL",
+                new Vector2(1f, 0f),
+                new Vector2(-338f, 350f),
+                new Vector2(150f, 150f),
+                new Color(0.18f, 0.19f, 0.11f, 0.88f));
+            var scanButton = EnsureMobileButton(
+                canvasRect,
+                "ScanButton",
+                "TARA",
+                new Vector2(1f, 1f),
+                new Vector2(-404f, -104f),
+                new Vector2(184f, 92f),
+                new Color(0.08f, 0.28f, 0.31f, 0.88f));
             var notebookButton = EnsureMobileButton(
                 canvasRect,
                 "NotebookButton",
                 "DOSYA",
                 new Vector2(1f, 1f),
-                new Vector2(-155f, -85f),
-                new Vector2(180f, 88f),
-                new Color(0.18f, 0.18f, 0.18f, 0.68f));
+                new Vector2(-172f, -94f),
+                new Vector2(216f, 92f),
+                new Color(0.11f, 0.13f, 0.16f, 0.88f));
+            EnsureMobileRuntimeOverlay(canvasObject, playerSetup.Interaction);
 
             var movementSerializedObject = new SerializedObject(playerSetup.Movement);
             movementSerializedObject.FindProperty("mobileMoveJoystick").objectReferenceValue = joystick;
             movementSerializedObject.FindProperty("mobileLookArea").objectReferenceValue = lookArea;
             movementSerializedObject.FindProperty("mobileSprintButton").objectReferenceValue = sprintButton;
             movementSerializedObject.FindProperty("mobileJumpButton").objectReferenceValue = jumpButton;
+            movementSerializedObject.FindProperty("mobileCrouchButton").objectReferenceValue = crouchButton;
             movementSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(playerSetup.Movement);
+
+            var scannerSerializedObject = new SerializedObject(playerSetup.Scanner);
+            scannerSerializedObject.FindProperty("mobileScanButton").objectReferenceValue = scanButton;
+            scannerSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(playerSetup.Scanner);
 
             var interactionSerializedObject = new SerializedObject(playerSetup.Interaction);
             interactionSerializedObject.FindProperty("mobileInteractButton").objectReferenceValue = interactButton;
@@ -498,6 +561,125 @@ namespace MobilOfl.EditorTools
             EditorUtility.SetDirty(playerSetup.Interaction);
 
             return notebookButton;
+        }
+
+        private static void EnsureMobileHudChrome(RectTransform canvasRect)
+        {
+            var header = EnsureUiRect(canvasRect, "MobileHudHeader", new Vector2(0f, 1f), new Vector2(230f, -86f), new Vector2(420f, 116f));
+            var headerImage = EnsureImage(header.gameObject, new Color(0.06f, 0.08f, 0.11f, 0.82f));
+            headerImage.raycastTarget = false;
+            EnsureOutline(header.gameObject, new Color(0.42f, 0.37f, 0.26f, 0.9f), new Vector2(1f, -1f));
+            EnsureShadow(header.gameObject, new Color(0f, 0f, 0f, 0.26f), new Vector2(0f, -4f));
+
+            var accent = EnsureUiRect(header, "Accent", new Vector2(0.5f, 1f), new Vector2(0f, -5f), new Vector2(388f, 5f));
+            EnsureImage(accent.gameObject, new Color(0.88f, 0.71f, 0.31f, 0.9f)).raycastTarget = false;
+
+            var title = EnsureText(header, "Title", "MOBIL OFL", 26, FontStyle.Bold, TextAnchor.UpperLeft, new Color(0.97f, 0.95f, 0.9f, 1f));
+            title.rectTransform.anchorMin = new Vector2(0f, 1f);
+            title.rectTransform.anchorMax = new Vector2(1f, 1f);
+            title.rectTransform.pivot = new Vector2(0f, 1f);
+            title.rectTransform.anchoredPosition = new Vector2(22f, -22f);
+            title.rectTransform.sizeDelta = new Vector2(-44f, 30f);
+
+            var subtitle = EnsureText(header, "Subtitle", "Mobil sorusturma arayuzu", 15, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.73f, 0.76f, 0.74f, 1f));
+            subtitle.rectTransform.anchorMin = new Vector2(0f, 1f);
+            subtitle.rectTransform.anchorMax = new Vector2(1f, 1f);
+            subtitle.rectTransform.pivot = new Vector2(0f, 1f);
+            subtitle.rectTransform.anchoredPosition = new Vector2(22f, -56f);
+            subtitle.rectTransform.sizeDelta = new Vector2(-44f, 22f);
+
+            var zonePill = EnsureUiRect(header, "ZonePill", new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(132f, 28f));
+            var zonePillImage = EnsureImage(zonePill.gameObject, new Color(0.12f, 0.16f, 0.18f, 0.92f));
+            zonePillImage.raycastTarget = false;
+            EnsureOutline(zonePill.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.4f), new Vector2(1f, -1f));
+            var zoneText = EnsureText(zonePill, "ZoneText", "KORIDOR", 11, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.97f, 0.95f, 0.9f, 1f));
+            zoneText.rectTransform.anchorMin = Vector2.zero;
+            zoneText.rectTransform.anchorMax = Vector2.one;
+            zoneText.rectTransform.offsetMin = new Vector2(8f, 4f);
+            zoneText.rectTransform.offsetMax = new Vector2(-8f, -4f);
+
+            var objectivePanel = EnsureUiRect(canvasRect, "MobileObjectivePanel", new Vector2(0.5f, 1f), new Vector2(0f, -88f), new Vector2(640f, 84f));
+            var objectiveImage = EnsureImage(objectivePanel.gameObject, new Color(0.06f, 0.08f, 0.11f, 0.84f));
+            objectiveImage.raycastTarget = false;
+            EnsureOutline(objectivePanel.gameObject, new Color(0.42f, 0.37f, 0.26f, 0.86f), new Vector2(1f, -1f));
+            EnsureShadow(objectivePanel.gameObject, new Color(0f, 0f, 0f, 0.22f), new Vector2(0f, -4f));
+            var objectiveAccent = EnsureUiRect(objectivePanel, "Accent", new Vector2(0f, 0.5f), new Vector2(3f, 0f), new Vector2(6f, 56f));
+            EnsureImage(objectiveAccent.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.9f)).raycastTarget = false;
+            var objectiveLabel = EnsureText(objectivePanel, "ObjectiveLabel", "ANLIK HEDEF", 11, FontStyle.Bold, TextAnchor.UpperLeft, new Color(0.73f, 0.76f, 0.74f, 1f));
+            objectiveLabel.rectTransform.anchorMin = new Vector2(0f, 1f);
+            objectiveLabel.rectTransform.anchorMax = new Vector2(1f, 1f);
+            objectiveLabel.rectTransform.pivot = new Vector2(0f, 1f);
+            objectiveLabel.rectTransform.anchoredPosition = new Vector2(22f, -12f);
+            objectiveLabel.rectTransform.sizeDelta = new Vector2(-44f, 16f);
+            var objectiveBody = EnsureText(objectivePanel, "ObjectiveText", "Ilk delili topla ve soru zincirini baslat.", 16, FontStyle.Bold, TextAnchor.UpperLeft, new Color(0.97f, 0.95f, 0.9f, 1f));
+            objectiveBody.rectTransform.anchorMin = new Vector2(0f, 0f);
+            objectiveBody.rectTransform.anchorMax = new Vector2(1f, 1f);
+            objectiveBody.rectTransform.offsetMin = new Vector2(22f, 12f);
+            objectiveBody.rectTransform.offsetMax = new Vector2(-16f, -28f);
+
+            var moveHint = EnsureUiRect(canvasRect, "MoveHintPanel", new Vector2(0f, 0f), new Vector2(230f, 316f), new Vector2(240f, 64f));
+            var moveHintImage = EnsureImage(moveHint.gameObject, new Color(0.07f, 0.1f, 0.12f, 0.68f));
+            moveHintImage.raycastTarget = false;
+            EnsureOutline(moveHint.gameObject, new Color(0.42f, 0.37f, 0.26f, 0.7f), new Vector2(1f, -1f));
+            EnsureText(moveHint, "HintText", "Sol alan: hareket", 14, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.97f, 0.95f, 0.9f, 1f));
+
+            var lookHint = EnsureUiRect(canvasRect, "LookHintPanel", new Vector2(1f, 0f), new Vector2(-368f, 428f), new Vector2(286f, 64f));
+            var lookHintImage = EnsureImage(lookHint.gameObject, new Color(0.07f, 0.1f, 0.12f, 0.64f));
+            lookHintImage.raycastTarget = false;
+            EnsureOutline(lookHint.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.38f), new Vector2(1f, -1f));
+            EnsureText(lookHint, "HintText", "Sag alan: surukle ve bak", 14, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.97f, 0.95f, 0.9f, 1f));
+
+            var contextPanel = EnsureUiRect(canvasRect, "MobileContextPanel", new Vector2(1f, 0f), new Vector2(-286f, 148f), new Vector2(330f, 90f));
+            var contextImage = EnsureImage(contextPanel.gameObject, new Color(0.06f, 0.08f, 0.11f, 0.82f));
+            contextImage.raycastTarget = false;
+            EnsureOutline(contextPanel.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.45f), new Vector2(1f, -1f));
+            EnsureShadow(contextPanel.gameObject, new Color(0f, 0f, 0f, 0.22f), new Vector2(0f, -4f));
+            var contextAccent = EnsureUiRect(contextPanel, "Accent", new Vector2(0f, 0.5f), new Vector2(3f, 0f), new Vector2(6f, 56f));
+            EnsureImage(contextAccent.gameObject, new Color(0.88f, 0.71f, 0.31f, 0.9f)).raycastTarget = false;
+            var contextLabel = EnsureText(contextPanel, "ContextText", "Delil veya NPC hedefine yaklas.", 15, FontStyle.Bold, TextAnchor.MiddleLeft, new Color(0.97f, 0.95f, 0.9f, 1f));
+            contextLabel.rectTransform.anchorMin = Vector2.zero;
+            contextLabel.rectTransform.anchorMax = Vector2.one;
+            contextLabel.rectTransform.offsetMin = new Vector2(22f, 14f);
+            contextLabel.rectTransform.offsetMax = new Vector2(-16f, -14f);
+        }
+
+        private static void EnsureMobileRuntimeOverlay(GameObject canvasObject, PlayerInteractionController playerInteraction)
+        {
+            var overlay = canvasObject.GetComponent<MobileInvestigationOverlay>();
+            if (overlay == null)
+            {
+                overlay = canvasObject.AddComponent<MobileInvestigationOverlay>();
+            }
+
+            var canvasGroup = canvasObject.GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = canvasObject.AddComponent<CanvasGroup>();
+            }
+
+            var header = canvasObject.transform.Find("MobileHudHeader");
+            var subtitle = header != null ? header.Find("Subtitle") : null;
+            var zonePill = header != null ? header.Find("ZonePill/ZoneText") : null;
+            var objectiveText = canvasObject.transform.Find("MobileObjectivePanel/ObjectiveText");
+            var contextPanel = canvasObject.transform.Find("MobileContextPanel");
+            var contextText = contextPanel != null ? contextPanel.Find("ContextText") : null;
+
+            var contextCanvasGroup = contextPanel != null ? contextPanel.GetComponent<CanvasGroup>() : null;
+            if (contextPanel != null && contextCanvasGroup == null)
+            {
+                contextCanvasGroup = contextPanel.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            var serializedObject = new SerializedObject(overlay);
+            serializedObject.FindProperty("playerInteraction").objectReferenceValue = playerInteraction;
+            serializedObject.FindProperty("rootGroup").objectReferenceValue = canvasGroup;
+            serializedObject.FindProperty("headerSubtitleText").objectReferenceValue = subtitle != null ? subtitle.GetComponent<Text>() : null;
+            serializedObject.FindProperty("zoneText").objectReferenceValue = zonePill != null ? zonePill.GetComponent<Text>() : null;
+            serializedObject.FindProperty("objectiveText").objectReferenceValue = objectiveText != null ? objectiveText.GetComponent<Text>() : null;
+            serializedObject.FindProperty("contextText").objectReferenceValue = contextText != null ? contextText.GetComponent<Text>() : null;
+            serializedObject.FindProperty("contextGroup").objectReferenceValue = contextCanvasGroup;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(overlay);
         }
 
         private static void EnsureEventSystem()
@@ -527,9 +709,19 @@ namespace MobilOfl.EditorTools
 
         private static MobileJoystick EnsureJoystick(RectTransform canvasRect)
         {
-            var background = EnsureUiRect(canvasRect, "MoveJoystick", new Vector2(0f, 0f), new Vector2(180f, 170f), new Vector2(230f, 230f));
+            var background = EnsureUiRect(canvasRect, "MoveJoystick", new Vector2(0f, 0f), new Vector2(190f, 178f), new Vector2(236f, 236f));
             var backgroundImage = EnsureImage(background.gameObject, new Color(0.12f, 0.18f, 0.22f, 0.45f));
             backgroundImage.raycastTarget = true;
+            EnsureOutline(background.gameObject, new Color(0.42f, 0.37f, 0.26f, 0.84f), new Vector2(1f, -1f));
+            EnsureShadow(background.gameObject, new Color(0f, 0f, 0f, 0.28f), new Vector2(0f, -4f));
+
+            var pulseRing = EnsureUiRect(background, "PulseRing", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(210f, 210f));
+            var pulseRingImage = EnsureImage(pulseRing.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.18f));
+            pulseRingImage.raycastTarget = false;
+            EnsureOutline(pulseRing.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.44f), new Vector2(1f, -1f));
+
+            var innerPlate = EnsureUiRect(background, "InnerPlate", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(168f, 168f));
+            EnsureImage(innerPlate.gameObject, new Color(0.08f, 0.11f, 0.14f, 0.7f)).raycastTarget = false;
 
             var joystick = background.GetComponent<MobileJoystick>();
             if (joystick == null)
@@ -538,11 +730,20 @@ namespace MobilOfl.EditorTools
             }
 
             var handle = EnsureUiRect(background, "Handle", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(95f, 95f));
-            EnsureImage(handle.gameObject, new Color(0.9f, 0.95f, 1f, 0.8f)).raycastTarget = false;
+            var handleImage = EnsureImage(handle.gameObject, new Color(0.9f, 0.95f, 1f, 0.82f));
+            handleImage.raycastTarget = false;
+            EnsureOutline(handle.gameObject, new Color(0.05f, 0.06f, 0.08f, 0.7f), new Vector2(1f, -1f));
+            EnsureShadow(handle.gameObject, new Color(0f, 0f, 0f, 0.26f), new Vector2(0f, -3f));
+
+            var centerDot = EnsureUiRect(handle, "CenterDot", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18f, 18f));
+            EnsureImage(centerDot.gameObject, new Color(0.12f, 0.16f, 0.18f, 0.9f)).raycastTarget = false;
 
             var serializedObject = new SerializedObject(joystick);
             serializedObject.FindProperty("background").objectReferenceValue = background;
             serializedObject.FindProperty("handle").objectReferenceValue = handle;
+            serializedObject.FindProperty("backgroundImage").objectReferenceValue = backgroundImage;
+            serializedObject.FindProperty("handleImage").objectReferenceValue = handleImage;
+            serializedObject.FindProperty("pulseRingImage").objectReferenceValue = pulseRingImage;
             serializedObject.FindProperty("handleRange").floatValue = 72f;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(joystick);
@@ -552,15 +753,21 @@ namespace MobilOfl.EditorTools
 
         private static MobileLookArea EnsureLookArea(RectTransform canvasRect)
         {
-            var lookAreaRect = EnsureUiRect(canvasRect, "LookArea", new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(960f, 1080f));
-            var image = EnsureImage(lookAreaRect.gameObject, new Color(0f, 0f, 0f, 0.01f));
+            var lookAreaRect = EnsureUiRect(canvasRect, "LookArea", new Vector2(1f, 0.5f), new Vector2(-468f, 0f), new Vector2(936f, 1080f));
+            var image = EnsureImage(lookAreaRect.gameObject, new Color(0.07f, 0.12f, 0.13f, 0.015f));
             image.raycastTarget = true;
+            EnsureOutline(lookAreaRect.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.12f), new Vector2(1f, -1f));
 
             var lookArea = lookAreaRect.GetComponent<MobileLookArea>();
             if (lookArea == null)
             {
                 lookArea = lookAreaRect.gameObject.AddComponent<MobileLookArea>();
             }
+
+            var serializedObject = new SerializedObject(lookArea);
+            serializedObject.FindProperty("overlayGraphic").objectReferenceValue = image;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(lookArea);
 
             return lookArea;
         }
@@ -577,6 +784,14 @@ namespace MobilOfl.EditorTools
             var buttonRect = EnsureUiRect(canvasRect, name, anchor, anchoredPosition, size);
             var image = EnsureImage(buttonRect.gameObject, color);
             image.raycastTarget = true;
+            EnsureOutline(buttonRect.gameObject, new Color(0.42f, 0.37f, 0.26f, 0.82f), new Vector2(1f, -1f));
+            EnsureShadow(buttonRect.gameObject, new Color(0f, 0f, 0f, 0.3f), new Vector2(0f, -4f));
+
+            var accent = EnsureUiRect(buttonRect, "Accent", new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(size.x * 0.72f, 4f));
+            EnsureImage(accent.gameObject, new Color(0.88f, 0.71f, 0.31f, 0.88f)).raycastTarget = false;
+
+            var contentRect = EnsureUiRect(buttonRect, "Content", new Vector2(0.5f, 0.5f), Vector2.zero, size);
+            contentRect.localScale = Vector3.one;
 
             var mobileButton = buttonRect.GetComponent<MobileButton>();
             if (mobileButton == null)
@@ -584,19 +799,27 @@ namespace MobilOfl.EditorTools
                 mobileButton = buttonRect.gameObject.AddComponent<MobileButton>();
             }
 
-            var labelRect = EnsureUiRect(buttonRect, "Label", new Vector2(0.5f, 0.5f), Vector2.zero, size);
-            var text = labelRect.GetComponent<Text>();
-            if (text == null)
-            {
-                text = labelRect.gameObject.AddComponent<Text>();
-            }
+            var text = EnsureText(contentRect, "Label", label, size.y >= 160f ? 28 : 24, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            text.rectTransform.anchorMin = new Vector2(0f, 0f);
+            text.rectTransform.anchorMax = new Vector2(1f, 1f);
+            text.rectTransform.offsetMin = new Vector2(8f, 8f);
+            text.rectTransform.offsetMax = new Vector2(-8f, -8f);
 
-            text.text = label;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = Color.white;
-            text.fontSize = 24;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.raycastTarget = false;
+            var subLabel = EnsureText(contentRect, "SubLabel", "DOKUN", 11, FontStyle.Bold, TextAnchor.LowerCenter, new Color(0.73f, 0.76f, 0.74f, 0.92f));
+            subLabel.rectTransform.anchorMin = new Vector2(0f, 0f);
+            subLabel.rectTransform.anchorMax = new Vector2(1f, 0f);
+            subLabel.rectTransform.pivot = new Vector2(0.5f, 0f);
+            subLabel.rectTransform.anchoredPosition = new Vector2(0f, 10f);
+            subLabel.rectTransform.sizeDelta = new Vector2(-12f, 16f);
+
+            var serializedObject = new SerializedObject(mobileButton);
+            serializedObject.FindProperty("background").objectReferenceValue = image;
+            serializedObject.FindProperty("contentRoot").objectReferenceValue = contentRect;
+            serializedObject.FindProperty("label").objectReferenceValue = text;
+            serializedObject.FindProperty("idleColor").colorValue = color;
+            serializedObject.FindProperty("pressedColor").colorValue = Color.Lerp(color, new Color(0.26f, 0.76f, 0.72f, 1f), 0.55f);
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(mobileButton);
 
             return mobileButton;
         }
@@ -642,6 +865,72 @@ namespace MobilOfl.EditorTools
 
             image.color = color;
             return image;
+        }
+
+        private static Text EnsureText(
+            Transform parent,
+            string name,
+            string value,
+            int fontSize,
+            FontStyle fontStyle,
+            TextAnchor anchor,
+            Color color)
+        {
+            var rect = EnsureUiRect(parent, name, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            var text = rect.GetComponent<Text>();
+            if (text == null)
+            {
+                text = rect.gameObject.AddComponent<Text>();
+            }
+
+            text.text = value;
+            text.alignment = anchor;
+            text.color = color;
+            text.fontSize = fontSize;
+            text.fontStyle = fontStyle;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.raycastTarget = false;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            return text;
+        }
+
+        private static Outline EnsureOutline(GameObject gameObject, Color color, Vector2 distance)
+        {
+            var outline = gameObject.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = gameObject.AddComponent<Outline>();
+            }
+
+            outline.effectColor = color;
+            outline.effectDistance = distance;
+            return outline;
+        }
+
+        private static Shadow EnsureShadow(GameObject gameObject, Color color, Vector2 distance)
+        {
+            Shadow shadow = null;
+            var shadows = gameObject.GetComponents<Shadow>();
+            for (var i = 0; i < shadows.Length; i++)
+            {
+                if (shadows[i] is Outline)
+                {
+                    continue;
+                }
+
+                shadow = shadows[i];
+                break;
+            }
+
+            if (shadow == null)
+            {
+                shadow = gameObject.AddComponent<Shadow>();
+            }
+
+            shadow.effectColor = color;
+            shadow.effectDistance = distance;
+            return shadow;
         }
 
         private static void EnsureSessionManager(CaseDefinition caseDefinition)
@@ -1237,9 +1526,73 @@ namespace MobilOfl.EditorTools
             CreateBlock(parent, name, position, scale, new Color(0.72f, 0.74f, 0.68f));
         }
 
+        private static void EnsureHideSpots()
+        {
+            CreateHideSpot(
+                "HideSpot_CorridorBench",
+                new Vector3(1.8f, 0.65f, 6.5f),
+                new Vector3(1.85f, 0.42f, 0.72f),
+                "Bankta sakinles",
+                "Koridor bankinda oturup dikkat seviyeni dusurdun.");
+
+            CreateHideSpot(
+                "HideSpot_LibraryShelf",
+                new Vector3(8.45f, 1.1f, -4.8f),
+                new Vector3(0.9f, 1.8f, 1.4f),
+                "Raf arkasinda bekle",
+                "Raflarin arasinda bekleyip nefesini toparladin.");
+
+            CreateHideSpot(
+                "HideSpot_CourtyardBench",
+                new Vector3(-4f, 0.65f, 22f),
+                new Vector3(1.85f, 0.42f, 0.72f),
+                "Avluda sakinles",
+                "Avluya cekilip dikkat seviyeni dusurdun.");
+        }
+
         private static void CreateDoorMarker(Transform parent, string name, Vector3 position)
         {
             CreateBlock(parent, name, position, new Vector3(1.4f, 0.08f, 0.7f), new Color(0.25f, 0.65f, 0.85f));
+        }
+
+        private static void CreateHideSpot(string name, Vector3 position, Vector3 scale, string promptText, string successMessage)
+        {
+            var existing = GameObject.Find(name);
+            if (existing != null)
+            {
+                Object.DestroyImmediate(existing);
+            }
+
+            var hideSpot = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            hideSpot.name = name;
+            hideSpot.transform.position = position;
+            hideSpot.transform.localScale = scale;
+
+            var renderer = hideSpot.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = CreatePreviewMaterial(name + "_Material", new Color(0.18f, 0.32f, 0.28f, 1f));
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+            }
+
+            var collider = hideSpot.GetComponent<Collider>();
+            if (collider != null)
+            {
+                collider.isTrigger = false;
+            }
+
+            var interactable = hideSpot.GetComponent<HideSpotInteractable>();
+            if (interactable == null)
+            {
+                interactable = hideSpot.AddComponent<HideSpotInteractable>();
+            }
+
+            var serializedObject = new SerializedObject(interactable);
+            serializedObject.FindProperty("promptText").stringValue = promptText;
+            serializedObject.FindProperty("successMessage").stringValue = successMessage;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(interactable);
         }
 
         private static void CreateDesk(Transform parent, string name, Vector3 position)
@@ -1386,23 +1739,55 @@ namespace MobilOfl.EditorTools
                 PrimitiveType.Cube,
                 new Vector3(1.2f, 0.2f, 1.2f));
 
-            CreateEvidenceObject(
+            CreateToolPickupObject(
+                root.transform,
+                "tool.archive-pass",
+                "Arsiv Gecis Karti",
+                "Arsiv Gecis Karti",
+                "Etkilesim: Arsiv Gecis Karti",
+                "Arsiv gecis karti alindi. Artik kisitli raf alanina girebilirsin.",
+                new Vector3(7.8f, 0.86f, 9.5f),
+                PrimitiveType.Cylinder,
+                new Vector3(0.36f, 0.08f, 0.36f),
+                new Color(0.22f, 0.88f, 0.82f, 1f));
+
+            CreateToolPickupObject(
+                root.transform,
+                "tool.lockpick",
+                "Maymuncuk Seti",
+                "Maymuncuk Seti",
+                "Etkilesim: Maymuncuk Seti",
+                "Maymuncuk seti alindi. Kilitli cekmece ve kutulari artik acabilirsin.",
+                new Vector3(-8.1f, 0.82f, 9.8f),
+                PrimitiveType.Cylinder,
+                new Vector3(0.34f, 0.12f, 0.34f),
+                new Color(0.96f, 0.68f, 0.18f, 1f));
+
+            CreateSearchSpotObject(
                 root.transform,
                 caseDefinition,
                 "evidence.locker-key",
-                "Etkilesim: Yedek Anahtar",
-                new Vector3(7f, 0.85f, 10f),
-                PrimitiveType.Capsule,
-                new Vector3(0.45f, 0.8f, 0.45f));
+                "Ogretmen Masasi Cekmecesi",
+                "Cekmeceyi ara",
+                "tool.lockpick",
+                "Bu cekmece icin once maymuncuk seti bulman gerekiyor.",
+                "Ogretmenler odasindaki cekmecede yedek anahtar bulundu.",
+                new Vector3(7.4f, 0.8f, 10.2f),
+                new Vector3(0.9f, 0.28f, 0.8f),
+                new Color(0.74f, 0.62f, 0.28f, 1f));
 
-            CreateEvidenceObject(
+            CreateSearchSpotObject(
                 root.transform,
                 caseDefinition,
                 "evidence.archive-ledger",
-                "Etkilesim: Arsiv Defteri",
-                new Vector3(-15f, 0.82f, 9f),
-                PrimitiveType.Cube,
-                new Vector3(1.1f, 0.22f, 1.1f));
+                "Arsiv Raf Kutusu",
+                "Kutuyu tara",
+                "tool.archive-pass",
+                "Arsiv raf kutusu icin once gecis karti bulman gerekiyor.",
+                "Arsiv rafinda sakli defter bulundu.",
+                new Vector3(-15f, 0.86f, 9.2f),
+                new Vector3(1.05f, 0.34f, 0.85f),
+                new Color(0.45f, 0.68f, 0.84f, 1f));
         }
 
         private static void EnsureNpcObjects(CaseDefinition caseDefinition)
@@ -1429,7 +1814,13 @@ namespace MobilOfl.EditorTools
                 "Kamera kaydini bulduysan soyleyebilirim: gece 22:15'te bilisim kulubu ogrencisi laboratuvar koridorundaydi.",
                 "evidence.security-log",
                 "evidence.guard-testimony",
-                new Color(0.2f, 0.35f, 0.8f));
+                new Color(0.2f, 0.35f, 0.8f),
+                new[]
+                {
+                    Vector3.zero,
+                    new Vector3(0f, 0f, 2.2f),
+                    new Vector3(1.1f, 0f, -1.8f)
+                });
 
             CreateNpcObject(
                 root.transform,
@@ -1442,7 +1833,13 @@ namespace MobilOfl.EditorTools
                 "Cevap anahtari notunu gordum. Bilisim kulubu ogrencisinin defterinden dustu.",
                 "evidence.answer-key-note",
                 "evidence.student-testimony",
-                new Color(0.25f, 0.65f, 0.35f));
+                new Color(0.25f, 0.65f, 0.35f),
+                new[]
+                {
+                    Vector3.zero,
+                    new Vector3(1.4f, 0f, 0.6f),
+                    new Vector3(-1.2f, 0f, -0.8f)
+                });
 
             CreateNpcObject(
                 root.transform,
@@ -1455,7 +1852,13 @@ namespace MobilOfl.EditorTools
                 "Yedek anahtar bende degildi. Dolabin yanina en son bilisim kulubu ogrencisi geldi.",
                 "evidence.locker-key",
                 string.Empty,
-                new Color(0.7f, 0.45f, 0.25f));
+                new Color(0.7f, 0.45f, 0.25f),
+                new[]
+                {
+                    Vector3.zero,
+                    new Vector3(-1.3f, 0f, 0.9f),
+                    new Vector3(1f, 0f, -0.9f)
+                });
 
             CreateNpcObject(
                 root.transform,
@@ -1468,7 +1871,13 @@ namespace MobilOfl.EditorTools
                 "Giris defterine gore bilisim kulubu ogrencisi sinavdan hemen once arsiv anahtarini sormustu.",
                 "evidence.archive-ledger",
                 string.Empty,
-                new Color(0.48f, 0.58f, 0.82f));
+                new Color(0.48f, 0.58f, 0.82f),
+                new[]
+                {
+                    Vector3.zero,
+                    new Vector3(0.8f, 0f, 1.7f),
+                    new Vector3(-0.9f, 0f, -1.4f)
+                });
 
             CreateNpcObject(
                 root.transform,
@@ -1481,7 +1890,13 @@ namespace MobilOfl.EditorTools
                 "Simdi hatirladim; o nottan sonra ayni ogrenci gece enerji icecegi alip laboratuvar tarafina kostu.",
                 "evidence.answer-key-note",
                 "evidence.canteen-testimony",
-                new Color(0.86f, 0.62f, 0.28f));
+                new Color(0.86f, 0.62f, 0.28f),
+                new[]
+                {
+                    Vector3.zero,
+                    new Vector3(-1.6f, 0f, 0.6f),
+                    new Vector3(1.2f, 0f, -0.7f)
+                });
         }
 
         private static void CreateNpcObject(
@@ -1495,7 +1910,8 @@ namespace MobilOfl.EditorTools
             string evidenceLine,
             string requiredEvidenceId,
             string witnessEvidenceId,
-            Color color)
+            Color color,
+            Vector3[] patrolOffsets)
         {
             var npcObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             npcObject.name = displayName;
@@ -1515,6 +1931,12 @@ namespace MobilOfl.EditorTools
                 interactable = npcObject.AddComponent<NpcInteractable>();
             }
 
+            var patrol = npcObject.GetComponent<NpcPatrolController>();
+            if (patrol == null)
+            {
+                patrol = npcObject.AddComponent<NpcPatrolController>();
+            }
+
             var serializedObject = new SerializedObject(interactable);
             serializedObject.FindProperty("caseDefinition").objectReferenceValue = caseDefinition;
             serializedObject.FindProperty("npcId").stringValue = npcId;
@@ -1527,6 +1949,23 @@ namespace MobilOfl.EditorTools
             serializedObject.FindProperty("promptText").stringValue = promptText;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(interactable);
+
+            var patrolSerializedObject = new SerializedObject(patrol);
+            patrolSerializedObject.FindProperty("npcInteractable").objectReferenceValue = interactable;
+            patrolSerializedObject.FindProperty("patrolEnabled").boolValue = patrolOffsets != null && patrolOffsets.Length > 1;
+            patrolSerializedObject.FindProperty("moveSpeed").floatValue = 1.18f;
+            patrolSerializedObject.FindProperty("waitDuration").floatValue = 1.15f;
+            patrolSerializedObject.FindProperty("viewDistance").floatValue = 6.6f;
+            patrolSerializedObject.FindProperty("viewAngle").floatValue = 62f;
+            patrolSerializedObject.FindProperty("sightPressurePerSecond").floatValue = 0.58f;
+            var offsetsProperty = patrolSerializedObject.FindProperty("patrolOffsets");
+            offsetsProperty.arraySize = patrolOffsets == null ? 0 : patrolOffsets.Length;
+            for (var i = 0; i < offsetsProperty.arraySize; i++)
+            {
+                offsetsProperty.GetArrayElementAtIndex(i).vector3Value = patrolOffsets[i];
+            }
+            patrolSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(patrol);
         }
 
         private static void CreateEvidenceObject(
@@ -1560,6 +1999,96 @@ namespace MobilOfl.EditorTools
             EditorUtility.SetDirty(interactable);
 
             ApplyEvidenceVisuals(evidenceObject);
+        }
+
+        private static void CreateSearchSpotObject(
+            Transform parent,
+            CaseDefinition caseDefinition,
+            string evidenceId,
+            string label,
+            string promptText,
+            string requiredToolId,
+            string missingToolMessage,
+            string searchMessage,
+            Vector3 worldPosition,
+            Vector3 localScale,
+            Color color)
+        {
+            var searchObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            searchObject.name = label;
+            searchObject.transform.SetParent(parent);
+            searchObject.transform.position = worldPosition;
+            searchObject.transform.localScale = localScale;
+
+            var renderer = searchObject.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = CreatePreviewMaterial(label + "_Material", color);
+            }
+
+            var interactable = searchObject.GetComponent<SearchSpotInteractable>();
+            if (interactable == null)
+            {
+                interactable = searchObject.AddComponent<SearchSpotInteractable>();
+            }
+
+            var serializedObject = new SerializedObject(interactable);
+            serializedObject.FindProperty("caseDefinition").objectReferenceValue = caseDefinition;
+            serializedObject.FindProperty("hiddenEvidenceId").stringValue = evidenceId;
+            serializedObject.FindProperty("markerLabel").stringValue = label;
+            serializedObject.FindProperty("markerColor").colorValue = color;
+            serializedObject.FindProperty("searchDuration").floatValue = 1.85f;
+            serializedObject.FindProperty("requiredToolId").stringValue = requiredToolId;
+            serializedObject.FindProperty("missingToolMessage").stringValue = missingToolMessage;
+            serializedObject.FindProperty("searchCompleteMessage").stringValue = searchMessage;
+            serializedObject.FindProperty("promptText").stringValue = promptText;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(interactable);
+
+            ApplyEvidenceVisuals(searchObject);
+        }
+
+        private static void CreateToolPickupObject(
+            Transform parent,
+            string toolId,
+            string toolDisplayName,
+            string label,
+            string promptText,
+            string pickupMessage,
+            Vector3 worldPosition,
+            PrimitiveType primitiveType,
+            Vector3 localScale,
+            Color color)
+        {
+            var toolObject = GameObject.CreatePrimitive(primitiveType);
+            toolObject.name = toolDisplayName;
+            toolObject.transform.SetParent(parent);
+            toolObject.transform.position = worldPosition;
+            toolObject.transform.localScale = localScale;
+
+            var renderer = toolObject.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = CreatePreviewMaterial(toolDisplayName + "_Material", color);
+            }
+
+            var interactable = toolObject.GetComponent<ToolPickupInteractable>();
+            if (interactable == null)
+            {
+                interactable = toolObject.AddComponent<ToolPickupInteractable>();
+            }
+
+            var serializedObject = new SerializedObject(interactable);
+            serializedObject.FindProperty("toolId").stringValue = toolId;
+            serializedObject.FindProperty("toolDisplayName").stringValue = toolDisplayName;
+            serializedObject.FindProperty("markerLabel").stringValue = label;
+            serializedObject.FindProperty("markerColor").colorValue = color;
+            serializedObject.FindProperty("pickupMessage").stringValue = pickupMessage;
+            serializedObject.FindProperty("promptText").stringValue = promptText;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(interactable);
+
+            ApplyEvidenceVisuals(toolObject);
         }
 
         private static void ApplyEvidenceVisuals(GameObject evidenceObject)

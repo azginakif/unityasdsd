@@ -72,6 +72,9 @@ namespace MobilOfl.EditorTools
 
             var movement = root.AddComponent<PrototypeFirstPersonController>();
             var interaction = root.AddComponent<PlayerInteractionController>();
+            var scanner = root.AddComponent<InvestigationScanner>();
+            var stealth = root.AddComponent<PlayerStealthController>();
+            var ping = root.AddComponent<TeamPingController>();
             root.AddComponent<NetworkObject>();
             root.AddComponent<NetworkTransform>();
             var avatar = root.AddComponent<NetworkPlayerAvatar>();
@@ -126,9 +129,35 @@ namespace MobilOfl.EditorTools
             interactionSerializedObject.FindProperty("interactDistance").floatValue = 4f;
             interactionSerializedObject.ApplyModifiedPropertiesWithoutUndo();
 
+            var scannerSerializedObject = new SerializedObject(scanner);
+            scannerSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
+            scannerSerializedObject.FindProperty("playerInteraction").objectReferenceValue = interaction;
+            scannerSerializedObject.FindProperty("scanRadius").floatValue = 10.5f;
+            scannerSerializedObject.FindProperty("scanDuration").floatValue = 2.35f;
+            scannerSerializedObject.FindProperty("scanCooldown").floatValue = 6f;
+            scannerSerializedObject.FindProperty("maxReportedSignals").intValue = 3;
+            scannerSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var stealthSerializedObject = new SerializedObject(stealth);
+            stealthSerializedObject.FindProperty("movementController").objectReferenceValue = movement;
+            stealthSerializedObject.FindProperty("scanner").objectReferenceValue = scanner;
+            stealthSerializedObject.FindProperty("npcAwarenessRadius").floatValue = 7.2f;
+            stealthSerializedObject.FindProperty("forcedCalmInteractionThreshold").floatValue = 0.72f;
+            stealthSerializedObject.FindProperty("scanNoiseBoost").floatValue = 0.18f;
+            stealthSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            var pingSerializedObject = new SerializedObject(ping);
+            pingSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
+            pingSerializedObject.FindProperty("playerInteraction").objectReferenceValue = interaction;
+            pingSerializedObject.FindProperty("pingDistance").floatValue = 32f;
+            pingSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+
             var avatarSerializedObject = new SerializedObject(avatar);
             avatarSerializedObject.FindProperty("movementController").objectReferenceValue = movement;
             avatarSerializedObject.FindProperty("interactionController").objectReferenceValue = interaction;
+            avatarSerializedObject.FindProperty("scanner").objectReferenceValue = scanner;
+            avatarSerializedObject.FindProperty("stealthController").objectReferenceValue = stealth;
+            avatarSerializedObject.FindProperty("pingController").objectReferenceValue = ping;
             avatarSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
             avatarSerializedObject.FindProperty("audioListener").objectReferenceValue = listener;
             avatarSerializedObject.FindProperty("localBodyRenderers").arraySize = 1;

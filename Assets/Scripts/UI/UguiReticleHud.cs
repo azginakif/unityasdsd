@@ -13,6 +13,7 @@ namespace MobilOfl.UI
         private Image[] _reticleLines;
         private Text _promptText;
         private CanvasGroup _promptGroup;
+        private Image _holdFill;
         private bool _built;
 
         private void Awake()
@@ -91,6 +92,18 @@ namespace MobilOfl.UI
             RuntimeUiFactory.AddVerticalLayout(promptCard, 0f, new RectOffset(12, 12, 12, 10), false);
             _promptText = RuntimeUiFactory.CreateText("PromptText", promptCard, string.Empty, 17, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             _promptText.alignment = TextAnchor.MiddleCenter;
+            var holdShell = RuntimeUiFactory.CreateUiRoot("HoldShell", promptCard);
+            RuntimeUiFactory.EnsureLayoutElement(holdShell, preferredHeight: 10f);
+            RuntimeUiFactory.AddImage(holdShell.gameObject, new Color(0.08f, 0.1f, 0.13f, 1f));
+            RuntimeUiFactory.AddOutline(holdShell.gameObject, new Color(0f, 0f, 0f, 0.3f), new Vector2(1f, -1f));
+            _holdFill = RuntimeUiFactory.CreateUiRoot("Fill", holdShell).gameObject.AddComponent<Image>();
+            _holdFill.color = ModernGuiTheme.AccentWarmColor;
+            var fillRect = _holdFill.rectTransform;
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(0f, 1f);
+            fillRect.pivot = new Vector2(0f, 0.5f);
+            fillRect.offsetMin = new Vector2(2f, 2f);
+            fillRect.offsetMax = new Vector2(0f, -2f);
             _promptGroup = promptCard.gameObject.GetComponent<CanvasGroup>();
             if (_promptGroup == null)
             {
@@ -126,14 +139,31 @@ namespace MobilOfl.UI
             }
 
             var hasTarget = playerInteraction != null && playerInteraction.CurrentInteractable != null;
-            var color = hasTarget ? new Color(0.2f, 0.95f, 0.65f, 0.95f) : new Color(1f, 1f, 1f, 0.55f);
+            var scanPulse = InvestigationScanner.IsScanActive
+                ? 0.45f + Mathf.PingPong(Time.unscaledTime * 1.8f, 0.35f)
+                : 0f;
+            var idleColor = Color.Lerp(new Color(1f, 1f, 1f, 0.55f), new Color(0.24f, 0.96f, 0.86f, 0.9f), scanPulse);
+            var color = hasTarget ? new Color(0.2f, 0.95f, 0.65f, 0.95f) : idleColor;
             for (var i = 0; i < _reticleLines.Length; i++)
             {
                 _reticleLines[i].color = color;
             }
 
-            _promptGroup.alpha = hasTarget ? 1f : 0f;
-            _promptText.text = hasTarget ? playerInteraction.CurrentInteractable.PromptText : string.Empty;
+            var showPrompt = hasTarget || InvestigationScanner.IsScanActive;
+            _promptGroup.alpha = showPrompt ? 1f : 0f;
+            var holdTarget = hasTarget && playerInteraction.CurrentInteractable.RequiresHold;
+            if (_holdFill != null)
+            {
+                _holdFill.transform.parent.gameObject.SetActive(holdTarget);
+                var progress = holdTarget ? playerInteraction.HoldProgress01 : 0f;
+                _holdFill.rectTransform.sizeDelta = new Vector2(332f * progress, 0f);
+            }
+
+            _promptText.text = hasTarget
+                ? (holdTarget
+                    ? $"Basili tut: {playerInteraction.CurrentInteractable.PromptText}"
+                    : playerInteraction.CurrentInteractable.PromptText)
+                : (InvestigationScanner.IsScanActive ? InvestigationScanner.LastScanSummary : string.Empty);
         }
 
         private void ResolveInteraction()

@@ -4,25 +4,34 @@ using UnityEngine;
 
 namespace MobilOfl.Gameplay
 {
-    public class EvidenceInteractable : InteractableBase
+    public class SearchSpotInteractable : InteractableBase
     {
         [SerializeField] private CaseDefinition caseDefinition;
-        [SerializeField] private string evidenceId;
-        [SerializeField] private string markerLabel = "Delil";
+        [SerializeField] private string hiddenEvidenceId;
+        [SerializeField] private string markerLabel = "Aranacak Alan";
         [SerializeField] private Color markerColor = default;
-        [SerializeField] private GameObject collectedVisual;
-        [SerializeField] private bool disableObjectOnCollect = true;
+        [SerializeField] private float searchDuration = 1.7f;
+        [SerializeField] private string requiredToolId;
+        [SerializeField] private string missingToolMessage = "Bu alan icin uygun ekipman gerekiyor.";
+        [SerializeField] private string searchCompleteMessage = "Arama tamamlandi.";
+        [SerializeField] private GameObject searchedVisual;
+        [SerializeField] private bool disableObjectOnSearch = true;
+
         private bool _isSubscribed;
+        private float _nextMissingToolMessageAt;
         private Renderer[] _cachedRenderers;
         private Collider[] _cachedColliders;
         private Behaviour[] _cachedBehaviours;
 
-        public string MarkerLabel => string.IsNullOrWhiteSpace(markerLabel) ? "Delil" : markerLabel;
-        public Color MarkerColor => markerColor.a <= 0f ? new Color(0.24f, 0.86f, 1f, 1f) : markerColor;
+        public string MarkerLabel => string.IsNullOrWhiteSpace(markerLabel) ? "Aranacak Alan" : markerLabel;
+        public Color MarkerColor => markerColor.a <= 0f ? new Color(0.92f, 0.74f, 0.3f, 1f) : markerColor;
         public bool IsMarkerVisible =>
             isActiveAndEnabled &&
             CaseSessionManager.Instance != null &&
-            !CaseSessionManager.Instance.HasEvidence(evidenceId);
+            !CaseSessionManager.Instance.HasEvidence(hiddenEvidenceId);
+
+        public override bool RequiresHold => true;
+        public override float HoldDuration => searchDuration;
 
         private void OnEnable()
         {
@@ -50,44 +59,91 @@ namespace MobilOfl.Gameplay
             _isSubscribed = false;
         }
 
+        public override bool CanMaintainHold(GameObject interactor)
+        {
+            if (interactor == null)
+            {
+                return false;
+            }
+
+            if (Vector3.Distance(interactor.transform.position, transform.position) > 3.6f)
+            {
+                return false;
+            }
+
+            if (HasRequiredTool())
+            {
+                return true;
+            }
+
+            TryPublishMissingToolMessage();
+            return false;
+        }
+
         public override bool TryInteract(GameObject interactor)
         {
-            if (caseDefinition == null || string.IsNullOrWhiteSpace(evidenceId))
+            if (caseDefinition == null || string.IsNullOrWhiteSpace(hiddenEvidenceId) || CaseSessionManager.Instance == null)
             {
                 return false;
             }
 
-            if (CaseSessionManager.Instance == null)
+            if (CaseSessionManager.Instance.HasEvidence(hiddenEvidenceId))
             {
+                ApplySearchedState();
                 return false;
             }
 
-            if (CaseSessionManager.Instance.HasEvidence(evidenceId))
+            if (!HasRequiredTool())
             {
-                ApplyCollectedVisualState();
+                TryPublishMissingToolMessage(true);
                 return false;
             }
 
             var networkCaseState = NetworkCaseState.Instance;
-            if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
-            {
-                return networkCaseState.RequestCollectEvidence(evidenceId);
-            }
+            var collected = networkCaseState != null && networkCaseState.IsOnlineSessionActive
+                ? networkCaseState.RequestCollectEvidence(hiddenEvidenceId)
+                : CaseSessionManager.Instance.TryCollectEvidence(caseDefinition, hiddenEvidenceId);
 
-            if (!CaseSessionManager.Instance.TryCollectEvidence(caseDefinition, evidenceId))
+            if (!collected)
             {
                 return false;
             }
 
-            ApplyCollectedVisualState();
+            CaseSessionManager.Instance.PublishMessage(searchCompleteMessage);
+            ApplySearchedState();
             return true;
+        }
+
+        private bool HasRequiredTool()
+        {
+            return CaseSessionManager.Instance == null ||
+                   string.IsNullOrWhiteSpace(requiredToolId) ||
+                   CaseSessionManager.Instance.HasTool(requiredToolId);
+        }
+
+        private void TryPublishMissingToolMessage(bool force = false)
+        {
+            if (CaseSessionManager.Instance == null)
+            {
+                return;
+            }
+
+            if (!force && Time.time < _nextMissingToolMessageAt)
+            {
+                return;
+            }
+
+            _nextMissingToolMessageAt = Time.time + 1.25f;
+            CaseSessionManager.Instance.PublishMessage(string.IsNullOrWhiteSpace(missingToolMessage)
+                ? "Bu alan icin once uygun ekipman bulman gerekiyor."
+                : missingToolMessage);
         }
 
         private void HandleEvidenceCollected(EvidenceData evidence)
         {
-            if (evidence != null && evidence.Id == evidenceId)
+            if (evidence != null && evidence.Id == hiddenEvidenceId)
             {
-                ApplyCollectedVisualState();
+                ApplySearchedState();
             }
         }
 
@@ -112,33 +168,33 @@ namespace MobilOfl.Gameplay
 
         private void RefreshCollectedState()
         {
-            if (CaseSessionManager.Instance != null && CaseSessionManager.Instance.HasEvidence(evidenceId))
+            if (CaseSessionManager.Instance != null && CaseSessionManager.Instance.HasEvidence(hiddenEvidenceId))
             {
-                ApplyCollectedVisualState();
+                ApplySearchedState();
                 return;
             }
 
-            RestoreUncollectedState();
+            RestoreUnsearchedState();
         }
 
-        private void ApplyCollectedVisualState()
+        private void ApplySearchedState()
         {
-            if (collectedVisual != null)
+            if (searchedVisual != null)
             {
-                collectedVisual.SetActive(true);
+                searchedVisual.SetActive(true);
             }
 
-            if (disableObjectOnCollect)
+            if (disableObjectOnSearch)
             {
                 SetInteractableVisualState(false);
             }
         }
 
-        private void RestoreUncollectedState()
+        private void RestoreUnsearchedState()
         {
-            if (collectedVisual != null)
+            if (searchedVisual != null)
             {
-                collectedVisual.SetActive(false);
+                searchedVisual.SetActive(false);
             }
 
             SetInteractableVisualState(true);

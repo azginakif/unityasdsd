@@ -4,25 +4,28 @@ using UnityEngine;
 
 namespace MobilOfl.Gameplay
 {
-    public class EvidenceInteractable : InteractableBase
+    public class ToolPickupInteractable : InteractableBase
     {
-        [SerializeField] private CaseDefinition caseDefinition;
-        [SerializeField] private string evidenceId;
-        [SerializeField] private string markerLabel = "Delil";
+        [SerializeField] private string toolId;
+        [SerializeField] private string toolDisplayName = "Ekipman";
+        [SerializeField] private string markerLabel = "Ekipman";
         [SerializeField] private Color markerColor = default;
+        [SerializeField] private string pickupMessage = "Ekipman alindi.";
         [SerializeField] private GameObject collectedVisual;
-        [SerializeField] private bool disableObjectOnCollect = true;
+        [SerializeField] private bool disableObjectOnPickup = true;
+
         private bool _isSubscribed;
         private Renderer[] _cachedRenderers;
         private Collider[] _cachedColliders;
         private Behaviour[] _cachedBehaviours;
 
-        public string MarkerLabel => string.IsNullOrWhiteSpace(markerLabel) ? "Delil" : markerLabel;
-        public Color MarkerColor => markerColor.a <= 0f ? new Color(0.24f, 0.86f, 1f, 1f) : markerColor;
+        public string ToolId => toolId;
+        public string MarkerLabel => string.IsNullOrWhiteSpace(markerLabel) ? toolDisplayName : markerLabel;
+        public Color MarkerColor => markerColor.a <= 0f ? new Color(0.98f, 0.7f, 0.24f, 1f) : markerColor;
         public bool IsMarkerVisible =>
             isActiveAndEnabled &&
             CaseSessionManager.Instance != null &&
-            !CaseSessionManager.Instance.HasEvidence(evidenceId);
+            !CaseSessionManager.Instance.HasTool(toolId);
 
         private void OnEnable()
         {
@@ -43,7 +46,7 @@ namespace MobilOfl.Gameplay
         {
             if (CaseSessionManager.Instance != null)
             {
-                CaseSessionManager.Instance.EvidenceCollected -= HandleEvidenceCollected;
+                CaseSessionManager.Instance.ToolUnlocked -= HandleToolUnlocked;
                 CaseSessionManager.Instance.CaseStarted -= HandleCaseStarted;
             }
 
@@ -52,48 +55,38 @@ namespace MobilOfl.Gameplay
 
         public override bool TryInteract(GameObject interactor)
         {
-            if (caseDefinition == null || string.IsNullOrWhiteSpace(evidenceId))
+            if (CaseSessionManager.Instance == null || string.IsNullOrWhiteSpace(toolId))
             {
                 return false;
             }
 
-            if (CaseSessionManager.Instance == null)
+            if (CaseSessionManager.Instance.HasTool(toolId))
             {
-                return false;
-            }
-
-            if (CaseSessionManager.Instance.HasEvidence(evidenceId))
-            {
-                ApplyCollectedVisualState();
+                ApplyCollectedState();
                 return false;
             }
 
             var networkCaseState = NetworkCaseState.Instance;
             if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
             {
-                return networkCaseState.RequestCollectEvidence(evidenceId);
+                return networkCaseState.RequestUnlockTool(toolId, toolDisplayName, pickupMessage);
             }
 
-            if (!CaseSessionManager.Instance.TryCollectEvidence(caseDefinition, evidenceId))
+            if (!CaseSessionManager.Instance.TryUnlockTool(toolId, toolDisplayName, pickupMessage))
             {
                 return false;
             }
 
-            ApplyCollectedVisualState();
+            ApplyCollectedState();
             return true;
         }
 
-        private void HandleEvidenceCollected(EvidenceData evidence)
+        private void HandleToolUnlocked(string unlockedToolId, string _)
         {
-            if (evidence != null && evidence.Id == evidenceId)
+            if (unlockedToolId == toolId)
             {
-                ApplyCollectedVisualState();
+                ApplyCollectedState();
             }
-        }
-
-        private void HandleCaseStarted(CaseDefinition _)
-        {
-            RefreshCollectedState();
         }
 
         private void TrySubscribe()
@@ -103,32 +96,37 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
-            CaseSessionManager.Instance.EvidenceCollected -= HandleEvidenceCollected;
+            CaseSessionManager.Instance.ToolUnlocked -= HandleToolUnlocked;
             CaseSessionManager.Instance.CaseStarted -= HandleCaseStarted;
-            CaseSessionManager.Instance.EvidenceCollected += HandleEvidenceCollected;
+            CaseSessionManager.Instance.ToolUnlocked += HandleToolUnlocked;
             CaseSessionManager.Instance.CaseStarted += HandleCaseStarted;
             _isSubscribed = true;
         }
 
+        private void HandleCaseStarted(CaseDefinition _)
+        {
+            RefreshCollectedState();
+        }
+
         private void RefreshCollectedState()
         {
-            if (CaseSessionManager.Instance != null && CaseSessionManager.Instance.HasEvidence(evidenceId))
+            if (CaseSessionManager.Instance != null && CaseSessionManager.Instance.HasTool(toolId))
             {
-                ApplyCollectedVisualState();
+                ApplyCollectedState();
                 return;
             }
 
             RestoreUncollectedState();
         }
 
-        private void ApplyCollectedVisualState()
+        private void ApplyCollectedState()
         {
             if (collectedVisual != null)
             {
                 collectedVisual.SetActive(true);
             }
 
-            if (disableObjectOnCollect)
+            if (disableObjectOnPickup)
             {
                 SetInteractableVisualState(false);
             }
@@ -208,4 +206,3 @@ namespace MobilOfl.Gameplay
             }
         }
     }
-}

@@ -16,6 +16,7 @@ namespace MobilOfl.Gameplay
         [SerializeField] private string witnessEvidenceId;
         [SerializeField] private bool collectWitnessEvidenceOnce = true;
 
+        public string NpcDisplayName => npcDisplayName;
         public string MarkerLabel => npcDisplayName;
         public Color MarkerColor => markerColor.a <= 0f ? new Color(1f, 0.78f, 0.3f, 1f) : markerColor;
         public bool IsMarkerVisible => isActiveAndEnabled && CaseSessionManager.Instance != null && !CaseSessionManager.Instance.IsCaseResolved;
@@ -30,6 +31,13 @@ namespace MobilOfl.Gameplay
             if (CaseSessionManager.Instance.IsCaseResolved)
             {
                 CaseSessionManager.Instance.PublishMessage("Vaka tamamlandi. Artik yeni sorgu yapilamaz.");
+                return false;
+            }
+
+            var stealth = interactor != null ? interactor.GetComponent<PlayerStealthController>() : null;
+            if (stealth != null && !stealth.CanStartCalmConversation(out var stealthReason))
+            {
+                CaseSessionManager.Instance.PublishMessage(stealthReason);
                 return false;
             }
 

@@ -16,10 +16,15 @@ namespace MobilOfl.UI
                     return _defaultFont;
                 }
 
-                _defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                _defaultFont = Font.CreateDynamicFontFromOSFont(new[] { "Segoe UI", "Bahnschrift", "Arial" }, 16);
                 if (_defaultFont == null)
                 {
                     _defaultFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                }
+
+                if (_defaultFont == null)
+                {
+                    _defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
                 }
 
                 return _defaultFont;
@@ -71,7 +76,19 @@ namespace MobilOfl.UI
 
         public static Shadow AddShadow(GameObject target, Color color, Vector2 distance)
         {
-            var shadow = target.GetComponent<Shadow>();
+            Shadow shadow = null;
+            var shadows = target.GetComponents<Shadow>();
+            for (var i = 0; i < shadows.Length; i++)
+            {
+                if (shadows[i] is Outline)
+                {
+                    continue;
+                }
+
+                shadow = shadows[i];
+                break;
+            }
+
             if (shadow == null)
             {
                 shadow = target.AddComponent<Shadow>();
@@ -108,7 +125,18 @@ namespace MobilOfl.UI
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.supportRichText = false;
+            text.alignByGeometry = true;
+            text.lineSpacing = 1.08f;
             text.raycastTarget = false;
+
+            var shadow = rect.gameObject.GetComponent<Shadow>();
+            if (shadow == null)
+            {
+                shadow = rect.gameObject.AddComponent<Shadow>();
+            }
+
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.28f);
+            shadow.effectDistance = new Vector2(0f, -1f);
 
             var fitter = rect.gameObject.GetComponent<ContentSizeFitter>();
             if (fitter == null)
