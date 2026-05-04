@@ -91,11 +91,19 @@ namespace MobilOfl.UI
                 return true;
             }
 
+            if (!session.HasTool("tool.archive-pass"))
+            {
+                title = "Arsiv Gecis Karti";
+                worldPosition = new Vector3(7.8f, 1f, 9.5f);
+                subtitle = "Ogretmenler odasindaki kart arsiv kapisini ve raf aramasini acar.";
+                return true;
+            }
+
             if (!session.HasEvidence("evidence.archive-ledger"))
             {
                 title = "Arsiv Kanadi";
                 worldPosition = new Vector3(-15f, 1f, 9f);
-                subtitle = "Giris defteri suphelinin onceki erisim izini burada sakliyor.";
+                subtitle = "Kart sende. Raf kutusunu arayip giris defterini ortaya cikar.";
                 return true;
             }
 
@@ -104,6 +112,14 @@ namespace MobilOfl.UI
                 title = "Kantin Calisani";
                 worldPosition = new Vector3(13.2f, 1f, 8.8f);
                 subtitle = "Kutuphane notundan sonra kantin tarafinda yeni tanik aciliyor.";
+                return true;
+            }
+
+            if (!session.HasTool("tool.lockpick"))
+            {
+                title = "Maymuncuk Seti";
+                worldPosition = new Vector3(-8.1f, 1f, 9.8f);
+                subtitle = "Kilitli cekmeceyi aramak icin guvenlik tarafindaki ekipmani al.";
                 return true;
             }
 
@@ -162,7 +178,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
             for (var i = 0; i < avatars.Length; i++)
             {
                 if (avatars[i] != null && avatars[i].IsOwner)

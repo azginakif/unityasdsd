@@ -282,7 +282,7 @@ namespace MobilOfl.Gameplay
                 playerInteraction = GetComponent<PlayerInteractionController>();
                 if (playerInteraction == null)
                 {
-                    playerInteraction = Object.FindFirstObjectByType<PlayerInteractionController>();
+                    playerInteraction = Object.FindAnyObjectByType<PlayerInteractionController>();
                 }
             }
 

@@ -12,6 +12,8 @@ namespace MobilOfl.UI
         [SerializeField] private CaseProgressTracker progressTracker;
         [SerializeField] private float messageDuration = 5f;
         [SerializeField] private float locationDuration = 2.4f;
+        [SerializeField] private float dialogueDuration = 6.2f;
+        [SerializeField] private float dialogueCharactersPerSecond = 52f;
 
         private Canvas _canvas;
         private RectTransform _root;
@@ -30,9 +32,24 @@ namespace MobilOfl.UI
         private Text _progressText;
         private Text _tacticText;
         private RectTransform _stepsContent;
+        private RectTransform _checklistCard;
         private Image _noiseFill;
         private Image _alertFill;
         private Text _stealthStateText;
+        private RectTransform _tensionCard;
+        private RectTransform _dialogueRoot;
+        private CanvasGroup _dialogueGroup;
+        private Image _dialoguePanelImage;
+        private Image _dialogueSpeakerImage;
+        private Text _dialogueSpeakerText;
+        private Text _dialogueBodyText;
+        private Text _dialogueMetaText;
+        private Image _dialogueSignalFill;
+        private string _dialogueSpeaker = string.Empty;
+        private string _dialogueLine = string.Empty;
+        private bool _dialogueRevealedLead;
+        private float _dialogueStartedAt;
+        private float _dialogueUntil;
         private float _messageUntil;
         private float _locationUntil;
         private string _currentMessage = string.Empty;
@@ -61,6 +78,7 @@ namespace MobilOfl.UI
             {
                 _subscribedSession.SessionMessagePublished -= HandleSessionMessage;
                 _subscribedSession.EvidenceCollected -= HandleEvidenceCollected;
+                _subscribedSession.NpcConversationRegistered -= HandleNpcConversation;
                 _subscribedSession = null;
             }
         }
@@ -75,8 +93,12 @@ namespace MobilOfl.UI
 
             if (_root != null)
             {
-                _root.gameObject.SetActive(!MainMenuHud.IsBlockingGameplay && !CaseNotebookHud.IsAnyNotebookOpen);
+                var desktopHudVisible = !MainMenuHud.IsBlockingGameplay && !CaseNotebookHud.IsAnyNotebookOpen;
+                _root.gameObject.SetActive(desktopHudVisible);
             }
+
+            UpdateMobileControlLayout();
+            RefreshDialoguePanel();
 
             if (Time.unscaledTime >= _nextRefreshAt)
             {
@@ -132,6 +154,7 @@ namespace MobilOfl.UI
             BuildMessageBanner();
             BuildLocationBanner();
             BuildWaypointCard();
+            BuildDialoguePanel();
             BuildChecklistCard();
             BuildTensionCard();
             _built = true;
@@ -144,10 +167,10 @@ namespace MobilOfl.UI
             card.anchorMax = new Vector2(0f, 1f);
             card.pivot = new Vector2(0f, 1f);
             card.anchoredPosition = new Vector2(18f, -18f);
-            card.sizeDelta = new Vector2(332f, 134f);
-            RuntimeUiFactory.AddVerticalLayout(card, 4f, new RectOffset(16, 16, 18, 12), false);
-            _statusTitleText = RuntimeUiFactory.CreateText("StatusTitle", card, "Vaka", 20, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _statusBodyText = RuntimeUiFactory.CreateText("StatusBody", card, string.Empty, 13, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            card.sizeDelta = new Vector2(310f, 112f);
+            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(14, 14, 15, 10));
+            _statusTitleText = RuntimeUiFactory.CreateText("StatusTitle", card, "Vaka", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _statusBodyText = RuntimeUiFactory.CreateText("StatusBody", card, string.Empty, 12, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
         }
 
         private void BuildObjectiveCard()
@@ -157,10 +180,10 @@ namespace MobilOfl.UI
             card.anchorMax = new Vector2(1f, 1f);
             card.pivot = new Vector2(1f, 1f);
             card.anchoredPosition = new Vector2(-18f, -18f);
-            card.sizeDelta = new Vector2(372f, 116f);
-            RuntimeUiFactory.AddVerticalLayout(card, 6f, new RectOffset(16, 16, 18, 12), false);
-            RuntimeUiFactory.CreateText("ObjectiveLabel", card, "HEDEF", 15, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _objectiveText = RuntimeUiFactory.CreateText("ObjectiveBody", card, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            card.sizeDelta = new Vector2(360f, 96f);
+            RuntimeUiFactory.AddVerticalLayout(card, 5f, new RectOffset(14, 14, 15, 10));
+            RuntimeUiFactory.CreateText("ObjectiveLabel", card, "HEDEF", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _objectiveText = RuntimeUiFactory.CreateText("ObjectiveBody", card, string.Empty, 13, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
         }
 
         private void BuildMessageBanner()
@@ -170,9 +193,9 @@ namespace MobilOfl.UI
             card.anchorMax = new Vector2(0.5f, 1f);
             card.pivot = new Vector2(0.5f, 1f);
             card.anchoredPosition = new Vector2(0f, -26f);
-            card.sizeDelta = new Vector2(660f, 72f);
-            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(18, 18, 14, 10), false);
-            _messageText = RuntimeUiFactory.CreateText("MessageText", card, string.Empty, 15, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            card.sizeDelta = new Vector2(600f, 52f);
+            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(16, 16, 11, 8));
+            _messageText = RuntimeUiFactory.CreateText("MessageText", card, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             _messageGroup = card.gameObject.GetComponent<CanvasGroup>();
             if (_messageGroup == null)
             {
@@ -186,11 +209,11 @@ namespace MobilOfl.UI
             card.anchorMin = new Vector2(0.5f, 1f);
             card.anchorMax = new Vector2(0.5f, 1f);
             card.pivot = new Vector2(0.5f, 1f);
-            card.anchoredPosition = new Vector2(0f, -108f);
-            card.sizeDelta = new Vector2(420f, 74f);
-            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(18, 18, 12, 10), false);
-            _locationTitleText = RuntimeUiFactory.CreateText("LocationTitle", card, string.Empty, 20, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
-            _locationSubtitleText = RuntimeUiFactory.CreateText("LocationSubtitle", card, string.Empty, 12, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.MiddleCenter);
+            card.anchoredPosition = new Vector2(0f, -88f);
+            card.sizeDelta = new Vector2(360f, 58f);
+            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(18, 18, 12, 10));
+            _locationTitleText = RuntimeUiFactory.CreateText("LocationTitle", card, string.Empty, 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            _locationSubtitleText = RuntimeUiFactory.CreateText("LocationSubtitle", card, string.Empty, 11, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.MiddleCenter);
             _locationGroup = card.gameObject.GetComponent<CanvasGroup>();
             if (_locationGroup == null)
             {
@@ -205,58 +228,149 @@ namespace MobilOfl.UI
             card.anchorMax = new Vector2(0.5f, 0f);
             card.pivot = new Vector2(0.5f, 0f);
             card.anchoredPosition = new Vector2(0f, 20f);
-            card.sizeDelta = new Vector2(468f, 90f);
-            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(16, 16, 14, 10), false);
-            _waypointTitleText = RuntimeUiFactory.CreateText("WaypointTitle", card, string.Empty, 15, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _waypointBodyText = RuntimeUiFactory.CreateText("WaypointBody", card, string.Empty, 13, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
-            _waypointMetaText = RuntimeUiFactory.CreateText("WaypointMeta", card, string.Empty, 11, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            card.sizeDelta = new Vector2(430f, 76f);
+            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(16, 16, 14, 10));
+            _waypointTitleText = RuntimeUiFactory.CreateText("WaypointTitle", card, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _waypointBodyText = RuntimeUiFactory.CreateText("WaypointBody", card, string.Empty, 12, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            _waypointMetaText = RuntimeUiFactory.CreateText("WaypointMeta", card, string.Empty, 10, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+        }
+
+        private void BuildDialoguePanel()
+        {
+            _dialogueRoot = RuntimeUiFactory.CreateCard("DialoguePanel", _root, new Color(0.045f, 0.06f, 0.09f, 0.96f), ModernGuiTheme.AccentColor);
+            _dialoguePanelImage = _dialogueRoot.GetComponent<Image>();
+            _dialogueRoot.anchorMin = new Vector2(0.5f, 0f);
+            _dialogueRoot.anchorMax = new Vector2(0.5f, 0f);
+            _dialogueRoot.pivot = new Vector2(0.5f, 0f);
+            _dialogueRoot.anchoredPosition = new Vector2(0f, 104f);
+            _dialogueRoot.sizeDelta = new Vector2(900f, 126f);
+
+            var layout = RuntimeUiFactory.AddHorizontalLayout(_dialogueRoot, 16f, new RectOffset(18, 18, 16, 14), true);
+            layout.childForceExpandWidth = false;
+
+            var portrait = RuntimeUiFactory.CreateCard("SpeakerChip", _dialogueRoot, new Color(0.08f, 0.13f, 0.17f, 1f), ModernGuiTheme.AccentWarmColor);
+            _dialogueSpeakerImage = portrait.GetComponent<Image>();
+            RuntimeUiFactory.EnsureLayoutElement(portrait, preferredWidth: 74f, preferredHeight: 96f);
+            RuntimeUiFactory.AddVerticalLayout(portrait, 6f, new RectOffset(12, 12, 12, 10));
+            RuntimeUiFactory.CreateIcon("SpeakerIcon", portrait, "users", ModernGuiTheme.AccentColor, new Vector2(34f, 34f));
+            RuntimeUiFactory.CreateText("SpeakerRole", portrait, "NPC", 12, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+
+            var content = RuntimeUiFactory.CreateUiRoot("DialogueContent", _dialogueRoot);
+            RuntimeUiFactory.EnsureLayoutElement(content, flexibleWidth: 1f, preferredHeight: 96f);
+            RuntimeUiFactory.AddVerticalLayout(content, 5f, new RectOffset(0, 0, 0, 0));
+
+            var header = RuntimeUiFactory.CreateUiRoot("DialogueHeader", content);
+            RuntimeUiFactory.EnsureLayoutElement(header, preferredHeight: 22f);
+            var headerLayout = RuntimeUiFactory.AddHorizontalLayout(header, 10f, new RectOffset(0, 0, 0, 0), true);
+            headerLayout.childForceExpandWidth = false;
+
+            _dialogueSpeakerText = RuntimeUiFactory.CreateText("DialogueSpeaker", header, string.Empty, 15, ModernGuiTheme.AccentWarmColor, FontStyle.Bold, TextAnchor.MiddleLeft);
+            RuntimeUiFactory.EnsureLayoutElement(_dialogueSpeakerText.transform, flexibleWidth: 1f);
+            _dialogueMetaText = RuntimeUiFactory.CreateText("DialogueMeta", header, "SORGULAMA", 11, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.MiddleRight);
+            RuntimeUiFactory.EnsureLayoutElement(_dialogueMetaText.transform, preferredWidth: 150f);
+
+            _dialogueBodyText = RuntimeUiFactory.CreateText("DialogueBody", content, string.Empty, 18, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            _dialogueBodyText.resizeTextForBestFit = true;
+            _dialogueBodyText.resizeTextMinSize = 14;
+            _dialogueBodyText.resizeTextMaxSize = 18;
+            RuntimeUiFactory.EnsureLayoutElement(_dialogueBodyText.transform, flexibleWidth: 1f, preferredHeight: 48f);
+
+            var signalTrack = RuntimeUiFactory.CreateUiRoot("DialogueSignalTrack", content);
+            RuntimeUiFactory.EnsureLayoutElement(signalTrack, preferredHeight: 6f);
+            RuntimeUiFactory.AddImage(signalTrack.gameObject, new Color(0.08f, 0.11f, 0.15f, 1f));
+            RuntimeUiFactory.ApplyOneUiRounding(signalTrack.gameObject, 3f);
+            _dialogueSignalFill = RuntimeUiFactory.CreateUiRoot("DialogueSignalFill", signalTrack).gameObject.AddComponent<Image>();
+            _dialogueSignalFill.color = ModernGuiTheme.AccentColor;
+            var fillRect = _dialogueSignalFill.rectTransform;
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(0f, 1f);
+            fillRect.pivot = new Vector2(0f, 0.5f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            _dialogueGroup = _dialogueRoot.gameObject.GetComponent<CanvasGroup>();
+            if (_dialogueGroup == null)
+            {
+                _dialogueGroup = _dialogueRoot.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            _dialogueGroup.alpha = 0f;
+            _dialogueGroup.blocksRaycasts = false;
+            _dialogueGroup.interactable = false;
         }
 
         private void BuildChecklistCard()
         {
             var card = RuntimeUiFactory.CreateCard("ChecklistCard", _root, ModernGuiTheme.PanelColor, ModernGuiTheme.AccentWarmColor);
+            _checklistCard = card;
             card.anchorMin = new Vector2(0f, 0f);
             card.anchorMax = new Vector2(0f, 0f);
             card.pivot = new Vector2(0f, 0f);
             card.anchoredPosition = new Vector2(18f, 18f);
-            card.sizeDelta = new Vector2(332f, 182f);
-            RuntimeUiFactory.AddVerticalLayout(card, 6f, new RectOffset(16, 16, 18, 12), false);
-            RuntimeUiFactory.CreateText("ChecklistLabel", card, "ILERLEME", 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            card.sizeDelta = new Vector2(292f, 124f);
+            RuntimeUiFactory.AddVerticalLayout(card, 5f, new RectOffset(14, 14, 15, 10));
+            RuntimeUiFactory.CreateText("ChecklistLabel", card, "ILERLEME", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
 
             var progressShell = RuntimeUiFactory.CreateUiRoot("ProgressShell", card);
-            RuntimeUiFactory.EnsureLayoutElement(progressShell, preferredHeight: 22f);
-            RuntimeUiFactory.AddImage(progressShell.gameObject, new Color(0.07f, 0.09f, 0.11f, 1f));
-            RuntimeUiFactory.AddOutline(progressShell.gameObject, new Color(0f, 0f, 0f, 0.35f), new Vector2(1f, -1f));
-            _progressFill = RuntimeUiFactory.CreateUiRoot("Fill", progressShell).gameObject.AddComponent<Image>();
+            var progressLayout = RuntimeUiFactory.EnsureLayoutElement(progressShell, flexibleWidth: 1f, preferredHeight: 34f);
+            progressLayout.minHeight = 34f;
+
+            var progressTrack = RuntimeUiFactory.CreateUiRoot("ProgressTrack", progressShell);
+            progressTrack.anchorMin = new Vector2(0f, 0.5f);
+            progressTrack.anchorMax = new Vector2(1f, 0.5f);
+            progressTrack.pivot = new Vector2(0.5f, 0.5f);
+            progressTrack.offsetMin = new Vector2(0f, -5f);
+            progressTrack.offsetMax = new Vector2(0f, 5f);
+            RuntimeUiFactory.AddImage(progressTrack.gameObject, new Color(0.08f, 0.11f, 0.15f, 0.95f));
+            RuntimeUiFactory.ApplyOneUiRounding(progressTrack.gameObject, 5f);
+            _progressFill = RuntimeUiFactory.CreateUiRoot("Fill", progressTrack).gameObject.AddComponent<Image>();
             var fillRect = _progressFill.rectTransform;
             fillRect.anchorMin = new Vector2(0f, 0f);
             fillRect.anchorMax = new Vector2(0f, 1f);
             fillRect.pivot = new Vector2(0f, 0.5f);
-            fillRect.offsetMin = new Vector2(2f, 2f);
-            fillRect.offsetMax = new Vector2(0f, -2f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            fillRect.sizeDelta = Vector2.zero;
             _progressFill.color = ModernGuiTheme.AccentColor;
+            RuntimeUiFactory.ApplyOneUiRounding(_progressFill.gameObject, 5f);
             _progressText = RuntimeUiFactory.CreateText("ProgressText", progressShell, string.Empty, 12, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            RuntimeUiFactory.Stretch(_progressText.rectTransform);
 
             _tacticText = RuntimeUiFactory.CreateText("TacticText", card, string.Empty, 12, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
             var scroll = RuntimeUiFactory.CreateScrollView("StepsScroll", card, out _stepsContent);
-            RuntimeUiFactory.EnsureLayoutElement(scroll.transform, flexibleHeight: 1f, preferredHeight: 86f);
-            RuntimeUiFactory.AddVerticalLayout(_stepsContent, 5f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.EnsureLayoutElement(scroll.transform, flexibleHeight: 1f, preferredHeight: 28f);
+            RuntimeUiFactory.AddVerticalLayout(_stepsContent, 5f, new RectOffset(0, 0, 0, 0));
             RuntimeUiFactory.AddContentSizeFitter(_stepsContent, ContentSizeFitter.FitMode.PreferredSize);
         }
 
         private void BuildTensionCard()
         {
             var card = RuntimeUiFactory.CreateCard("TensionCard", _root, ModernGuiTheme.PanelColor, ModernGuiTheme.AccentColor);
+            _tensionCard = card;
             card.anchorMin = new Vector2(1f, 0f);
             card.anchorMax = new Vector2(1f, 0f);
             card.pivot = new Vector2(1f, 0f);
             card.anchoredPosition = new Vector2(-18f, 18f);
-            card.sizeDelta = new Vector2(332f, 130f);
-            RuntimeUiFactory.AddVerticalLayout(card, 6f, new RectOffset(16, 16, 18, 12), false);
-            RuntimeUiFactory.CreateText("TensionLabel", card, "GIZLILIK", 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            card.sizeDelta = new Vector2(292f, 112f);
+            RuntimeUiFactory.AddVerticalLayout(card, 5f, new RectOffset(14, 14, 15, 10));
+            RuntimeUiFactory.CreateText("TensionLabel", card, "GIZLILIK", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _stealthStateText = RuntimeUiFactory.CreateText("TensionState", card, string.Empty, 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _noiseFill = CreateMeter(card, "Gurultu");
             _alertFill = CreateMeter(card, "Dikkat");
+        }
+
+        private void UpdateMobileControlLayout()
+        {
+            var showDesktopBottomCards = !MobileInvestigationOverlay.IsMobileHudVisible;
+            if (_checklistCard != null)
+            {
+                _checklistCard.gameObject.SetActive(showDesktopBottomCards);
+            }
+
+            if (_tensionCard != null)
+            {
+                _tensionCard.gameObject.SetActive(showDesktopBottomCards);
+            }
         }
 
         private void RefreshImmediate()
@@ -286,7 +400,7 @@ namespace MobilOfl.UI
                 ? playerInteraction.CurrentInteractable.PromptText
                 : "Serbest kesif";
             var networkLine = string.Empty;
-            var bootstrap = Object.FindFirstObjectByType<RelayNetworkBootstrap>();
+            var bootstrap = Object.FindAnyObjectByType<RelayNetworkBootstrap>();
             if (bootstrap != null && !string.IsNullOrWhiteSpace(bootstrap.CurrentStatus))
             {
                 networkLine = string.IsNullOrWhiteSpace(bootstrap.CurrentJoinCode)
@@ -303,7 +417,7 @@ namespace MobilOfl.UI
 
         private void RefreshObjective(CaseSessionManager session)
         {
-            var stealth = Object.FindFirstObjectByType<PlayerStealthController>();
+            var stealth = Object.FindAnyObjectByType<PlayerStealthController>();
             if (stealth != null && stealth.IsHighAlert)
             {
                 _objectiveText.text = "Dikkat seviyesi yuksek. En yakin sakinlesme noktasina cekilip NPC baskisini dusur.";
@@ -340,34 +454,60 @@ namespace MobilOfl.UI
 
         private void RefreshChecklist(CaseSessionManager session)
         {
-            if (progressTracker == null)
+            if (progressTracker == null || _progressFill == null || _progressText == null || _stepsContent == null)
             {
                 return;
             }
 
             var ratio = progressTracker.GetCompletionRatio();
-            _progressFill.rectTransform.sizeDelta = new Vector2(Mathf.Max(0f, 400f * ratio), 0f);
+            var fillRect = _progressFill.rectTransform;
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(Mathf.Clamp01(ratio), 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            fillRect.sizeDelta = Vector2.zero;
             _progressText.text = $"{Mathf.RoundToInt(ratio * 100f)}% tamamlandi";
             _tacticText.text = "Taktik: " + session.GetRecommendedNextStep();
 
             RuntimeUiFactory.ClearChildren(_stepsContent);
             var steps = progressTracker.Steps;
             var shown = 0;
-            for (var i = 0; i < steps.Count && shown < 3; i++)
+            for (var i = 0; i < steps.Count && shown < 1; i++)
             {
-                var prefix = steps[i].IsCompleted ? "[x]" : "[ ]";
-                var color = steps[i].IsCompleted ? ModernGuiTheme.AccentColor : ModernGuiTheme.TextColor;
-                var card = RuntimeUiFactory.CreateCard("Step" + i, _stepsContent, new Color(0.09f, 0.11f, 0.14f, 0.96f), steps[i].IsCompleted ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.BorderColor);
-                RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 30f);
-                RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(10, 10, 8, 6), false);
-                RuntimeUiFactory.CreateText("StepText", card, prefix + " " + steps[i].Label, 12, color, steps[i].IsCompleted ? FontStyle.Bold : FontStyle.Normal, TextAnchor.UpperLeft);
+                if (steps[i].IsCompleted)
+                {
+                    continue;
+                }
+
+                DrawChecklistStep(i, steps[i].Label, false);
+                shown++;
+            }
+
+            if (shown > 0)
+            {
+                return;
+            }
+
+            for (var i = Mathf.Max(0, steps.Count - 1); i < steps.Count && shown < 1; i++)
+            {
+                DrawChecklistStep(i, steps[i].Label, steps[i].IsCompleted);
                 shown++;
             }
         }
 
+        private void DrawChecklistStep(int index, string label, bool isCompleted)
+        {
+            var prefix = isCompleted ? "[x]" : "[ ]";
+            var color = isCompleted ? ModernGuiTheme.AccentColor : ModernGuiTheme.TextColor;
+            var card = RuntimeUiFactory.CreateCard("Step" + index, _stepsContent, new Color(0.09f, 0.11f, 0.14f, 0.96f), isCompleted ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.BorderColor);
+            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 30f);
+            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(10, 10, 8, 6));
+            RuntimeUiFactory.CreateText("StepText", card, prefix + " " + label, 12, color, isCompleted ? FontStyle.Bold : FontStyle.Normal, TextAnchor.UpperLeft);
+        }
+
         private void RefreshTension()
         {
-            var stealth = Object.FindFirstObjectByType<PlayerStealthController>();
+            var stealth = Object.FindAnyObjectByType<PlayerStealthController>();
             if (stealth == null)
             {
                 if (_stealthStateText != null)
@@ -401,6 +541,74 @@ namespace MobilOfl.UI
 
             _messageGroup.alpha = Mathf.Clamp01(Mathf.Min(1f, timeLeft / 0.35f));
             _messageText.text = _currentMessage;
+        }
+
+        private void RefreshDialoguePanel()
+        {
+            if (_dialogueGroup == null || _dialogueRoot == null)
+            {
+                return;
+            }
+
+            var hasDialogue = !string.IsNullOrWhiteSpace(_dialogueLine) && Time.time < _dialogueUntil;
+            var mobileHud = MobileInvestigationOverlay.IsMobileHudVisible;
+            var hiddenPosition = new Vector2(0f, mobileHud ? 146f : 78f);
+            var visiblePosition = new Vector2(0f, mobileHud ? 190f : 112f);
+            var targetSize = new Vector2(mobileHud ? 760f : 900f, mobileHud ? 118f : 126f);
+            _dialogueRoot.sizeDelta = Vector2.Lerp(_dialogueRoot.sizeDelta, targetSize, Time.unscaledDeltaTime * 9f);
+
+            if (!hasDialogue)
+            {
+                _dialogueGroup.alpha = Mathf.MoveTowards(_dialogueGroup.alpha, 0f, Time.unscaledDeltaTime * 7f);
+                _dialogueRoot.anchoredPosition = Vector2.Lerp(_dialogueRoot.anchoredPosition, hiddenPosition, Time.unscaledDeltaTime * 8f);
+                return;
+            }
+
+            var elapsed = Mathf.Max(0f, Time.time - _dialogueStartedAt);
+            var timeLeft = _dialogueUntil - Time.time;
+            var intro = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / 0.28f));
+            var outro = Mathf.Clamp01(timeLeft / 0.32f);
+            var alpha = Mathf.Min(intro, outro);
+            _dialogueGroup.alpha = alpha;
+            _dialogueRoot.anchoredPosition = Vector2.Lerp(hiddenPosition, visiblePosition, intro);
+            _dialogueRoot.localScale = Vector3.Lerp(new Vector3(0.97f, 0.97f, 1f), Vector3.one, intro);
+
+            var characterRate = Mathf.Max(1f, dialogueCharactersPerSecond);
+            var typedCharacters = Mathf.Clamp(Mathf.FloorToInt(elapsed * characterRate), 0, _dialogueLine.Length);
+            var visibleLine = _dialogueLine.Substring(0, typedCharacters);
+            if (typedCharacters < _dialogueLine.Length && Mathf.FloorToInt(Time.unscaledTime * 6f) % 2 == 0)
+            {
+                visibleLine += "_";
+            }
+
+            _dialogueSpeakerText.text = _dialogueSpeaker;
+            _dialogueBodyText.text = visibleLine;
+            _dialogueMetaText.text = _dialogueRevealedLead ? "YENI IPUCU" : "SORGULAMA";
+
+            var accent = _dialogueRevealedLead ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.AccentColor;
+            _dialogueSpeakerText.color = accent;
+            _dialogueMetaText.color = _dialogueRevealedLead ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.MutedTextColor;
+            if (_dialoguePanelImage != null)
+            {
+                _dialoguePanelImage.color = new Color(0.045f, 0.06f, 0.09f, Mathf.Lerp(0.9f, 0.98f, alpha));
+            }
+
+            if (_dialogueSpeakerImage != null)
+            {
+                _dialogueSpeakerImage.color = _dialogueRevealedLead
+                    ? new Color(0.18f, 0.12f, 0.07f, 1f)
+                    : new Color(0.08f, 0.13f, 0.17f, 1f);
+            }
+
+            if (_dialogueSignalFill != null)
+            {
+                _dialogueSignalFill.color = accent;
+                var fillRect = _dialogueSignalFill.rectTransform;
+                fillRect.anchorMin = new Vector2(0f, 0f);
+                fillRect.anchorMax = new Vector2(Mathf.Clamp01(typedCharacters / (float)Mathf.Max(1, _dialogueLine.Length)), 1f);
+                fillRect.offsetMin = Vector2.zero;
+                fillRect.offsetMax = Vector2.zero;
+            }
         }
 
         private void RefreshLocationVisuals()
@@ -442,8 +650,28 @@ namespace MobilOfl.UI
 
         private void HandleSessionMessage(string message)
         {
+            if (IsCurrentDialogueMessage(message))
+            {
+                return;
+            }
+
             _currentMessage = message;
             _messageUntil = Time.time + messageDuration;
+        }
+
+        private void HandleNpcConversation(string npcId, string npcDisplayName, string line, bool revealedLead)
+        {
+            _dialogueSpeaker = string.IsNullOrWhiteSpace(npcDisplayName) ? "NPC" : npcDisplayName;
+            _dialogueLine = CompactDialogueLine(line);
+            _dialogueRevealedLead = revealedLead;
+            _dialogueStartedAt = Time.time;
+            var characterRate = Mathf.Max(1f, dialogueCharactersPerSecond);
+            _dialogueUntil = Time.time + Mathf.Max(dialogueDuration, _dialogueLine.Length / characterRate + 1.4f);
+
+            if (_dialogueGroup != null)
+            {
+                _dialogueGroup.alpha = 0f;
+            }
         }
 
         private void HandleEvidenceCollected(EvidenceData evidence)
@@ -465,11 +693,13 @@ namespace MobilOfl.UI
             {
                 _subscribedSession.SessionMessagePublished -= HandleSessionMessage;
                 _subscribedSession.EvidenceCollected -= HandleEvidenceCollected;
+                _subscribedSession.NpcConversationRegistered -= HandleNpcConversation;
             }
 
             _subscribedSession = CaseSessionManager.Instance;
             _subscribedSession.SessionMessagePublished += HandleSessionMessage;
             _subscribedSession.EvidenceCollected += HandleEvidenceCollected;
+            _subscribedSession.NpcConversationRegistered += HandleNpcConversation;
 
             if (_subscribedSession.ActiveCase != null)
             {
@@ -481,7 +711,7 @@ namespace MobilOfl.UI
         {
             if (playerInteraction == null || !playerInteraction.isActiveAndEnabled)
             {
-                var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude);
                 for (var i = 0; i < candidates.Length; i++)
                 {
                     if (candidates[i] != null && candidates[i].isActiveAndEnabled)
@@ -494,31 +724,31 @@ namespace MobilOfl.UI
 
             if (progressTracker == null)
             {
-                progressTracker = Object.FindFirstObjectByType<CaseProgressTracker>();
+                progressTracker = Object.FindAnyObjectByType<CaseProgressTracker>();
             }
         }
 
         private void DisableLegacyHudScripts()
         {
-            var status = Object.FindFirstObjectByType<CaseStatusHud>();
+            var status = Object.FindAnyObjectByType<CaseStatusHud>();
             if (status != null)
             {
                 status.enabled = false;
             }
 
-            var checklist = Object.FindFirstObjectByType<CaseChecklistHud>();
+            var checklist = Object.FindAnyObjectByType<CaseChecklistHud>();
             if (checklist != null)
             {
                 checklist.enabled = false;
             }
 
-            var waypoint = Object.FindFirstObjectByType<InvestigationWaypointHud>();
+            var waypoint = Object.FindAnyObjectByType<InvestigationWaypointHud>();
             if (waypoint != null)
             {
                 waypoint.enabled = false;
             }
 
-            var banner = Object.FindFirstObjectByType<LocationBannerHud>();
+            var banner = Object.FindAnyObjectByType<LocationBannerHud>();
             if (banner != null)
             {
                 banner.enabled = false;
@@ -531,7 +761,7 @@ namespace MobilOfl.UI
             worldPosition = Vector3.zero;
             subtitle = string.Empty;
 
-            var stealth = Object.FindFirstObjectByType<PlayerStealthController>();
+            var stealth = Object.FindAnyObjectByType<PlayerStealthController>();
             if (stealth != null && stealth.IsHighAlert && playerInteraction != null)
             {
                 GetNearestRecoverySpot(playerInteraction.transform.position, out worldPosition, out title, out subtitle);
@@ -645,6 +875,36 @@ namespace MobilOfl.UI
             return "DUZ ILERI";
         }
 
+        private bool IsCurrentDialogueMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message) ||
+                string.IsNullOrWhiteSpace(_dialogueSpeaker) ||
+                string.IsNullOrWhiteSpace(_dialogueLine) ||
+                Time.time >= _dialogueUntil)
+            {
+                return false;
+            }
+
+            return message.StartsWith(_dialogueSpeaker + ":", System.StringComparison.Ordinal) &&
+                message.Contains(_dialogueLine);
+        }
+
+        private static string CompactDialogueLine(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return string.Empty;
+            }
+
+            var compact = line.Replace('\n', ' ').Replace('\r', ' ').Trim();
+            while (compact.Contains("  "))
+            {
+                compact = compact.Replace("  ", " ");
+            }
+
+            return compact.Length <= 180 ? compact : compact.Substring(0, 177) + "...";
+        }
+
         private static string FormatElapsedTime(float timeSeconds)
         {
             var totalSeconds = Mathf.Max(0, Mathf.FloorToInt(timeSeconds));
@@ -694,7 +954,7 @@ namespace MobilOfl.UI
         private Image CreateMeter(Transform parent, string label)
         {
             var root = RuntimeUiFactory.CreateUiRoot(label + "Meter", parent);
-            RuntimeUiFactory.AddVerticalLayout(root, 3f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.AddVerticalLayout(root, 3f, new RectOffset(0, 0, 0, 0));
             RuntimeUiFactory.CreateText(label + "Label", root, label.ToUpperInvariant(), 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
 
             var shell = RuntimeUiFactory.CreateUiRoot(label + "Shell", root);

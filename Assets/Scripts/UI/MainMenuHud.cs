@@ -8,6 +8,16 @@ namespace MobilOfl.UI
 {
     public class MainMenuHud : MonoBehaviour
     {
+        public enum RuntimeMenuMode
+        {
+            Opening,
+            Lobby,
+            Pause
+        }
+
+        private const string MasterVolumeKey = "MobilOfl.MasterVolume";
+        private const string LookSensitivityKey = "MobilOfl.LookSensitivity";
+
         [SerializeField] private RelayNetworkBootstrap bootstrap;
         [SerializeField] private bool startOpen = true;
         [SerializeField] private bool restartCaseOnStart = true;
@@ -17,6 +27,10 @@ namespace MobilOfl.UI
         public static bool IsBlockingGameplay { get; private set; }
 
         public bool IsOpen => _isOpen;
+        public RuntimeMenuMode CurrentMenuMode => _menuMode;
+        public bool HasStartedGameplay => _hasStartedGameplay;
+        public float MasterVolume => _masterVolume;
+        public float CameraSensitivity => _cameraSensitivity;
 
         public string PlayerName
         {
@@ -26,7 +40,7 @@ namespace MobilOfl.UI
                 _playerName = PlayerProfileSettings.Sanitize(value);
                 PlayerProfileSettings.SavePlayerName(_playerName);
 
-                var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
                 for (var i = 0; i < avatars.Length; i++)
                 {
                     if (avatars[i] != null && avatars[i].IsOwner)
@@ -52,9 +66,14 @@ namespace MobilOfl.UI
         }
 
         private bool _isOpen;
+        private bool _hasStartedGameplay;
+        private RuntimeMenuMode _menuMode = RuntimeMenuMode.Opening;
         private string _playerName;
         private string _joinCodeInput = string.Empty;
         private string _status = "Hazir.";
+        private float _masterVolume = 0.82f;
+        private float _cameraSensitivity = 2f;
+        private float _nextRuntimeSettingsApplyAt;
         private GUIStyle _windowStyle;
         private GUIStyle _titleStyle;
         private GUIStyle _subtitleStyle;
@@ -70,6 +89,9 @@ namespace MobilOfl.UI
             Instance = this;
             _playerName = PlayerProfileSettings.LoadPlayerName();
             _isOpen = startOpen;
+            _menuMode = RuntimeMenuMode.Opening;
+            LoadRuntimeSettings();
+            ApplyRuntimeSettings();
             SyncBlockingState();
         }
 
@@ -103,6 +125,13 @@ namespace MobilOfl.UI
 
         private void Update()
         {
+            MonitorOnlinePhaseTransition();
+            if (Time.unscaledTime >= _nextRuntimeSettingsApplyAt)
+            {
+                ApplyRuntimeSettings();
+                _nextRuntimeSettingsApplyAt = Time.unscaledTime + 0.5f;
+            }
+
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 if (_isOpen)
@@ -161,12 +190,20 @@ namespace MobilOfl.UI
             }
 
             CaseNotebookHud.Instance?.CloseNotebook();
+            RefreshMenuMode();
             _isOpen = true;
             SyncBlockingState();
         }
 
         public void CloseMenu()
         {
+            if (!_hasStartedGameplay && _menuMode != RuntimeMenuMode.Pause)
+            {
+                _isOpen = true;
+                SyncBlockingState();
+                return;
+            }
+
             _isOpen = false;
             SyncBlockingState();
         }
@@ -189,6 +226,22 @@ namespace MobilOfl.UI
         public async void ReconnectFromUi()
         {
             await ReconnectLastSessionAsync();
+        }
+
+        public void SetMasterVolume(float value)
+        {
+            _masterVolume = Mathf.Clamp01(value);
+            PlayerPrefs.SetFloat(MasterVolumeKey, _masterVolume);
+            PlayerPrefs.Save();
+            ApplyRuntimeSettings();
+        }
+
+        public void SetCameraSensitivity(float value)
+        {
+            _cameraSensitivity = Mathf.Clamp(value, 0.6f, 4.5f);
+            PlayerPrefs.SetFloat(LookSensitivityKey, _cameraSensitivity);
+            PlayerPrefs.Save();
+            ApplyRuntimeSettings();
         }
 
         private void DrawCollapsedButton()
@@ -445,6 +498,8 @@ namespace MobilOfl.UI
             {
                 CaseSessionManager.Instance.RestartCurrentCase();
             }
+            _hasStartedGameplay = false;
+            _menuMode = RuntimeMenuMode.Lobby;
             OpenMenu(bootstrap.IsHost
                 ? "Online lobi hazir. Herkes hazir olunca host operasyonu baslatabilir."
                 : "Oturuma katildin. Hazirlik verip hostun operasyonu baslatmasini bekle.");
@@ -463,12 +518,15 @@ namespace MobilOfl.UI
 
             var success = await bootstrap.AttemptReconnectToLastSessionAsync();
             _status = bootstrap.CurrentStatus;
-            OpenMenu(_status);
-
             if (!success)
             {
+                OpenMenu(_status);
                 return;
             }
+
+            _hasStartedGameplay = false;
+            _menuMode = RuntimeMenuMode.Lobby;
+            OpenMenu(_status);
         }
 
         private void StartSoloGame()
@@ -487,6 +545,8 @@ namespace MobilOfl.UI
                 CaseSessionManager.Instance.RestartCurrentCase();
             }
 
+            _hasStartedGameplay = true;
+            _menuMode = RuntimeMenuMode.Pause;
             CloseMenu();
         }
 
@@ -503,11 +563,80 @@ namespace MobilOfl.UI
             Cursor.visible = _isOpen;
         }
 
+        private void RefreshMenuMode()
+        {
+            var networkCaseState = NetworkCaseState.Instance;
+            if (bootstrap != null &&
+                bootstrap.IsOnlineSessionActive &&
+                networkCaseState != null &&
+                !networkCaseState.IsGameplayPhase)
+            {
+                _menuMode = RuntimeMenuMode.Lobby;
+                return;
+            }
+
+            _menuMode = _hasStartedGameplay ? RuntimeMenuMode.Pause : RuntimeMenuMode.Opening;
+        }
+
+        private void MonitorOnlinePhaseTransition()
+        {
+            EnsureBootstrap();
+
+            var networkCaseState = NetworkCaseState.Instance;
+            if (bootstrap == null ||
+                !bootstrap.IsOnlineSessionActive ||
+                networkCaseState == null)
+            {
+                return;
+            }
+
+            if (networkCaseState.IsGameplayPhase)
+            {
+                if (!_hasStartedGameplay)
+                {
+                    _status = "Operasyon basladi. Takim sahada.";
+                }
+
+                _hasStartedGameplay = true;
+                _menuMode = RuntimeMenuMode.Pause;
+                if (_isOpen)
+                {
+                    CloseMenu();
+                }
+                return;
+            }
+
+            if (!_hasStartedGameplay)
+            {
+                _menuMode = RuntimeMenuMode.Lobby;
+            }
+        }
+
+        private void LoadRuntimeSettings()
+        {
+            _masterVolume = PlayerPrefs.GetFloat(MasterVolumeKey, _masterVolume);
+            _cameraSensitivity = PlayerPrefs.GetFloat(LookSensitivityKey, _cameraSensitivity);
+        }
+
+        private void ApplyRuntimeSettings()
+        {
+            AudioListener.volume = Mathf.Clamp01(_masterVolume);
+
+            var controllers = Object.FindObjectsByType<PrototypeFirstPersonController>(FindObjectsInactive.Exclude);
+            for (var i = 0; i < controllers.Length; i++)
+            {
+                if (controllers[i] != null)
+                {
+                    controllers[i].LookSensitivity = _cameraSensitivity;
+                }
+            }
+        }
+
         private void EnsureBootstrap()
         {
             if (bootstrap == null)
             {
-                bootstrap = Object.FindFirstObjectByType<RelayNetworkBootstrap>();
+                bootstrap = Object.FindAnyObjectByType<RelayNetworkBootstrap>();
             }
         }
 

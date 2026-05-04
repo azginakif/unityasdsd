@@ -1,6 +1,7 @@
 using MobilOfl.Case;
 using MobilOfl.Gameplay;
 using MobilOfl.Online;
+using MobilOfl.Visuals;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using Unity.Netcode.Transports.UTP;
@@ -15,6 +16,7 @@ namespace MobilOfl.EditorTools
         private const string CaseAssetPath = "Assets/Data/Cases/ExamTheftCase.asset";
         private const string GeneratedPrefabsFolder = "Assets/Prefabs/Generated";
         private const string PlayerPrefabPath = GeneratedPrefabsFolder + "/NetworkPlayer.prefab";
+        private const float PlayerEyeHeight = 1.62f;
 
         [MenuItem("Mobil OFL/Setup/Configure Online Prototype")]
         public static void ConfigureOnlinePrototypeMenu()
@@ -79,40 +81,11 @@ namespace MobilOfl.EditorTools
             root.AddComponent<NetworkTransform>();
             var avatar = root.AddComponent<NetworkPlayerAvatar>();
 
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "AvatarBody";
-            body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.75f, 0.9f, 0.75f);
-            var bodyCollider = body.GetComponent<Collider>();
-            if (bodyCollider != null)
-            {
-                Object.DestroyImmediate(bodyCollider);
-            }
-
-            var bodyRenderer = body.GetComponent<Renderer>();
-            if (bodyRenderer != null)
-            {
-                var shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null)
-                {
-                    shader = Shader.Find("Standard");
-                }
-
-                if (shader == null)
-                {
-                    shader = Shader.Find("Sprites/Default");
-                }
-
-                bodyRenderer.sharedMaterial = new Material(shader)
-                {
-                    color = new Color(0.22f, 0.62f, 0.82f)
-                };
-            }
+            var localBodyRenderers = CreateNetworkPlayerVisual(root.transform);
 
             var cameraObject = new GameObject("PlayerCamera");
             cameraObject.transform.SetParent(root.transform, false);
-            cameraObject.transform.localPosition = new Vector3(0f, 0.75f, 0f);
+            cameraObject.transform.localPosition = new Vector3(0f, PlayerEyeHeight, 0f);
 
             var camera = cameraObject.AddComponent<Camera>();
             camera.tag = "Untagged";
@@ -160,13 +133,108 @@ namespace MobilOfl.EditorTools
             avatarSerializedObject.FindProperty("pingController").objectReferenceValue = ping;
             avatarSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
             avatarSerializedObject.FindProperty("audioListener").objectReferenceValue = listener;
-            avatarSerializedObject.FindProperty("localBodyRenderers").arraySize = 1;
-            avatarSerializedObject.FindProperty("localBodyRenderers").GetArrayElementAtIndex(0).objectReferenceValue = bodyRenderer;
+            var bodyRenderersProperty = avatarSerializedObject.FindProperty("localBodyRenderers");
+            bodyRenderersProperty.arraySize = localBodyRenderers.Length;
+            for (var i = 0; i < localBodyRenderers.Length; i++)
+            {
+                bodyRenderersProperty.GetArrayElementAtIndex(i).objectReferenceValue = localBodyRenderers[i];
+            }
             avatarSerializedObject.ApplyModifiedPropertiesWithoutUndo();
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        private static Renderer[] CreateNetworkPlayerVisual(Transform parent)
+        {
+            var schoolBoyPrefab = SchoolBoyCharacterSetupTool.LoadCharacterPrefab();
+            if (schoolBoyPrefab != null)
+            {
+                var instance = PrefabUtility.InstantiatePrefab(schoolBoyPrefab, parent) as GameObject;
+                if (instance != null)
+                {
+                    instance.name = "AvatarVisual";
+                    instance.transform.localPosition = Vector3.zero;
+                    instance.transform.localRotation = Quaternion.identity;
+                    instance.transform.localScale = Vector3.one;
+                    return instance.GetComponentsInChildren<Renderer>(true);
+                }
+            }
+
+            var visualRoot = new GameObject("AvatarVisual");
+            visualRoot.transform.SetParent(parent, false);
+            visualRoot.transform.localPosition = Vector3.zero;
+
+            var material = CreatePreviewMaterial("NetworkPlayer_Material", new Color(0.22f, 0.62f, 0.82f));
+            var body = CreateVisualPrimitive(visualRoot.transform, "AvatarBody", PrimitiveType.Capsule, new Vector3(0f, 0.9f, 0f), new Vector3(0.62f, 0.82f, 0.62f), material);
+            var head = CreateVisualPrimitive(visualRoot.transform, "AvatarHead", PrimitiveType.Sphere, new Vector3(0f, 1.76f, 0f), new Vector3(0.4f, 0.4f, 0.4f), material);
+            var leftArm = CreateVisualPrimitive(visualRoot.transform, "AvatarLeftArm", PrimitiveType.Cylinder, new Vector3(-0.43f, 1.08f, 0f), new Vector3(0.09f, 0.48f, 0.09f), material);
+            var rightArm = CreateVisualPrimitive(visualRoot.transform, "AvatarRightArm", PrimitiveType.Cylinder, new Vector3(0.43f, 1.08f, 0f), new Vector3(0.09f, 0.48f, 0.09f), material);
+
+            var visual = visualRoot.AddComponent<PlaceholderCharacterVisual>();
+            var serializedObject = new SerializedObject(visual);
+            serializedObject.FindProperty("head").objectReferenceValue = head.transform;
+            serializedObject.FindProperty("body").objectReferenceValue = body.transform;
+            serializedObject.FindProperty("leftArm").objectReferenceValue = leftArm.transform;
+            serializedObject.FindProperty("rightArm").objectReferenceValue = rightArm.transform;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            return new[]
+            {
+                body.GetComponent<Renderer>(),
+                head.GetComponent<Renderer>(),
+                leftArm.GetComponent<Renderer>(),
+                rightArm.GetComponent<Renderer>()
+            };
+        }
+
+        private static GameObject CreateVisualPrimitive(
+            Transform parent,
+            string name,
+            PrimitiveType primitiveType,
+            Vector3 localPosition,
+            Vector3 localScale,
+            Material material)
+        {
+            var primitive = GameObject.CreatePrimitive(primitiveType);
+            primitive.name = name;
+            primitive.transform.SetParent(parent, false);
+            primitive.transform.localPosition = localPosition;
+            primitive.transform.localScale = localScale;
+
+            var collider = primitive.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Object.DestroyImmediate(collider);
+            }
+
+            var renderer = primitive.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = material;
+            }
+
+            return primitive;
+        }
+
+        private static Material CreatePreviewMaterial(string name, Color color)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Standard");
+            }
+
+            if (shader == null)
+            {
+                shader = Shader.Find("Sprites/Default");
+            }
+
+            var material = new Material(shader);
+            material.name = name;
+            material.color = color;
+            return material;
         }
 
         private static NetworkCaseState EnsureNetworkCaseState(CaseDefinition caseDefinition)

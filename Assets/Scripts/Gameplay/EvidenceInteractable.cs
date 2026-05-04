@@ -1,5 +1,6 @@
 using MobilOfl.Case;
 using MobilOfl.Online;
+using MobilOfl.Visuals;
 using UnityEngine;
 
 namespace MobilOfl.Gameplay

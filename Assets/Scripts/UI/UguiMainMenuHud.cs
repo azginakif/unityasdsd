@@ -15,6 +15,13 @@ namespace MobilOfl.UI
         private RectTransform _overlayRoot;
         private RectTransform _collapsedRoot;
         private RectTransform _windowRoot;
+        private RectTransform _headerRoot;
+        private RectTransform _metricsRoot;
+        private RectTransform _bodyRoot;
+        private RectTransform _leftColumnRoot;
+        private RectTransform _rightColumnRoot;
+        private RectTransform _footerRoot;
+        private RectTransform _secondaryActionsRoot;
         private CanvasGroup _overlayGroup;
         private float _openBlend;
         private InputField _playerNameField;
@@ -24,9 +31,11 @@ namespace MobilOfl.UI
         private Text _heroStatusText;
         private Text _heroMetaText;
         private Text _collapsedHintText;
+        private Text _sessionTitleText;
         private Text _missionBriefText;
         private Text _missionNextStepText;
         private Text _missionStatsText;
+        private Text _settingsSummaryText;
         private Text _controlsText;
         private Text _hintText;
         private Text _intelPrimaryText;
@@ -34,16 +43,22 @@ namespace MobilOfl.UI
         private Text _commandDeckStatusText;
         private Text _commandDeckCodeText;
         private Text _commandDeckHintText;
+        private Text _footerNoteText;
         private Text _modeMetricText;
         private Text _caseMetricText;
         private Text _playerMetricText;
         private Text _readyMetricText;
+        private Button _soloButton;
         private Button _hostButton;
         private Button _joinButton;
         private Button _reconnectButton;
+        private Button _resetSaveButton;
         private Button _readyButton;
+        private Button _closeButton;
+        private Text _closeButtonText;
         private Text _readyButtonText;
         private RectTransform _rosterContent;
+        private RectTransform _settingsRoot;
         private float _nextRefreshAt;
         private bool _built;
         private bool _syncingFields;
@@ -81,6 +96,7 @@ namespace MobilOfl.UI
             }
 
             SyncVisibility();
+            ApplyResponsiveLayout();
             AnimateMenu(logic != null && logic.IsOpen);
 
             if (Time.unscaledTime >= _nextRefreshAt)
@@ -155,10 +171,10 @@ namespace MobilOfl.UI
             _collapsedRoot.anchorMin = new Vector2(0f, 0f);
             _collapsedRoot.anchorMax = new Vector2(0f, 0f);
             _collapsedRoot.pivot = new Vector2(0f, 0f);
-            _collapsedRoot.anchoredPosition = new Vector2(24f, 24f);
-            _collapsedRoot.sizeDelta = new Vector2(168f, 58f);
+            _collapsedRoot.anchoredPosition = new Vector2(24f, 218f);
+            _collapsedRoot.sizeDelta = new Vector2(122f, 44f);
 
-            var openButton = RuntimeUiFactory.CreateButton("OpenMenuButton", _collapsedRoot, "MENU", new Color(0.12f, 0.15f, 0.18f, 0.96f), 18);
+            var openButton = RuntimeUiFactory.CreateButton("OpenMenuButton", _collapsedRoot, "MENU", new Color(0.12f, 0.15f, 0.18f, 0.78f), 16);
             RuntimeUiFactory.Stretch(openButton.GetComponent<RectTransform>());
             openButton.onClick.AddListener(() => logic?.OpenMenu());
 
@@ -216,10 +232,10 @@ namespace MobilOfl.UI
             _windowRoot.anchorMin = new Vector2(0.5f, 0.5f);
             _windowRoot.anchorMax = new Vector2(0.5f, 0.5f);
             _windowRoot.pivot = new Vector2(0.5f, 0.5f);
-            _windowRoot.sizeDelta = new Vector2(1240f, 740f);
+            _windowRoot.sizeDelta = new Vector2(1040f, 650f);
             _windowRoot.anchoredPosition = Vector2.zero;
 
-            var layout = RuntimeUiFactory.AddVerticalLayout(_windowRoot, 14f, new RectOffset(22, 22, 22, 22));
+            var layout = RuntimeUiFactory.AddVerticalLayout(_windowRoot, 10f, new RectOffset(18, 18, 18, 18));
             layout.childForceExpandHeight = false;
 
             BuildHeader(_windowRoot);
@@ -251,13 +267,13 @@ namespace MobilOfl.UI
 
             var left = RuntimeUiFactory.CreateUiRoot("Primary", strip);
             RuntimeUiFactory.EnsureLayoutElement(left, flexibleWidth: 1f);
-            RuntimeUiFactory.AddVerticalLayout(left, 2f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.AddVerticalLayout(left, 2f, new RectOffset(0, 0, 0, 0));
             RuntimeUiFactory.CreateText("PrimaryLabel", left, "CANLI INTEL", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _intelPrimaryText = RuntimeUiFactory.CreateText("PrimaryText", left, string.Empty, 15, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
 
             var right = RuntimeUiFactory.CreateUiRoot("Secondary", strip);
             RuntimeUiFactory.EnsureLayoutElement(right, preferredWidth: 296f);
-            RuntimeUiFactory.AddVerticalLayout(right, 2f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.AddVerticalLayout(right, 2f, new RectOffset(0, 0, 0, 0));
             RuntimeUiFactory.CreateText("SecondaryLabel", right, "OTURUM OZETI", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _intelSecondaryText = RuntimeUiFactory.CreateText("SecondaryText", right, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
         }
@@ -265,35 +281,37 @@ namespace MobilOfl.UI
         private void BuildHeader(RectTransform parent)
         {
             var header = RuntimeUiFactory.CreateUiRoot("Header", parent);
-            RuntimeUiFactory.EnsureLayoutElement(header, preferredHeight: 112f);
-            RuntimeUiFactory.AddHorizontalLayout(header, 18f, new RectOffset(0, 0, 0, 0), true);
+            _headerRoot = header;
+            RuntimeUiFactory.EnsureLayoutElement(header, preferredHeight: 86f);
+            RuntimeUiFactory.AddHorizontalLayout(header, 14f, new RectOffset(0, 0, 0, 0), true);
 
             var titleBlock = RuntimeUiFactory.CreateUiRoot("TitleBlock", header);
             RuntimeUiFactory.EnsureLayoutElement(titleBlock, flexibleWidth: 1f);
-            RuntimeUiFactory.AddVerticalLayout(titleBlock, 4f, new RectOffset(0, 0, 0, 0), false);
-            RuntimeUiFactory.CreateText("Title", titleBlock, "MOBIL OFL", 42, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            RuntimeUiFactory.CreateText("Subtitle", titleBlock, "Okul ici suc dosyasi ve co-op arastirma prototipi.", 15, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            RuntimeUiFactory.AddVerticalLayout(titleBlock, 4f, new RectOffset(0, 0, 0, 0));
+            RuntimeUiFactory.CreateText("Title", titleBlock, "MOBIL OFL", 34, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            RuntimeUiFactory.CreateText("Subtitle", titleBlock, "Okul ici suc dosyasi ve co-op arastirma prototipi.", 13, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
             var heroBadge = RuntimeUiFactory.CreateCard("HeroBadge", titleBlock, new Color(0.1f, 0.13f, 0.16f, 0.95f), ModernGuiTheme.AccentWarmColor);
-            RuntimeUiFactory.EnsureLayoutElement(heroBadge, preferredHeight: 54f);
-            RuntimeUiFactory.AddVerticalLayout(heroBadge, 2f, new RectOffset(16, 16, 10, 8), false);
+            RuntimeUiFactory.EnsureLayoutElement(heroBadge, preferredHeight: 38f);
+            RuntimeUiFactory.AddVerticalLayout(heroBadge, 2f, new RectOffset(14, 14, 8, 7));
             _heroStatusText = RuntimeUiFactory.CreateText("HeroStatus", heroBadge, "DOSYA HAZIR", 14, ModernGuiTheme.AccentWarmColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _heroMetaText = RuntimeUiFactory.CreateText("HeroMeta", heroBadge, "Tek oyuncu ya da co-op oturumunu buradan baslat.", 13, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
             var profileCard = RuntimeUiFactory.CreateCard("ProfileCard", header, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(profileCard, preferredWidth: 312f, preferredHeight: 96f);
-            RuntimeUiFactory.AddVerticalLayout(profileCard, 10f, new RectOffset(16, 16, 18, 16), false);
+            RuntimeUiFactory.EnsureLayoutElement(profileCard, preferredWidth: 300f, preferredHeight: 82f);
+            RuntimeUiFactory.AddVerticalLayout(profileCard, 8f, new RectOffset(16, 16, 14, 14));
             RuntimeUiFactory.CreateText("ProfileLabel", profileCard, "OYUNCU PROFILI", 13, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _playerNameField = RuntimeUiFactory.CreateInputField("PlayerNameField", profileCard, "Oyuncu adi", 20);
-            RuntimeUiFactory.EnsureLayoutElement(_playerNameField.transform, preferredHeight: 56f);
+            RuntimeUiFactory.EnsureLayoutElement(_playerNameField.transform, preferredHeight: 42f);
             _playerNameField.onValueChanged.AddListener(OnPlayerNameChanged);
         }
 
         private void BuildMetrics(RectTransform parent)
         {
             var metricsRow = RuntimeUiFactory.CreateUiRoot("MetricsRow", parent);
-            RuntimeUiFactory.EnsureLayoutElement(metricsRow, preferredHeight: 74f);
-            var row = RuntimeUiFactory.AddHorizontalLayout(metricsRow, 12f, new RectOffset(0, 0, 0, 0), true);
+            _metricsRoot = metricsRow;
+            RuntimeUiFactory.EnsureLayoutElement(metricsRow, preferredHeight: 58f);
+            var row = RuntimeUiFactory.AddHorizontalLayout(metricsRow, 10f, new RectOffset(0, 0, 0, 0), true);
             row.childForceExpandWidth = true;
 
             _caseMetricText = CreateMetricCard(metricsRow, "VAKA");
@@ -305,30 +323,32 @@ namespace MobilOfl.UI
         private Text CreateMetricCard(Transform parent, string label)
         {
             var card = RuntimeUiFactory.CreateCard(label + "Card", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
-            RuntimeUiFactory.EnsureLayoutElement(card, flexibleWidth: 1f, preferredHeight: 72f);
-            RuntimeUiFactory.AddVerticalLayout(card, 4f, new RectOffset(14, 14, 12, 10), false);
+            RuntimeUiFactory.EnsureLayoutElement(card, flexibleWidth: 1f, preferredHeight: 56f);
+            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(13, 13, 9, 7));
             RuntimeUiFactory.CreateText(label + "Label", card, label, 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            return RuntimeUiFactory.CreateText(label + "Value", card, "-", 20, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            return RuntimeUiFactory.CreateText(label + "Value", card, "-", 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
         }
 
         private void BuildBody(RectTransform parent)
         {
             var body = RuntimeUiFactory.CreateUiRoot("Body", parent);
-            RuntimeUiFactory.EnsureLayoutElement(body, preferredHeight: 440f, flexibleHeight: 1f);
-            var row = RuntimeUiFactory.AddHorizontalLayout(body, 14f, new RectOffset(0, 0, 0, 0), true);
+            _bodyRoot = body;
+            RuntimeUiFactory.EnsureLayoutElement(body, preferredHeight: 416f, flexibleHeight: 1f);
+            var row = RuntimeUiFactory.AddHorizontalLayout(body, 12f, new RectOffset(0, 0, 0, 0), true);
             row.childForceExpandWidth = true;
             row.childForceExpandHeight = true;
 
             var leftColumn = RuntimeUiFactory.CreateUiRoot("LeftColumn", body);
-            RuntimeUiFactory.EnsureLayoutElement(leftColumn, preferredWidth: 380f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(leftColumn, 12f, new RectOffset(0, 0, 0, 0));
+            _leftColumnRoot = leftColumn;
+            RuntimeUiFactory.EnsureLayoutElement(leftColumn, preferredWidth: 360f, flexibleHeight: 1f);
+            RuntimeUiFactory.AddVerticalLayout(leftColumn, 10f, new RectOffset(0, 0, 0, 0));
             BuildSessionCard(leftColumn);
-            BuildCommandDeckCard(leftColumn);
-            BuildControlsCard(leftColumn);
+            BuildSettingsCard(leftColumn);
 
             var rightColumn = RuntimeUiFactory.CreateUiRoot("RightColumn", body);
+            _rightColumnRoot = rightColumn;
             RuntimeUiFactory.EnsureLayoutElement(rightColumn, flexibleWidth: 1f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(rightColumn, 12f, new RectOffset(0, 0, 0, 0));
+            RuntimeUiFactory.AddVerticalLayout(rightColumn, 10f, new RectOffset(0, 0, 0, 0));
             BuildMissionCard(rightColumn);
             BuildRosterCard(rightColumn);
         }
@@ -336,20 +356,22 @@ namespace MobilOfl.UI
         private void BuildSessionCard(Transform parent)
         {
             var card = RuntimeUiFactory.CreateCard("SessionCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 252f);
-            RuntimeUiFactory.AddVerticalLayout(card, 10f, new RectOffset(18, 18, 18, 18), false);
-            RuntimeUiFactory.CreateText("SessionTitle", card, "OTURUM", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _statusText = RuntimeUiFactory.CreateText("StatusText", card, "Hazir.", 15, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 252f, flexibleHeight: 1f);
+            RuntimeUiFactory.AddVerticalLayout(card, 7f, new RectOffset(15, 15, 13, 13));
+            _sessionTitleText = RuntimeUiFactory.CreateText("SessionTitle", card, "ANA MENU", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _statusText = RuntimeUiFactory.CreateText("StatusText", card, "Hazir.", 16, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            RuntimeUiFactory.EnsureLayoutElement(_statusText.transform, preferredHeight: 24f);
             _backendText = RuntimeUiFactory.CreateText("BackendText", card, "-", 13, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            RuntimeUiFactory.EnsureLayoutElement(_backendText.transform, preferredHeight: 22f);
 
             var primaryActions = RuntimeUiFactory.CreateUiRoot("PrimaryActions", card);
             RuntimeUiFactory.EnsureLayoutElement(primaryActions, preferredHeight: 48f);
             var actionLayout = RuntimeUiFactory.AddHorizontalLayout(primaryActions, 10f, new RectOffset(0, 0, 0, 0), true);
             actionLayout.childForceExpandWidth = true;
 
-            var soloButton = RuntimeUiFactory.CreateButton("SoloButton", primaryActions, "Tek Basina Basla", new Color(0.13f, 0.17f, 0.2f, 1f), 16);
-            RuntimeUiFactory.EnsureLayoutElement(soloButton.transform, flexibleWidth: 1f, preferredHeight: 48f);
-            soloButton.onClick.AddListener(() => logic?.StartSoloFromUi());
+            _soloButton = RuntimeUiFactory.CreateButton("SoloButton", primaryActions, "Solo Basla", new Color(0.13f, 0.17f, 0.2f, 1f), 16);
+            RuntimeUiFactory.EnsureLayoutElement(_soloButton.transform, flexibleWidth: 1f, preferredHeight: 48f);
+            _soloButton.onClick.AddListener(() => logic?.StartSoloFromUi());
 
             _hostButton = RuntimeUiFactory.CreateButton("HostButton", primaryActions, "Co-op Host", new Color(0.26f, 0.2f, 0.1f, 1f), 16);
             RuntimeUiFactory.EnsureLayoutElement(_hostButton.transform, flexibleWidth: 1f, preferredHeight: 48f);
@@ -357,38 +379,70 @@ namespace MobilOfl.UI
 
             RuntimeUiFactory.CreateText("JoinLabel", card, "JOIN CODE", 13, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _joinCodeField = RuntimeUiFactory.CreateInputField("JoinCodeField", card, "ABC123", 18);
-            RuntimeUiFactory.EnsureLayoutElement(_joinCodeField.transform, preferredHeight: 52f);
+            RuntimeUiFactory.EnsureLayoutElement(_joinCodeField.transform, preferredHeight: 42f);
             _joinCodeField.onValueChanged.AddListener(OnJoinCodeChanged);
 
             var secondaryActions = RuntimeUiFactory.CreateUiRoot("SecondaryActions", card);
-            RuntimeUiFactory.EnsureLayoutElement(secondaryActions, preferredHeight: 46f);
+            _secondaryActionsRoot = secondaryActions;
+            RuntimeUiFactory.EnsureLayoutElement(secondaryActions, preferredHeight: 40f);
             var secondaryLayout = RuntimeUiFactory.AddHorizontalLayout(secondaryActions, 10f, new RectOffset(0, 0, 0, 0), true);
             secondaryLayout.childForceExpandWidth = true;
 
             _joinButton = RuntimeUiFactory.CreateButton("JoinButton", secondaryActions, "Oturuma Katil", new Color(0.12f, 0.2f, 0.17f, 1f), 16);
-            RuntimeUiFactory.EnsureLayoutElement(_joinButton.transform, flexibleWidth: 1f, preferredHeight: 46f);
+            RuntimeUiFactory.EnsureLayoutElement(_joinButton.transform, flexibleWidth: 1f, preferredHeight: 40f);
             _joinButton.onClick.AddListener(() => logic?.JoinCurrentCodeFromUi());
 
             _reconnectButton = RuntimeUiFactory.CreateButton("ReconnectButton", secondaryActions, "Yeniden Baglan", new Color(0.19f, 0.15f, 0.08f, 1f), 15);
-            RuntimeUiFactory.EnsureLayoutElement(_reconnectButton.transform, flexibleWidth: 1f, preferredHeight: 46f);
+            RuntimeUiFactory.EnsureLayoutElement(_reconnectButton.transform, flexibleWidth: 1f, preferredHeight: 40f);
             _reconnectButton.onClick.AddListener(() => logic?.ReconnectFromUi());
 
             var copyButton = RuntimeUiFactory.CreateButton("CopyButton", secondaryActions, "Kodu Kopyala", new Color(0.11f, 0.12f, 0.15f, 1f), 15);
-            RuntimeUiFactory.EnsureLayoutElement(copyButton.transform, flexibleWidth: 1f, preferredHeight: 46f);
+            RuntimeUiFactory.EnsureLayoutElement(copyButton.transform, flexibleWidth: 1f, preferredHeight: 40f);
             copyButton.onClick.AddListener(CopyJoinCode);
+        }
+
+        private void BuildSettingsCard(Transform parent)
+        {
+            _settingsRoot = RuntimeUiFactory.CreateCard("MiniSettingsCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
+            RuntimeUiFactory.EnsureLayoutElement(_settingsRoot, preferredHeight: 116f);
+            RuntimeUiFactory.AddVerticalLayout(_settingsRoot, 7f, new RectOffset(15, 15, 13, 13));
+            RuntimeUiFactory.CreateText("SettingsTitle", _settingsRoot, "MINI AYARLAR", 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _settingsSummaryText = RuntimeUiFactory.CreateText("SettingsSummary", _settingsRoot, string.Empty, 14, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            RuntimeUiFactory.EnsureLayoutElement(_settingsSummaryText.transform, preferredHeight: 32f);
+
+            var actions = RuntimeUiFactory.CreateUiRoot("SettingsActions", _settingsRoot);
+            RuntimeUiFactory.EnsureLayoutElement(actions, preferredHeight: 34f);
+            var row = RuntimeUiFactory.AddHorizontalLayout(actions, 8f, new RectOffset(0, 0, 0, 0), true);
+            row.childForceExpandWidth = true;
+
+            var volumeDown = RuntimeUiFactory.CreateButton("VolumeDown", actions, "Ses -", new Color(0.11f, 0.13f, 0.16f, 1f), 13);
+            RuntimeUiFactory.EnsureLayoutElement(volumeDown.transform, flexibleWidth: 1f, preferredHeight: 34f);
+            volumeDown.onClick.AddListener(() => AdjustVolume(-0.1f));
+
+            var volumeUp = RuntimeUiFactory.CreateButton("VolumeUp", actions, "Ses +", new Color(0.11f, 0.13f, 0.16f, 1f), 13);
+            RuntimeUiFactory.EnsureLayoutElement(volumeUp.transform, flexibleWidth: 1f, preferredHeight: 34f);
+            volumeUp.onClick.AddListener(() => AdjustVolume(0.1f));
+
+            var lookDown = RuntimeUiFactory.CreateButton("LookDown", actions, "Bakis -", new Color(0.11f, 0.13f, 0.16f, 1f), 13);
+            RuntimeUiFactory.EnsureLayoutElement(lookDown.transform, flexibleWidth: 1f, preferredHeight: 34f);
+            lookDown.onClick.AddListener(() => AdjustLookSensitivity(-0.2f));
+
+            var lookUp = RuntimeUiFactory.CreateButton("LookUp", actions, "Bakis +", new Color(0.11f, 0.13f, 0.16f, 1f), 13);
+            RuntimeUiFactory.EnsureLayoutElement(lookUp.transform, flexibleWidth: 1f, preferredHeight: 34f);
+            lookUp.onClick.AddListener(() => AdjustLookSensitivity(0.2f));
         }
 
         private void BuildCommandDeckCard(Transform parent)
         {
             var card = RuntimeUiFactory.CreateCard("CommandDeckCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
-            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 154f);
-            RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(18, 18, 18, 16), false);
+            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 136f);
+            RuntimeUiFactory.AddVerticalLayout(card, 7f, new RectOffset(16, 16, 14, 14));
 
             RuntimeUiFactory.CreateText("DeckTitle", card, "KOMUTA GUVERTESI", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _commandDeckStatusText = RuntimeUiFactory.CreateText("DeckStatus", card, "Baglanti hazir.", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
 
             var codeShell = RuntimeUiFactory.CreateCard("CodeShell", card, new Color(0.08f, 0.11f, 0.14f, 0.95f), ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(codeShell, preferredHeight: 46f);
+            RuntimeUiFactory.EnsureLayoutElement(codeShell, preferredHeight: 40f);
             var shellLayout = RuntimeUiFactory.AddHorizontalLayout(codeShell, 10f, new RectOffset(14, 14, 10, 10), true);
             shellLayout.childForceExpandWidth = false;
 
@@ -408,7 +462,7 @@ namespace MobilOfl.UI
         {
             var card = RuntimeUiFactory.CreateCard("ControlsCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
             RuntimeUiFactory.EnsureLayoutElement(card, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(18, 18, 18, 18), false);
+            RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(18, 18, 18, 18));
             RuntimeUiFactory.CreateText("ControlsTitle", card, "KONTROLLER", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _controlsText = RuntimeUiFactory.CreateText("ControlsText", card, string.Empty, 15, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
             _hintText = RuntimeUiFactory.CreateText("HintText", card, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
@@ -417,12 +471,12 @@ namespace MobilOfl.UI
         private void BuildMissionCard(Transform parent)
         {
             var card = RuntimeUiFactory.CreateCard("MissionCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
-            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 286f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(card, 10f, new RectOffset(18, 18, 18, 18), false);
+            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 206f, flexibleHeight: 1f);
+            RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(16, 16, 14, 14));
             RuntimeUiFactory.CreateText("MissionTitle", card, "GOREV DOSYASI", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             var briefingStrip = RuntimeUiFactory.CreateCard("BriefingStrip", card, new Color(0.12f, 0.15f, 0.18f, 0.96f), ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(briefingStrip, preferredHeight: 68f);
-            RuntimeUiFactory.AddVerticalLayout(briefingStrip, 3f, new RectOffset(16, 16, 12, 10), false);
+            RuntimeUiFactory.EnsureLayoutElement(briefingStrip, preferredHeight: 58f);
+            RuntimeUiFactory.AddVerticalLayout(briefingStrip, 3f, new RectOffset(16, 16, 12, 10));
             RuntimeUiFactory.CreateText("BriefingLabel", briefingStrip, "CANLI BRIEFING", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _missionBriefText = RuntimeUiFactory.CreateText("MissionBrief", briefingStrip, string.Empty, 16, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
             RuntimeUiFactory.CreateText("NextLabel", card, "SIRADAKI HAMLE", 13, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
@@ -433,11 +487,11 @@ namespace MobilOfl.UI
         private void BuildRosterCard(Transform parent)
         {
             var card = RuntimeUiFactory.CreateCard("RosterCard", parent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 200f, flexibleHeight: 1f);
-            RuntimeUiFactory.AddVerticalLayout(card, 10f, new RectOffset(18, 18, 18, 18), false);
+            RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 116f, flexibleHeight: 1f);
+            RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(16, 16, 14, 14));
 
             var header = RuntimeUiFactory.CreateUiRoot("RosterHeader", card);
-            RuntimeUiFactory.EnsureLayoutElement(header, preferredHeight: 42f);
+            RuntimeUiFactory.EnsureLayoutElement(header, preferredHeight: 36f);
             var headerLayout = RuntimeUiFactory.AddHorizontalLayout(header, 10f, new RectOffset(0, 0, 0, 0), true);
             headerLayout.childForceExpandWidth = false;
 
@@ -445,29 +499,35 @@ namespace MobilOfl.UI
             RuntimeUiFactory.EnsureLayoutElement(header.GetChild(0), flexibleWidth: 1f);
 
             _readyButton = RuntimeUiFactory.CreateButton("ReadyButton", header, "Hazirim", new Color(0.14f, 0.22f, 0.18f, 1f), 15);
-            RuntimeUiFactory.EnsureLayoutElement(_readyButton.transform, preferredWidth: 168f, preferredHeight: 40f);
+            RuntimeUiFactory.EnsureLayoutElement(_readyButton.transform, preferredWidth: 150f, preferredHeight: 34f);
             _readyButtonText = _readyButton.GetComponentInChildren<Text>();
             _readyButton.onClick.AddListener(ToggleReady);
 
             var scrollView = RuntimeUiFactory.CreateScrollView("RosterScroll", card, out _rosterContent);
-            RuntimeUiFactory.EnsureLayoutElement(scrollView.transform, flexibleHeight: 1f, preferredHeight: 118f);
-            RuntimeUiFactory.AddVerticalLayout(_rosterContent, 8f, new RectOffset(0, 0, 0, 0), false);
+            RuntimeUiFactory.EnsureLayoutElement(scrollView.transform, flexibleHeight: 1f, preferredHeight: 52f);
+            RuntimeUiFactory.AddVerticalLayout(_rosterContent, 8f, new RectOffset(0, 0, 0, 0));
             RuntimeUiFactory.AddContentSizeFitter(_rosterContent, ContentSizeFitter.FitMode.PreferredSize);
         }
 
         private void BuildFooter(RectTransform parent)
         {
             var footer = RuntimeUiFactory.CreateUiRoot("Footer", parent);
-            RuntimeUiFactory.EnsureLayoutElement(footer, preferredHeight: 46f);
+            _footerRoot = footer;
+            RuntimeUiFactory.EnsureLayoutElement(footer, preferredHeight: 36f);
             var layout = RuntimeUiFactory.AddHorizontalLayout(footer, 12f, new RectOffset(0, 0, 0, 0), true);
             layout.childForceExpandWidth = false;
 
-            var note = RuntimeUiFactory.CreateText("FooterNote", footer, "Vaka masasina donup dosya uzerinden suphelileri karsilastir. Arayuz artik uGUI ile calisiyor.", 14, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.MiddleLeft);
-            RuntimeUiFactory.EnsureLayoutElement(note.transform, flexibleWidth: 1f);
+            _footerNoteText = RuntimeUiFactory.CreateText("FooterNote", footer, "Vaka masasina donup dosya uzerinden suphelileri karsilastir. Arayuz artik uGUI ile calisiyor.", 14, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.MiddleLeft);
+            RuntimeUiFactory.EnsureLayoutElement(_footerNoteText.transform, flexibleWidth: 1f);
 
-            var closeButton = RuntimeUiFactory.CreateButton("CloseButton", footer, "Kapat", new Color(0.12f, 0.12f, 0.15f, 1f), 16);
-            RuntimeUiFactory.EnsureLayoutElement(closeButton.transform, preferredWidth: 136f, preferredHeight: 42f);
-            closeButton.onClick.AddListener(() => logic?.CloseMenu());
+            _resetSaveButton = RuntimeUiFactory.CreateButton("ResetSaveButton", footer, "Kaydi Sifirla", new Color(0.18f, 0.12f, 0.1f, 1f), 16);
+            RuntimeUiFactory.EnsureLayoutElement(_resetSaveButton.transform, preferredWidth: 148f, preferredHeight: 36f);
+            _resetSaveButton.onClick.AddListener(ClearSoloSave);
+
+            _closeButton = RuntimeUiFactory.CreateButton("CloseButton", footer, "Oyuna Don", new Color(0.12f, 0.12f, 0.15f, 1f), 16);
+            RuntimeUiFactory.EnsureLayoutElement(_closeButton.transform, preferredWidth: 128f, preferredHeight: 36f);
+            _closeButtonText = _closeButton.GetComponentInChildren<Text>();
+            _closeButton.onClick.AddListener(() => logic?.CloseMenu());
         }
 
         private void RefreshImmediate()
@@ -480,6 +540,7 @@ namespace MobilOfl.UI
             var bootstrap = logic.Bootstrap;
             var session = CaseSessionManager.Instance;
             var networkCaseState = NetworkCaseState.Instance;
+            var menuMode = logic.CurrentMenuMode;
 
             _syncingFields = true;
             if (_playerNameField != null && !_playerNameField.isFocused)
@@ -493,17 +554,38 @@ namespace MobilOfl.UI
             }
             _syncingFields = false;
 
+            _sessionTitleText.text = menuMode == MainMenuHud.RuntimeMenuMode.Opening
+                ? "ANA MENU"
+                : (menuMode == MainMenuHud.RuntimeMenuMode.Lobby ? "ONLINE LOBI" : "OYUN MENUSU");
             _statusText.text = logic.CurrentStatus;
             _backendText.text = bootstrap == null
-                ? "Ag katmani: offline"
-                : $"Ag katmani: {bootstrap.BackendLabel}\n{bootstrap.BackendUpgradeHint}";
-            _heroStatusText.text = bootstrap != null && bootstrap.IsOnlineSessionActive ? "CO-OP OTURUM CANLI" : "DOSYA HAZIR";
-            _heroMetaText.text = session == null ? "Sahne kuruldugunda ilk delili topla." : session.GetRecommendedNextStep();
+                ? "Ag: offline"
+                : $"Ag: {bootstrap.BackendLabel}";
+            _heroStatusText.text = menuMode == MainMenuHud.RuntimeMenuMode.Opening
+                ? "OPERASYON MERKEZI"
+                : (bootstrap != null && bootstrap.IsOnlineSessionActive ? "CO-OP OTURUM CANLI" : "DOSYA HAZIR");
+            _heroMetaText.text = BuildHeroMeta(menuMode, session, bootstrap, networkCaseState);
 
-            _controlsText.text =
-                "PC: WASD hareket, Mouse bakis, E etkilesim, Tab dosya, Esc menu.\n" +
-                "Mobil: Joystick hareket, sag alan bakis, AL etkilesim, DOSYA vaka dosyasi.";
-            _hintText.text = session == null ? "Aktif oturum bekleniyor." : session.GetRecommendedNextStep();
+            if (_soloButton != null)
+            {
+                _soloButton.GetComponentInChildren<Text>().text = menuMode == MainMenuHud.RuntimeMenuMode.Pause ? "Yeni Solo Vaka" : "Solo Basla";
+            }
+
+            if (_controlsText != null)
+            {
+                _controlsText.text =
+                    "PC: WASD hareket, Mouse bakis, E etkilesim, Tab dosya, Esc menu.\n" +
+                    "Mobil: Joystick hareket, sag alan bakis, AL etkilesim, DOSYA vaka dosyasi.";
+            }
+
+            if (_hintText != null)
+            {
+                _hintText.text = session == null ? "Aktif oturum bekleniyor." : session.GetRecommendedNextStep();
+            }
+            if (_settingsSummaryText != null)
+            {
+                _settingsSummaryText.text = $"Ses %{Mathf.RoundToInt(logic.MasterVolume * 100f)}  |  Bakis {logic.CameraSensitivity:0.0}";
+            }
             if (_intelPrimaryText != null)
             {
                 _intelPrimaryText.text = session == null
@@ -517,9 +599,20 @@ namespace MobilOfl.UI
                     ? "Offline akis hazir. Tek kisilik test icin uygun."
                     : CompactSessionLine(bootstrap, networkCaseState);
             }
-            _commandDeckStatusText.text = BuildCommandDeckStatus(bootstrap, networkCaseState);
-            _commandDeckCodeText.text = bootstrap == null || string.IsNullOrWhiteSpace(bootstrap.CurrentJoinCode) ? "YOK" : bootstrap.CurrentJoinCode;
-            _commandDeckHintText.text = BuildCommandDeckHint(bootstrap, networkCaseState);
+            if (_commandDeckStatusText != null)
+            {
+                _commandDeckStatusText.text = BuildCommandDeckStatus(bootstrap, networkCaseState);
+            }
+
+            if (_commandDeckCodeText != null)
+            {
+                _commandDeckCodeText.text = bootstrap == null || string.IsNullOrWhiteSpace(bootstrap.CurrentJoinCode) ? "YOK" : bootstrap.CurrentJoinCode;
+            }
+
+            if (_commandDeckHintText != null)
+            {
+                _commandDeckHintText.text = BuildCommandDeckHint(bootstrap, networkCaseState);
+            }
 
             _caseMetricText.text = session != null && session.ActiveCase != null ? session.ActiveCase.CaseTitle : "Hazir";
             _playerMetricText.text = string.IsNullOrWhiteSpace(logic.PlayerName) ? "Dedektif" : logic.PlayerName;
@@ -533,7 +626,8 @@ namespace MobilOfl.UI
                 _missionStatsText.text =
                     $"Toplanan delil: {session.CollectedEvidenceIds.Count}/{session.ActiveCase.EvidenceItems.Count}\n" +
                     $"NPC sorgusu: {session.InterviewedNpcCount}\n" +
-                    $"Takim notu: {session.TeamNotes.Count}";
+                    $"Takim notu: {session.TeamNotes.Count}\n" +
+                    $"Solo kayit: {BuildSaveSummary(session)}";
             }
             else
             {
@@ -544,9 +638,24 @@ namespace MobilOfl.UI
 
             _hostButton.interactable = bootstrap == null || !bootstrap.IsBusy;
             _joinButton.interactable = bootstrap == null || !bootstrap.IsBusy;
+            if (_closeButton != null)
+            {
+                var canClose = menuMode == MainMenuHud.RuntimeMenuMode.Pause || logic.HasStartedGameplay;
+                _closeButton.gameObject.SetActive(canClose);
+                _closeButton.interactable = canClose;
+                if (_closeButtonText != null)
+                {
+                    _closeButtonText.text = "Oyuna Don";
+                }
+            }
             if (_reconnectButton != null)
             {
-                _reconnectButton.interactable = bootstrap != null && bootstrap.CanReconnectLastSession && !bootstrap.IsBusy;
+                var canReconnect = bootstrap != null && bootstrap.CanReconnectLastSession && !bootstrap.IsBusy;
+                _reconnectButton.interactable = canReconnect;
+                if (MobileInvestigationOverlay.IsMobileUiAllowed)
+                {
+                    _reconnectButton.gameObject.SetActive(canReconnect);
+                }
             }
 
             RebuildRoster(networkCaseState, bootstrap);
@@ -593,7 +702,7 @@ namespace MobilOfl.UI
         {
             var card = RuntimeUiFactory.CreateCard("RosterLine", _rosterContent, new Color(0.1f, 0.12f, 0.15f, 0.94f), ready ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.BorderColor);
             RuntimeUiFactory.EnsureLayoutElement(card, preferredHeight: 46f);
-            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(14, 14, 12, 10), false);
+            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(14, 14, 12, 10));
             RuntimeUiFactory.CreateText("LineText", card, text, 14, color, FontStyle.Normal, TextAnchor.MiddleLeft);
         }
 
@@ -646,14 +755,63 @@ namespace MobilOfl.UI
             RefreshImmediate();
         }
 
-        private void CopyJoinCode()
+        private void ClearSoloSave()
         {
-            if (logic == null || string.IsNullOrWhiteSpace(logic.JoinCodeInput))
+            var session = CaseSessionManager.Instance;
+            if (session == null || session.ActiveCase == null)
             {
                 return;
             }
 
-            GUIUtility.systemCopyBuffer = logic.JoinCodeInput;
+            var saveManager = CaseSaveManager.Instance;
+            if (saveManager != null)
+            {
+                saveManager.ClearSaveForCase(session.ActiveCase.CaseId);
+            }
+
+            session.RestartCurrentCase();
+            session.PublishMessage("Solo kayit sifirlandi. Vaka temiz baslatildi.");
+            RefreshImmediate();
+        }
+
+        private void AdjustVolume(float delta)
+        {
+            if (logic == null)
+            {
+                return;
+            }
+
+            logic.SetMasterVolume(logic.MasterVolume + delta);
+            RefreshImmediate();
+        }
+
+        private void AdjustLookSensitivity(float delta)
+        {
+            if (logic == null)
+            {
+                return;
+            }
+
+            logic.SetCameraSensitivity(logic.CameraSensitivity + delta);
+            RefreshImmediate();
+        }
+
+        private void CopyJoinCode()
+        {
+            if (logic == null)
+            {
+                return;
+            }
+
+            var code = logic.Bootstrap != null && !string.IsNullOrWhiteSpace(logic.Bootstrap.CurrentJoinCode)
+                ? logic.Bootstrap.CurrentJoinCode
+                : logic.JoinCodeInput;
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return;
+            }
+
+            GUIUtility.systemCopyBuffer = code;
         }
 
         private void OnPlayerNameChanged(string value)
@@ -685,10 +843,87 @@ namespace MobilOfl.UI
 
             _overlayRoot.gameObject.SetActive(true);
             _collapsedRoot.gameObject.SetActive(!logic.IsOpen && _openBlend <= 0.02f);
+            _collapsedRoot.anchoredPosition = MobileInvestigationOverlay.IsMobileHudVisible
+                ? new Vector2(24f, 242f)
+                : new Vector2(24f, 218f);
             if (_collapsedHintText != null)
             {
+                _collapsedHintText.gameObject.SetActive(!MobileInvestigationOverlay.IsMobileHudVisible);
                 _collapsedHintText.text = string.IsNullOrWhiteSpace(logic.PlayerName) ? "Dosya merkezi" : logic.PlayerName;
             }
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            if (!_built || _windowRoot == null)
+            {
+                return;
+            }
+
+            var mobileLayout = MobileInvestigationOverlay.IsMobileUiAllowed;
+            _windowRoot.sizeDelta = mobileLayout ? new Vector2(1040f, 640f) : new Vector2(1160f, 720f);
+
+            SetPreferredHeight(_headerRoot, mobileLayout ? 74f : 86f);
+            SetPreferredHeight(_metricsRoot, mobileLayout ? 0f : 58f);
+            SetPreferredHeight(_bodyRoot, mobileLayout ? 430f : 416f);
+            SetPreferredHeight(_footerRoot, mobileLayout ? 38f : 36f);
+            _metricsRoot?.gameObject.SetActive(!mobileLayout);
+
+            if (_leftColumnRoot != null)
+            {
+                var layout = RuntimeUiFactory.EnsureLayoutElement(_leftColumnRoot, preferredWidth: mobileLayout ? 332f : 360f, flexibleHeight: 1f);
+                layout.flexibleWidth = 0f;
+            }
+
+            if (_rightColumnRoot != null)
+            {
+                var layout = RuntimeUiFactory.EnsureLayoutElement(_rightColumnRoot, flexibleWidth: 1f, flexibleHeight: 1f);
+                layout.preferredWidth = mobileLayout ? 560f : -1f;
+            }
+
+            if (_hintText != null)
+            {
+                _hintText.gameObject.SetActive(!mobileLayout);
+            }
+
+            if (_footerNoteText != null)
+            {
+                _footerNoteText.gameObject.SetActive(!mobileLayout);
+            }
+
+            if (_secondaryActionsRoot != null)
+            {
+                SetPreferredHeight(_secondaryActionsRoot, mobileLayout ? 38f : 40f);
+            }
+
+            if (_reconnectButton != null)
+            {
+                var canReconnect = logic != null && logic.Bootstrap != null && logic.Bootstrap.CanReconnectLastSession && !logic.Bootstrap.IsBusy;
+                _reconnectButton.gameObject.SetActive(!mobileLayout || canReconnect);
+                RuntimeUiFactory.EnsureLayoutElement(_reconnectButton.transform, flexibleWidth: 1f, preferredHeight: mobileLayout ? 38f : 40f);
+            }
+
+            if (_joinButton != null)
+            {
+                RuntimeUiFactory.EnsureLayoutElement(_joinButton.transform, flexibleWidth: 1f, preferredHeight: mobileLayout ? 38f : 40f);
+            }
+
+            if (_resetSaveButton != null)
+            {
+                RuntimeUiFactory.EnsureLayoutElement(_resetSaveButton.transform, preferredWidth: mobileLayout ? 132f : 148f, preferredHeight: mobileLayout ? 34f : 36f);
+            }
+        }
+
+        private static void SetPreferredHeight(RectTransform target, float height)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            var layout = RuntimeUiFactory.EnsureLayoutElement(target, preferredHeight: height);
+            layout.minHeight = height;
+            layout.flexibleHeight = height <= 0f ? 0f : layout.flexibleHeight;
         }
 
         private void AnimateMenu(bool visible)
@@ -726,7 +961,7 @@ namespace MobilOfl.UI
             card.pivot = new Vector2(0.5f, 0.5f);
             card.anchoredPosition = anchoredPosition;
             card.sizeDelta = size;
-            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(16, 16, 18, 14), false);
+            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(16, 16, 18, 14));
             RuntimeUiFactory.CreateText("Title", card, title, 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             RuntimeUiFactory.CreateText("Body", card, body, 14, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
             AddFloatMotion(card, card.GetComponent<Image>(), motionAmplitude, speed, 0.05f, 0.02f, phase);
@@ -765,6 +1000,37 @@ namespace MobilOfl.UI
             return $"{bootstrap.CurrentMode}  |  {networkCaseState.CurrentPhaseLabel}  |  Oyuncu {networkCaseState.RegisteredPlayerCount}  |  {joinCode}";
         }
 
+        private static string BuildHeroMeta(
+            MainMenuHud.RuntimeMenuMode menuMode,
+            CaseSessionManager session,
+            RelayNetworkBootstrap bootstrap,
+            NetworkCaseState networkCaseState)
+        {
+            if (menuMode == MainMenuHud.RuntimeMenuMode.Opening)
+            {
+                return "Solo basla ya da co-op lobby kurup ekibi hazirla.";
+            }
+
+            if (menuMode == MainMenuHud.RuntimeMenuMode.Lobby)
+            {
+                if (bootstrap == null || !bootstrap.IsOnlineSessionActive)
+                {
+                    return "Host ac veya join code girerek lobiye katil.";
+                }
+
+                if (networkCaseState == null)
+                {
+                    return "Online baglanti hazir, roster bekleniyor.";
+                }
+
+                return networkCaseState.AreAllRegisteredPlayersReady
+                    ? "Ekip hazir. Host operasyonu baslatabilir."
+                    : "Oyuncular hazir durumuna gecince operasyon baslayacak.";
+            }
+
+            return session == null ? "Oyuna donup ilk delili topla." : session.GetRecommendedNextStep();
+        }
+
         private static string BuildCommandDeckStatus(RelayNetworkBootstrap bootstrap, NetworkCaseState networkCaseState)
         {
             if (bootstrap == null)
@@ -790,6 +1056,17 @@ namespace MobilOfl.UI
             }
 
             return $"{bootstrap.CurrentMode} aktif  |  Faz: {networkCaseState.CurrentPhaseLabel}  |  {networkCaseState.ReadyPlayerCount}/{networkCaseState.RegisteredPlayerCount} hazir";
+        }
+
+        private static string BuildSaveSummary(CaseSessionManager session)
+        {
+            if (session == null || session.ActiveCase == null)
+            {
+                return "hazir degil";
+            }
+
+            var saveManager = CaseSaveManager.Instance;
+            return saveManager == null ? "hazirlaniyor" : saveManager.GetCurrentSaveSummary(session.ActiveCase);
         }
 
         private static string BuildCommandDeckHint(RelayNetworkBootstrap bootstrap, NetworkCaseState networkCaseState)

@@ -1,5 +1,6 @@
 using MobilOfl.Case;
 using MobilOfl.Online;
+using MobilOfl.Visuals;
 using UnityEngine;
 
 namespace MobilOfl.Gameplay
@@ -26,6 +27,41 @@ namespace MobilOfl.Gameplay
             isActiveAndEnabled &&
             CaseSessionManager.Instance != null &&
             !CaseSessionManager.Instance.HasTool(toolId);
+
+        public void Configure(
+            string id,
+            string displayName,
+            string label,
+            string message,
+            Color color)
+        {
+            if (!string.IsNullOrWhiteSpace(id))
+            {
+                toolId = id.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                toolDisplayName = displayName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                markerLabel = label.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                pickupMessage = message.Trim();
+            }
+
+            if (color.a > 0f)
+            {
+                markerColor = color;
+            }
+
+            RefreshCollectedState();
+        }
 
         private void OnEnable()
         {
@@ -206,3 +242,4 @@ namespace MobilOfl.Gameplay
             }
         }
     }
+}

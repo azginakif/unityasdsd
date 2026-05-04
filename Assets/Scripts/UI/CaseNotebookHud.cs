@@ -190,7 +190,7 @@ namespace MobilOfl.UI
             GUILayout.Label($"Delil: {session.CollectedEvidenceIds.Count}/{session.ActiveCase.EvidenceItems.Count}", _bodyStyle);
             GUILayout.Label($"Kritik: {session.CollectedCriticalEvidenceCount}/{session.TotalCriticalEvidenceCount}", _bodyStyle);
             GUILayout.Label($"Takim notu: {session.TeamNotes.Count}", _bodyStyle);
-            var exploration = Object.FindFirstObjectByType<SchoolExplorationTracker>();
+            var exploration = Object.FindAnyObjectByType<SchoolExplorationTracker>();
             if (exploration != null)
             {
                 GUILayout.Label($"Kesif: {exploration.VisitedZoneCount} bolge", _bodyStyle);
@@ -247,7 +247,7 @@ namespace MobilOfl.UI
             GUILayout.EndVertical();
             GUILayout.Space(8f);
 
-            var onlineBootstrap = Object.FindFirstObjectByType<RelayNetworkBootstrap>();
+            var onlineBootstrap = Object.FindAnyObjectByType<RelayNetworkBootstrap>();
             if (onlineBootstrap != null)
             {
                 GUILayout.Label("Co-op Durumu", _sectionStyle);
@@ -271,12 +271,12 @@ namespace MobilOfl.UI
             DrawSummaryCard($"Toplanan Delil\n{session.CollectedEvidenceIds.Count}");
             DrawSummaryCard($"Kritik Delil\n{session.CollectedCriticalEvidenceCount}/{session.TotalCriticalEvidenceCount}");
             DrawSummaryCard($"Gorusulen NPC\n{session.InterviewedNpcCount}");
-            var explorationSummary = Object.FindFirstObjectByType<SchoolExplorationTracker>();
+            var explorationSummary = Object.FindAnyObjectByType<SchoolExplorationTracker>();
             DrawSummaryCard(explorationSummary == null ? "Kesif\n-" : $"Kesif\n{explorationSummary.VisitedZoneCount}");
             GUILayout.EndHorizontal();
             GUILayout.Space(10f);
 
-            var explorationTracker = Object.FindFirstObjectByType<SchoolExplorationTracker>();
+            var explorationTracker = Object.FindAnyObjectByType<SchoolExplorationTracker>();
             if (explorationTracker != null && explorationTracker.VisitedZoneCount > 0)
             {
                 GUILayout.Label("Gezilen Bolgeler", _sectionStyle);

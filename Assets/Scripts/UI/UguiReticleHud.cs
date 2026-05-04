@@ -89,7 +89,7 @@ namespace MobilOfl.UI
             promptCard.pivot = new Vector2(0.5f, 0f);
             promptCard.anchoredPosition = new Vector2(0f, -84f);
             promptCard.sizeDelta = new Vector2(360f, 54f);
-            RuntimeUiFactory.AddVerticalLayout(promptCard, 0f, new RectOffset(12, 12, 12, 10), false);
+            RuntimeUiFactory.AddVerticalLayout(promptCard, 0f, new RectOffset(12, 12, 12, 10));
             _promptText = RuntimeUiFactory.CreateText("PromptText", promptCard, string.Empty, 17, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             _promptText.alignment = TextAnchor.MiddleCenter;
             var holdShell = RuntimeUiFactory.CreateUiRoot("HoldShell", promptCard);
@@ -173,7 +173,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude);
             for (var i = 0; i < candidates.Length; i++)
             {
                 if (candidates[i] != null && candidates[i].isActiveAndEnabled)
@@ -186,7 +186,7 @@ namespace MobilOfl.UI
 
         private void DisableLegacy()
         {
-            var legacy = Object.FindFirstObjectByType<FocusReticleHud>();
+            var legacy = Object.FindAnyObjectByType<FocusReticleHud>();
             if (legacy != null)
             {
                 legacy.enabled = false;

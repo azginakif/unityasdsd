@@ -1,5 +1,6 @@
 using MobilOfl.Case;
 using MobilOfl.Online;
+using MobilOfl.Visuals;
 using UnityEngine;
 
 namespace MobilOfl.Gameplay
@@ -23,6 +24,8 @@ namespace MobilOfl.Gameplay
         private Collider[] _cachedColliders;
         private Behaviour[] _cachedBehaviours;
 
+        public string HiddenEvidenceId => hiddenEvidenceId;
+        public string RequiredToolId => ResolveRequiredToolId();
         public string MarkerLabel => string.IsNullOrWhiteSpace(markerLabel) ? "Aranacak Alan" : markerLabel;
         public Color MarkerColor => markerColor.a <= 0f ? new Color(0.92f, 0.74f, 0.3f, 1f) : markerColor;
         public bool IsMarkerVisible =>
@@ -32,6 +35,19 @@ namespace MobilOfl.Gameplay
 
         public override bool RequiresHold => true;
         public override float HoldDuration => searchDuration;
+
+        public void ConfigureToolGate(string toolId, string message)
+        {
+            if (!string.IsNullOrWhiteSpace(toolId))
+            {
+                requiredToolId = toolId.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                missingToolMessage = message.Trim();
+            }
+        }
 
         private void OnEnable()
         {
@@ -116,9 +132,10 @@ namespace MobilOfl.Gameplay
 
         private bool HasRequiredTool()
         {
+            var resolvedRequiredToolId = ResolveRequiredToolId();
             return CaseSessionManager.Instance == null ||
-                   string.IsNullOrWhiteSpace(requiredToolId) ||
-                   CaseSessionManager.Instance.HasTool(requiredToolId);
+                   string.IsNullOrWhiteSpace(resolvedRequiredToolId) ||
+                   CaseSessionManager.Instance.HasTool(resolvedRequiredToolId);
         }
 
         private void TryPublishMissingToolMessage(bool force = false)
@@ -134,9 +151,40 @@ namespace MobilOfl.Gameplay
             }
 
             _nextMissingToolMessageAt = Time.time + 1.25f;
-            CaseSessionManager.Instance.PublishMessage(string.IsNullOrWhiteSpace(missingToolMessage)
+            var resolvedMessage = ResolveMissingToolMessage();
+            CaseSessionManager.Instance.PublishMessage(string.IsNullOrWhiteSpace(resolvedMessage)
                 ? "Bu alan icin once uygun ekipman bulman gerekiyor."
-                : missingToolMessage);
+                : resolvedMessage);
+        }
+
+        private string ResolveRequiredToolId()
+        {
+            if (!string.IsNullOrWhiteSpace(requiredToolId))
+            {
+                return requiredToolId;
+            }
+
+            return hiddenEvidenceId switch
+            {
+                "evidence.locker-key" => "tool.lockpick",
+                "evidence.archive-ledger" => "tool.archive-pass",
+                _ => string.Empty
+            };
+        }
+
+        private string ResolveMissingToolMessage()
+        {
+            if (!string.IsNullOrWhiteSpace(missingToolMessage))
+            {
+                return missingToolMessage;
+            }
+
+            return ResolveRequiredToolId() switch
+            {
+                "tool.lockpick" => "Bu cekmece icin once maymuncuk seti bulman gerekiyor.",
+                "tool.archive-pass" => "Arsiv raf kutusu icin once gecis karti bulman gerekiyor.",
+                _ => string.Empty
+            };
         }
 
         private void HandleEvidenceCollected(EvidenceData evidence)

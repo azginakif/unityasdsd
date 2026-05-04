@@ -272,7 +272,7 @@ namespace MobilOfl.Online
         {
             if (bootstrap == null)
             {
-                bootstrap = Object.FindFirstObjectByType<RelayNetworkBootstrap>();
+                bootstrap = Object.FindAnyObjectByType<RelayNetworkBootstrap>();
             }
         }
 

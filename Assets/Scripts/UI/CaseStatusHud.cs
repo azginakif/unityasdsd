@@ -111,13 +111,13 @@ namespace MobilOfl.UI
                 GUILayout.Label($"Bolge: {SchoolLocationUtility.GetZoneTitle(playerInteraction.transform.position)}", _messageStyle);
             }
 
-            var exploration = Object.FindFirstObjectByType<SchoolExplorationTracker>();
+            var exploration = Object.FindAnyObjectByType<SchoolExplorationTracker>();
             if (exploration != null)
             {
                 GUILayout.Label($"Kesif: {exploration.VisitedZoneCount} bolge", _messageStyle);
             }
 
-            var onlineBootstrap = Object.FindFirstObjectByType<RelayNetworkBootstrap>();
+            var onlineBootstrap = Object.FindAnyObjectByType<RelayNetworkBootstrap>();
             if (onlineBootstrap != null)
             {
                 var onlineText = string.IsNullOrWhiteSpace(onlineBootstrap.CurrentJoinCode)
@@ -172,7 +172,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude);
             for (var i = 0; i < candidates.Length; i++)
             {
                 if (candidates[i] != null && candidates[i].isActiveAndEnabled)

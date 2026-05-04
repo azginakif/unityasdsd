@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using DevsDaddy.Shared.UIFramework.Core.RoundedMasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,11 +8,18 @@ namespace MobilOfl.UI
     public static class RuntimeUiFactory
     {
         private static Font _defaultFont;
+        private static readonly Dictionary<string, Sprite> OneUiIconCache = new Dictionary<string, Sprite>();
 
         public static Font DefaultFont
         {
             get
             {
+                if (_defaultFont != null)
+                {
+                    return _defaultFont;
+                }
+
+                _defaultFont = Resources.Load<Font>("MobilOflOneUI/Fonts/tilda-sans_semibold");
                 if (_defaultFont != null)
                 {
                     return _defaultFont;
@@ -59,6 +68,63 @@ namespace MobilOfl.UI
 
             image.color = color;
             return image;
+        }
+
+        public static Sprite LoadOneUiIcon(string iconName)
+        {
+            if (string.IsNullOrWhiteSpace(iconName))
+            {
+                return null;
+            }
+
+            if (OneUiIconCache.TryGetValue(iconName, out var cached))
+            {
+                return cached;
+            }
+
+            var path = "MobilOflOneUI/Icons/" + iconName;
+            var sprite = Resources.Load<Sprite>(path);
+            if (sprite == null)
+            {
+                var texture = Resources.Load<Texture2D>(path);
+                if (texture != null)
+                {
+                    sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+                }
+            }
+
+            OneUiIconCache[iconName] = sprite;
+            return sprite;
+        }
+
+        public static Image CreateIcon(string name, Transform parent, string iconName, Color color, Vector2 size)
+        {
+            var rect = CreateUiRoot(name, parent);
+            rect.sizeDelta = size;
+            var image = rect.gameObject.AddComponent<Image>();
+            image.sprite = LoadOneUiIcon(iconName);
+            image.color = color;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            EnsureLayoutElement(rect, preferredWidth: size.x, preferredHeight: size.y);
+            return image;
+        }
+
+        public static void ApplyOneUiRounding(GameObject target, float radius = 14f)
+        {
+            var graphic = target.GetComponent<MaskableGraphic>();
+            if (graphic == null)
+            {
+                return;
+            }
+
+            var rounded = target.GetComponent<ImageRoundedMask>();
+            if (rounded == null)
+            {
+                rounded = target.AddComponent<ImageRoundedMask>();
+            }
+
+            rounded.radius = radius;
         }
 
         public static Outline AddOutline(GameObject target, Color color, Vector2 distance)
@@ -153,6 +219,7 @@ namespace MobilOfl.UI
         {
             var rect = CreateUiRoot(name, parent);
             var image = AddImage(rect.gameObject, backgroundColor);
+            ApplyOneUiRounding(rect.gameObject, 12f);
             AddOutline(rect.gameObject, new Color(0f, 0f, 0f, 0.6f), new Vector2(1f, -1f));
             AddShadow(rect.gameObject, new Color(0f, 0f, 0f, 0.32f), new Vector2(0f, -3f));
 
@@ -161,14 +228,15 @@ namespace MobilOfl.UI
 
             var colors = button.colors;
             colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1f, 1f, 1f, 0.96f);
-            colors.pressedColor = new Color(0.88f, 0.88f, 0.88f, 0.9f);
+            colors.highlightedColor = new Color(1.08f, 1.08f, 1.08f, 1f);
+            colors.pressedColor = new Color(0.78f, 0.9f, 1f, 0.95f);
             colors.disabledColor = new Color(1f, 1f, 1f, 0.45f);
             colors.fadeDuration = 0.08f;
             button.colors = colors;
 
             var labelText = CreateText("Label", rect, label, fontSize, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             Stretch(labelText.rectTransform);
+            RemoveContentSizeFitter(labelText.gameObject);
             return button;
         }
 
@@ -176,6 +244,7 @@ namespace MobilOfl.UI
         {
             var rect = CreateUiRoot(name, parent);
             AddImage(rect.gameObject, new Color(0.07f, 0.09f, 0.12f, 0.96f));
+            ApplyOneUiRounding(rect.gameObject, 12f);
             AddOutline(rect.gameObject, ModernGuiTheme.BorderColor, new Vector2(1f, -1f));
 
             var textArea = CreateUiRoot("TextArea", rect);
@@ -209,6 +278,7 @@ namespace MobilOfl.UI
         {
             var root = CreateUiRoot(name, parent);
             AddImage(root.gameObject, new Color(0.05f, 0.06f, 0.08f, 0.72f));
+            ApplyOneUiRounding(root.gameObject, 12f);
             AddOutline(root.gameObject, new Color(0f, 0f, 0f, 0.5f), new Vector2(1f, -1f));
 
             var viewport = CreateUiRoot("Viewport", root);
@@ -284,6 +354,24 @@ namespace MobilOfl.UI
             return fitter;
         }
 
+        public static void RemoveContentSizeFitter(GameObject target)
+        {
+            var fitter = target.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Object.Destroy(fitter);
+            }
+            else
+            {
+                Object.DestroyImmediate(fitter);
+            }
+        }
+
         public static LayoutElement EnsureLayoutElement(Transform target, float preferredWidth = -1f, float preferredHeight = -1f, float flexibleWidth = -1f, float flexibleHeight = -1f)
         {
             var element = target.GetComponent<LayoutElement>();
@@ -303,6 +391,7 @@ namespace MobilOfl.UI
         {
             var rect = CreateUiRoot(name, parent);
             AddImage(rect.gameObject, color);
+            ApplyOneUiRounding(rect.gameObject, 16f);
             AddOutline(rect.gameObject, ModernGuiTheme.BorderColor, new Vector2(1f, -1f));
             AddShadow(rect.gameObject, new Color(0f, 0f, 0f, 0.28f), new Vector2(0f, -4f));
 

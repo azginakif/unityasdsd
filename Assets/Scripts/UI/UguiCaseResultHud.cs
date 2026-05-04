@@ -1,4 +1,5 @@
 using MobilOfl.Gameplay;
+using MobilOfl.Online;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -109,7 +110,7 @@ namespace MobilOfl.UI
             panel.pivot = new Vector2(0.5f, 0.5f);
             panel.anchoredPosition = Vector2.zero;
             panel.sizeDelta = new Vector2(760f, 470f);
-            RuntimeUiFactory.AddVerticalLayout(panel, 12f, new RectOffset(24, 24, 24, 22), false);
+            RuntimeUiFactory.AddVerticalLayout(panel, 12f, new RectOffset(24, 24, 24, 22));
 
             var title = RuntimeUiFactory.CreateText("Title", panel, "VAKA COZULDU", 38, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             title.alignment = TextAnchor.MiddleCenter;
@@ -131,7 +132,7 @@ namespace MobilOfl.UI
             panel.pivot = new Vector2(0.5f, 1f);
             panel.anchoredPosition = new Vector2(0f, -180f);
             panel.sizeDelta = new Vector2(600f, 112f);
-            RuntimeUiFactory.AddVerticalLayout(panel, 4f, new RectOffset(18, 18, 16, 12), false);
+            RuntimeUiFactory.AddVerticalLayout(panel, 4f, new RectOffset(18, 18, 16, 12));
             _warningText = RuntimeUiFactory.CreateText("WarningText", panel, string.Empty, 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             _warningText.alignment = TextAnchor.MiddleCenter;
             _warningGroup = panel.gameObject.AddComponent<CanvasGroup>();
@@ -184,6 +185,7 @@ namespace MobilOfl.UI
                     _successStatsText.text =
                         $"Toplanan delil: {session.CollectedEvidenceIds.Count}\n" +
                         $"Kritik delil: {session.CollectedCriticalEvidenceCount}/{session.TotalCriticalEvidenceCount}\n" +
+                        $"Cikarim: {session.InferenceHistory.Count}\n" +
                         $"Gorusulen NPC: {session.InterviewedNpcCount}\n" +
                         $"Gecen sure: {FormatElapsedTime(session.ElapsedCaseTimeSeconds)}";
                 }
@@ -221,7 +223,7 @@ namespace MobilOfl.UI
 
         private void DisableLegacy()
         {
-            var legacy = Object.FindFirstObjectByType<CaseResultHud>();
+            var legacy = Object.FindAnyObjectByType<CaseResultHud>();
             if (legacy != null)
             {
                 legacy.enabled = false;

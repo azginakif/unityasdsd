@@ -33,6 +33,8 @@ namespace MobilOfl.Online
         public bool IsBusy { get; private set; }
         public int ConnectedClientCount => networkManager != null ? networkManager.ConnectedClientsIds.Count : 0;
         public bool IsOnlineSessionActive => networkManager != null && networkManager.IsListening;
+        public bool IsHost => networkManager != null && networkManager.IsHost;
+        public bool IsClient => networkManager != null && networkManager.IsClient;
         public bool UsesLegacyRelayFlow => true;
         public string BackendLabel => UsesLegacyRelayFlow ? CurrentBackendLabel : RecommendedBackendLabel;
         public string BackendUpgradeHint => "Unity 6 icin sonraki dogru adim: com.unity.services.multiplayer tabanli Session/MPS akisina gecis.";
@@ -302,7 +304,7 @@ namespace MobilOfl.Online
 
             if (networkManager == null)
             {
-                networkManager = UnityEngine.Object.FindFirstObjectByType<NetworkManager>();
+                networkManager = UnityEngine.Object.FindAnyObjectByType<NetworkManager>();
             }
 
             if (unityTransport == null && networkManager != null)
@@ -312,7 +314,7 @@ namespace MobilOfl.Online
 
             if (networkCaseState == null)
             {
-                networkCaseState = UnityEngine.Object.FindFirstObjectByType<NetworkCaseState>();
+                networkCaseState = UnityEngine.Object.FindAnyObjectByType<NetworkCaseState>();
             }
 
             if (offlineScenePlayerRoot == null)

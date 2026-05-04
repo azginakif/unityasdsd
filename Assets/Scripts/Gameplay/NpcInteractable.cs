@@ -54,6 +54,8 @@ namespace MobilOfl.Gameplay
                 !string.IsNullOrWhiteSpace(witnessEvidenceId) &&
                 (!collectWitnessEvidenceOnce || !witnessAlreadyCollected);
 
+            FaceInteractor(interactor);
+
             var networkCaseState = NetworkCaseState.Instance;
             if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
             {
@@ -85,6 +87,23 @@ namespace MobilOfl.Gameplay
             }
 
             return true;
+        }
+
+        private void FaceInteractor(GameObject interactor)
+        {
+            if (interactor == null)
+            {
+                return;
+            }
+
+            var lookDirection = interactor.transform.position - transform.position;
+            lookDirection.y = 0f;
+            if (lookDirection.sqrMagnitude < 0.001f)
+            {
+                return;
+            }
+
+            transform.rotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
         }
     }
 }

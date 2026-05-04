@@ -86,14 +86,14 @@ namespace MobilOfl.UI
             card.anchorMin = new Vector2(1f, 1f);
             card.anchorMax = new Vector2(1f, 1f);
             card.pivot = new Vector2(1f, 1f);
-            card.anchoredPosition = new Vector2(-18f, -156f);
-            card.sizeDelta = new Vector2(252f, 252f);
-            RuntimeUiFactory.AddVerticalLayout(card, 4f, new RectOffset(12, 12, 12, 10), false);
-            RuntimeUiFactory.CreateText("Title", card, "KAMPUS HARITASI", 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _zoneText = RuntimeUiFactory.CreateText("Zone", card, string.Empty, 12, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            card.anchoredPosition = new Vector2(-18f, -124f);
+            card.sizeDelta = new Vector2(214f, 188f);
+            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(10, 10, 11, 8));
+            RuntimeUiFactory.CreateText("Title", card, "HARITA", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _zoneText = RuntimeUiFactory.CreateText("Zone", card, string.Empty, 11, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
 
             _mapRect = RuntimeUiFactory.CreateUiRoot("Map", card);
-            RuntimeUiFactory.EnsureLayoutElement(_mapRect, preferredHeight: 174f);
+            RuntimeUiFactory.EnsureLayoutElement(_mapRect, preferredHeight: 124f);
             RuntimeUiFactory.AddImage(_mapRect.gameObject, new Color(0.06f, 0.09f, 0.12f, 0.96f));
             RuntimeUiFactory.AddOutline(_mapRect.gameObject, new Color(0f, 0f, 0f, 0.45f), new Vector2(1f, -1f));
             BuildStaticMap(_mapRect);
@@ -148,7 +148,7 @@ namespace MobilOfl.UI
 
         private void DrawMarkers()
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -160,7 +160,7 @@ namespace MobilOfl.UI
                 DrawPoint(evidence.transform.position, evidence.MarkerColor, 8f);
             }
 
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -216,7 +216,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
             for (var i = 0; i < avatars.Length; i++)
             {
                 if (avatars[i] != null && avatars[i].IsOwner)
@@ -235,7 +235,7 @@ namespace MobilOfl.UI
 
         private void DisableLegacy()
         {
-            var legacy = Object.FindFirstObjectByType<SchoolMinimapHud>();
+            var legacy = Object.FindAnyObjectByType<SchoolMinimapHud>();
             if (legacy != null)
             {
                 legacy.enabled = false;

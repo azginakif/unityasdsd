@@ -81,7 +81,7 @@ namespace MobilOfl.UI
 
         private void DrawMarkers(Rect mapRect)
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -93,7 +93,7 @@ namespace MobilOfl.UI
                 DrawMarker(mapRect, evidence.transform.position, evidence.MarkerColor, 7f);
             }
 
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -154,7 +154,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
             for (var i = 0; i < avatars.Length; i++)
             {
                 if (avatars[i] != null && avatars[i].IsOwner)

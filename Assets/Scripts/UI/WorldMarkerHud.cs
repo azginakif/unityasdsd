@@ -31,7 +31,7 @@ namespace MobilOfl.UI
 
         private void DrawEvidenceMarkers()
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -46,7 +46,7 @@ namespace MobilOfl.UI
 
         private void DrawNpcMarkers()
         {
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -75,11 +75,26 @@ namespace MobilOfl.UI
             }
 
             var screen = targetCamera.WorldToScreenPoint(worldPosition);
-            var rect = new Rect(screen.x - 90f, Screen.height - screen.y - 16f, 180f, 30f);
+            var markerText = BuildMarkerText(label, distance);
+            var width = Mathf.Clamp(markerText.Length * 8.5f + 24f, 156f, 260f);
+            var x = Mathf.Clamp(screen.x - width * 0.5f, 12f, Screen.width - width - 12f);
+            var y = Mathf.Clamp(Screen.height - screen.y - 16f, 12f, Screen.height - 42f);
+            var rect = new Rect(x, y, width, 30f);
 
             ModernGuiTheme.DrawRect(new Rect(rect.x, rect.y, rect.width, rect.height), new Color(0.05f, 0.08f, 0.11f, 0.84f));
             ModernGuiTheme.DrawRect(new Rect(rect.x, rect.y, 4f, rect.height), color);
-            GUI.Label(rect, $"{label}  [{distance:0}m]", _markerStyle);
+            GUI.Label(rect, markerText, _markerStyle);
+        }
+
+        private static string BuildMarkerText(string label, float distance)
+        {
+            var safeLabel = string.IsNullOrWhiteSpace(label) ? "Hedef" : label.Trim();
+            if (safeLabel.Length > 22)
+            {
+                safeLabel = safeLabel.Substring(0, 19).TrimEnd() + "...";
+            }
+
+            return $"{safeLabel} [{distance:0}m]";
         }
 
         private void EnsureCamera()
@@ -95,7 +110,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
             for (var i = 0; i < cameras.Length; i++)
             {
                 if (cameras[i] != null && cameras[i].isActiveAndEnabled)
@@ -114,6 +129,8 @@ namespace MobilOfl.UI
             }
 
             _markerStyle = ModernGuiTheme.CreateLabelStyle(13, true, true, ModernGuiTheme.TextColor);
+            _markerStyle.wordWrap = false;
+            _markerStyle.clipping = TextClipping.Clip;
         }
     }
 }

@@ -9,6 +9,8 @@ namespace MobilOfl.Online
     [RequireComponent(typeof(NetworkObject))]
     public class NetworkPlayerAvatar : NetworkBehaviour
     {
+        private const int LocalPlayerVisualLayer = 8;
+
         private readonly NetworkVariable<FixedString64Bytes> _displayName = new NetworkVariable<FixedString64Bytes>();
 
         [SerializeField] private PrototypeFirstPersonController movementController;
@@ -85,6 +87,10 @@ namespace MobilOfl.Online
             {
                 playerCamera.enabled = ownerActive;
                 playerCamera.tag = ownerActive ? "MainCamera" : "Untagged";
+                if (ownerActive)
+                {
+                    playerCamera.cullingMask &= ~(1 << LocalPlayerVisualLayer);
+                }
             }
 
             if (audioListener != null)
@@ -104,7 +110,8 @@ namespace MobilOfl.Online
                     continue;
                 }
 
-                bodyRenderer.enabled = !ownerActive;
+                bodyRenderer.enabled = true;
+                bodyRenderer.gameObject.layer = ownerActive ? LocalPlayerVisualLayer : 0;
             }
         }
 

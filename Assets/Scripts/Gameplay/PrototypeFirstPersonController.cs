@@ -11,6 +11,8 @@ namespace MobilOfl.Gameplay
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private float walkSpeed = 4.5f;
         [SerializeField] private float sprintSpeed = 6.5f;
+        [SerializeField] private bool allowJump;
+        [SerializeField] private bool allowCrouch;
         [SerializeField] private float jumpHeight = 1.1f;
         [SerializeField] private float gravity = -20f;
         [SerializeField] private float lookSensitivity = 2f;
@@ -52,6 +54,11 @@ namespace MobilOfl.Gameplay
         public float SprintStamina01 => _sprintStamina;
         public bool IsSprinting => _isSprinting;
         public bool IsCrouching => _isCrouching;
+        public float LookSensitivity
+        {
+            get => lookSensitivity;
+            set => lookSensitivity = Mathf.Clamp(value, 0.6f, 4.5f);
+        }
 
         public void RestoreSprintStamina(float amount)
         {
@@ -188,8 +195,9 @@ namespace MobilOfl.Gameplay
             var speed = _isCrouching ? crouchSpeed : (isSprinting ? sprintSpeed : walkSpeed);
             var move = transform.TransformDirection(moveInput) * speed;
             var jumpPressed =
-                (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||
-                (mobileJumpButton != null && mobileJumpButton.ConsumeWasPressedThisFrame());
+                allowJump &&
+                ((Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||
+                (mobileJumpButton != null && mobileJumpButton.ConsumeWasPressedThisFrame()));
 
             if (_characterController.isGrounded)
             {
@@ -215,6 +223,12 @@ namespace MobilOfl.Gameplay
 
         private void UpdateStance()
         {
+            if (!allowCrouch)
+            {
+                _isCrouching = false;
+                return;
+            }
+
             var crouchPressed =
                 (Keyboard.current != null && Keyboard.current[crouchKey].wasPressedThisFrame) ||
                 (mobileCrouchButton != null && mobileCrouchButton.ConsumeWasPressedThisFrame());

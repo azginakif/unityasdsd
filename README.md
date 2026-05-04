@@ -31,6 +31,9 @@ Detayli notlar icin:
 - [SETUP_MVP_TR.md](SETUP_MVP_TR.md)
 - [GAME_CONCEPT_TR.md](GAME_CONCEPT_TR.md)
 - [UI_TEMPLATE_REFERENCE.md](UI_TEMPLATE_REFERENCE.md)
+- [RELEASE_READINESS_TR.md](RELEASE_READINESS_TR.md)
+- [PRODUCTION_GAPS_TR.md](PRODUCTION_GAPS_TR.md)
+- [CREDITS.md](CREDITS.md)
 
 ## Klasorler
 - `Assets/Scripts/Case`: vaka veri yapilari

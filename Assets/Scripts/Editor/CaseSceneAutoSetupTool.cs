@@ -14,6 +14,7 @@ using UnityEngine.UI;
 
 namespace MobilOfl.EditorTools
 {
+    [InitializeOnLoad]
     public static class CaseSceneAutoSetupTool
     {
         private const string CaseAssetFolder = "Assets/Data/Cases";
@@ -21,6 +22,13 @@ namespace MobilOfl.EditorTools
         private const string EvidenceRootName = "SampleEvidenceRoot";
         private const string NpcRootName = "SampleNpcRoot";
         private const string PlayerRootName = "Player";
+        private const string PlayerAvatarVisualName = "PlayerAvatarVisual";
+        private const string LocalPlayerVisualLayerName = "LocalPlayerVisual";
+        private const int LocalPlayerVisualLayer = 8;
+        private const float ActorGroundY = 0.05f;
+        private const float PlayerEyeHeight = 1.62f;
+        private const float ActorHeight = 1.8f;
+        private const float ActorRadius = 0.35f;
         private const string MobileControlsCanvasName = "MobileControlsCanvas";
         private const string SchoolBlockRootName = "SampleSchoolBlock";
         private const string AtmosphereRootName = "SampleAtmosphere";
@@ -32,6 +40,13 @@ namespace MobilOfl.EditorTools
         private const string RecommendedAndroidAppId = "com.mobilofl.prototype";
         private const string RecommendedIosAppId = "com.mobilofl.prototype";
         private const string RecommendedStandaloneAppId = "com.mobilofl.prototype";
+        private static bool _sceneVisualRepairQueued;
+
+        static CaseSceneAutoSetupTool()
+        {
+            QueueAutoRepairMissingSceneCharacterVisuals();
+            EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
+        }
 
         [MenuItem("Mobil OFL/Setup/Auto Setup Investigation Scene")]
         public static void AutoSetupInvestigationScene()
@@ -47,6 +62,7 @@ namespace MobilOfl.EditorTools
             EnsureSceneInBuildSettings(activeScene.path);
             EnsureFolder("Assets/Data");
             EnsureFolder(CaseAssetFolder);
+            SchoolBoyCharacterSetupTool.SetupSchoolBoyCharacterAssets();
 
             var caseDefinition = LoadOrCreateCaseDefinition();
             PopulateCaseDefinition(caseDefinition);
@@ -85,6 +101,136 @@ namespace MobilOfl.EditorTools
                 "Mobil OFL",
                 "Vaka asset'i olusturuldu, sahne kuruldu ve onerilen proje ayarlari uygulandi.",
                 "Tamam");
+        }
+
+        [MenuItem("Mobil OFL/Characters/Apply School Boy To Scene Actors")]
+        public static void ApplySchoolBoyToSceneActors()
+        {
+            if (ApplySchoolBoyToSceneActorsInternal(true))
+            {
+                EditorUtility.DisplayDialog("Mobil OFL", "School boy karakteri player/NPC aktorlerine uygulandi.", "Tamam");
+            }
+        }
+
+        public static bool ApplySchoolBoyToSceneActorsInternal()
+        {
+            return ApplySchoolBoyToSceneActorsInternal(true);
+        }
+
+        private static bool ApplySchoolBoyToSceneActorsInternal(bool showDialogOnFailure)
+        {
+            var prefab = SchoolBoyCharacterSetupTool.SetupSchoolBoyCharacterAssets();
+            if (prefab == null)
+            {
+                if (showDialogOnFailure)
+                {
+                    EditorUtility.DisplayDialog("Mobil OFL", "School boy prefab hazirlanamadi. Assets/karakter/source klasorunu kontrol et.", "Tamam");
+                }
+
+                return false;
+            }
+
+            EnsureLocalPlayerVisualLayer();
+
+            var player = GameObject.Find(PlayerRootName);
+            if (player != null)
+            {
+                NormalizePlayerActor(player.transform, Camera.main);
+                EnsurePlayerCharacterVisual(player.transform, Camera.main);
+            }
+
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
+            for (var i = 0; i < npcs.Length; i++)
+            {
+                var npc = npcs[i];
+                if (npc == null)
+                {
+                    continue;
+                }
+
+                NormalizeNpcActor(npc.transform);
+                ReplaceCharacterVisual(npc.transform, npc.name + "_Visual", Color.white);
+            }
+
+            var activeScene = SceneManager.GetActiveScene();
+            if (activeScene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(activeScene);
+                if (!string.IsNullOrWhiteSpace(activeScene.path))
+                {
+                    EditorSceneManager.SaveScene(activeScene);
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            return true;
+        }
+
+        private static void QueueAutoRepairMissingSceneCharacterVisuals()
+        {
+            if (_sceneVisualRepairQueued)
+            {
+                return;
+            }
+
+            _sceneVisualRepairQueued = true;
+            EditorApplication.delayCall += () =>
+            {
+                _sceneVisualRepairQueued = false;
+                AutoRepairMissingSceneCharacterVisuals();
+            };
+        }
+
+        private static void HandlePlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.EnteredEditMode)
+            {
+                QueueAutoRepairMissingSceneCharacterVisuals();
+            }
+        }
+
+        private static void AutoRepairMissingSceneCharacterVisuals()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling)
+            {
+                return;
+            }
+
+            var activeScene = SceneManager.GetActiveScene();
+            if (!activeScene.IsValid() || string.IsNullOrWhiteSpace(activeScene.path))
+            {
+                return;
+            }
+
+            var hasBrokenVisual = false;
+            var player = GameObject.Find(PlayerRootName);
+            if (player != null)
+            {
+                hasBrokenVisual |= ActorNeedsNormalization(player.transform);
+                hasBrokenVisual |= player.GetComponentInChildren<CharacterMovementAnimator>(true) == null;
+            }
+
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
+            for (var i = 0; i < npcs.Length; i++)
+            {
+                if (npcs[i] == null)
+                {
+                    continue;
+                }
+
+                hasBrokenVisual |= ActorNeedsNormalization(npcs[i].transform);
+                hasBrokenVisual |= npcs[i].GetComponentInChildren<CharacterMovementAnimator>(true) == null;
+            }
+
+            if (!hasBrokenVisual)
+            {
+                return;
+            }
+
+            if (ApplySchoolBoyToSceneActorsInternal(false))
+            {
+                Debug.Log("[Mobil OFL] Aktif sahnede eksik karakter gorselleri otomatik uygulandi.");
+            }
         }
 
         [MenuItem("Mobil OFL/Setup/Apply Recommended Mobile Project Settings")]
@@ -138,9 +284,9 @@ namespace MobilOfl.EditorTools
             PlayerSettings.bundleVersion = RecommendedBundleVersion;
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.runInBackground = true;
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, RecommendedAndroidAppId);
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, RecommendedIosAppId);
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Standalone, RecommendedStandaloneAppId);
+            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Android, RecommendedAndroidAppId);
+            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.iOS, RecommendedIosAppId);
+            PlayerSettings.SetApplicationIdentifier(UnityEditor.Build.NamedBuildTarget.Standalone, RecommendedStandaloneAppId);
         }
 
         private static void EnsureSceneInBuildSettings(string scenePath)
@@ -339,7 +485,7 @@ namespace MobilOfl.EditorTools
                 playerRoot = new GameObject(PlayerRootName);
             }
 
-            playerRoot.transform.position = new Vector3(0f, 1f, -8f);
+            playerRoot.transform.position = new Vector3(0f, ActorGroundY, -8f);
             playerRoot.transform.rotation = Quaternion.identity;
 
             var controller = playerRoot.GetComponent<CharacterController>();
@@ -348,9 +494,9 @@ namespace MobilOfl.EditorTools
                 controller = playerRoot.AddComponent<CharacterController>();
             }
 
-            controller.height = 1.8f;
-            controller.radius = 0.35f;
-            controller.center = new Vector3(0f, 0.9f, 0f);
+            controller.height = ActorHeight;
+            controller.radius = ActorRadius;
+            controller.center = new Vector3(0f, ActorHeight * 0.5f, 0f);
             controller.stepOffset = 0.3f;
 
             var movement = playerRoot.GetComponent<PrototypeFirstPersonController>();
@@ -374,7 +520,7 @@ namespace MobilOfl.EditorTools
             var camera = Camera.main;
             if (camera == null)
             {
-                camera = Object.FindFirstObjectByType<Camera>();
+                camera = Object.FindAnyObjectByType<Camera>();
             }
 
             if (camera == null)
@@ -387,7 +533,7 @@ namespace MobilOfl.EditorTools
             camera.name = "Main Camera";
             camera.tag = "MainCamera";
             camera.transform.SetParent(playerRoot.transform);
-            camera.transform.localPosition = new Vector3(0f, 0.75f, 0f);
+            camera.transform.localPosition = new Vector3(0f, PlayerEyeHeight, 0f);
             camera.transform.localRotation = Quaternion.identity;
 
             if (camera.GetComponent<AudioListener>() == null)
@@ -442,6 +588,8 @@ namespace MobilOfl.EditorTools
             stealthSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(stealth);
 
+            EnsurePlayerCharacterVisual(playerRoot.transform, camera);
+
             return new PlayerSetup
             {
                 Root = playerRoot,
@@ -489,6 +637,7 @@ namespace MobilOfl.EditorTools
 
             var canvasRect = canvasObject.GetComponent<RectTransform>();
             EnsureMobileHudChrome(canvasRect);
+            DisableMobileChrome(canvasRect);
             var joystick = EnsureJoystick(canvasRect);
             var lookArea = EnsureLookArea(canvasRect);
             var sprintButton = EnsureMobileButton(
@@ -496,57 +645,43 @@ namespace MobilOfl.EditorTools
                 "SprintButton",
                 "KOS",
                 new Vector2(1f, 0f),
-                new Vector2(-332f, 182f),
-                new Vector2(158f, 158f),
-                new Color(0.15f, 0.28f, 0.36f, 0.82f));
-            var jumpButton = EnsureMobileButton(
-                canvasRect,
-                "JumpButton",
-                "ZIPLA",
-                new Vector2(1f, 0f),
-                new Vector2(-166f, 322f),
-                new Vector2(150f, 150f),
-                new Color(0.36f, 0.27f, 0.12f, 0.86f));
+                new Vector2(-214f, 118f),
+                new Vector2(88f, 88f),
+                new Color(0.12f, 0.2f, 0.25f, 0.42f));
             var interactButton = EnsureMobileButton(
                 canvasRect,
                 "InteractButton",
                 "AL",
                 new Vector2(1f, 0f),
-                new Vector2(-152f, 150f),
-                new Vector2(170f, 170f),
-                new Color(0.11f, 0.34f, 0.31f, 0.9f));
-            var crouchButton = EnsureMobileButton(
-                canvasRect,
-                "CrouchButton",
-                "EGIL",
-                new Vector2(1f, 0f),
-                new Vector2(-338f, 350f),
-                new Vector2(150f, 150f),
-                new Color(0.18f, 0.19f, 0.11f, 0.88f));
+                new Vector2(-100f, 154f),
+                new Vector2(104f, 104f),
+                new Color(0.08f, 0.3f, 0.25f, 0.5f));
+            DisableMobileButton(canvasRect, "JumpButton");
+            DisableMobileButton(canvasRect, "CrouchButton");
             var scanButton = EnsureMobileButton(
                 canvasRect,
                 "ScanButton",
                 "TARA",
-                new Vector2(1f, 1f),
-                new Vector2(-404f, -104f),
-                new Vector2(184f, 92f),
-                new Color(0.08f, 0.28f, 0.31f, 0.88f));
+                new Vector2(1f, 0f),
+                new Vector2(-214f, 228f),
+                new Vector2(92f, 58f),
+                new Color(0.08f, 0.25f, 0.29f, 0.4f));
             var notebookButton = EnsureMobileButton(
                 canvasRect,
                 "NotebookButton",
                 "DOSYA",
-                new Vector2(1f, 1f),
-                new Vector2(-172f, -94f),
-                new Vector2(216f, 92f),
-                new Color(0.11f, 0.13f, 0.16f, 0.88f));
+                new Vector2(1f, 0f),
+                new Vector2(-100f, 272f),
+                new Vector2(100f, 58f),
+                new Color(0.11f, 0.1f, 0.12f, 0.44f));
             EnsureMobileRuntimeOverlay(canvasObject, playerSetup.Interaction);
 
             var movementSerializedObject = new SerializedObject(playerSetup.Movement);
             movementSerializedObject.FindProperty("mobileMoveJoystick").objectReferenceValue = joystick;
             movementSerializedObject.FindProperty("mobileLookArea").objectReferenceValue = lookArea;
             movementSerializedObject.FindProperty("mobileSprintButton").objectReferenceValue = sprintButton;
-            movementSerializedObject.FindProperty("mobileJumpButton").objectReferenceValue = jumpButton;
-            movementSerializedObject.FindProperty("mobileCrouchButton").objectReferenceValue = crouchButton;
+            movementSerializedObject.FindProperty("mobileJumpButton").objectReferenceValue = null;
+            movementSerializedObject.FindProperty("mobileCrouchButton").objectReferenceValue = null;
             movementSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(playerSetup.Movement);
 
@@ -561,6 +696,24 @@ namespace MobilOfl.EditorTools
             EditorUtility.SetDirty(playerSetup.Interaction);
 
             return notebookButton;
+        }
+
+        private static void DisableMobileButton(RectTransform canvasRect, string buttonName)
+        {
+            var existing = canvasRect.Find(buttonName);
+            if (existing != null)
+            {
+                existing.gameObject.SetActive(false);
+            }
+        }
+
+        private static void DisableMobileChrome(RectTransform canvasRect)
+        {
+            DisableMobileButton(canvasRect, "MobileHudHeader");
+            DisableMobileButton(canvasRect, "MobileObjectivePanel");
+            DisableMobileButton(canvasRect, "MoveHintPanel");
+            DisableMobileButton(canvasRect, "LookHintPanel");
+            DisableMobileButton(canvasRect, "MobileContextPanel");
         }
 
         private static void EnsureMobileHudChrome(RectTransform canvasRect)
@@ -678,6 +831,8 @@ namespace MobilOfl.EditorTools
             serializedObject.FindProperty("objectiveText").objectReferenceValue = objectiveText != null ? objectiveText.GetComponent<Text>() : null;
             serializedObject.FindProperty("contextText").objectReferenceValue = contextText != null ? contextText.GetComponent<Text>() : null;
             serializedObject.FindProperty("contextGroup").objectReferenceValue = contextCanvasGroup;
+            serializedObject.FindProperty("showInEditor").boolValue = true;
+            serializedObject.FindProperty("showOnDesktop").boolValue = false;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(overlay);
         }
@@ -709,18 +864,18 @@ namespace MobilOfl.EditorTools
 
         private static MobileJoystick EnsureJoystick(RectTransform canvasRect)
         {
-            var background = EnsureUiRect(canvasRect, "MoveJoystick", new Vector2(0f, 0f), new Vector2(190f, 178f), new Vector2(236f, 236f));
-            var backgroundImage = EnsureImage(background.gameObject, new Color(0.12f, 0.18f, 0.22f, 0.45f));
+            var background = EnsureUiRect(canvasRect, "MoveJoystick", new Vector2(0f, 0f), new Vector2(128f, 130f), new Vector2(150f, 150f));
+            var backgroundImage = EnsureImage(background.gameObject, new Color(0.12f, 0.18f, 0.22f, 0.24f));
             backgroundImage.raycastTarget = true;
             EnsureOutline(background.gameObject, new Color(0.42f, 0.37f, 0.26f, 0.84f), new Vector2(1f, -1f));
             EnsureShadow(background.gameObject, new Color(0f, 0f, 0f, 0.28f), new Vector2(0f, -4f));
 
-            var pulseRing = EnsureUiRect(background, "PulseRing", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(210f, 210f));
-            var pulseRingImage = EnsureImage(pulseRing.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.18f));
+            var pulseRing = EnsureUiRect(background, "PulseRing", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(124f, 124f));
+            var pulseRingImage = EnsureImage(pulseRing.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.1f));
             pulseRingImage.raycastTarget = false;
             EnsureOutline(pulseRing.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.44f), new Vector2(1f, -1f));
 
-            var innerPlate = EnsureUiRect(background, "InnerPlate", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(168f, 168f));
+            var innerPlate = EnsureUiRect(background, "InnerPlate", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(96f, 96f));
             EnsureImage(innerPlate.gameObject, new Color(0.08f, 0.11f, 0.14f, 0.7f)).raycastTarget = false;
 
             var joystick = background.GetComponent<MobileJoystick>();
@@ -729,13 +884,13 @@ namespace MobilOfl.EditorTools
                 joystick = background.gameObject.AddComponent<MobileJoystick>();
             }
 
-            var handle = EnsureUiRect(background, "Handle", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(95f, 95f));
-            var handleImage = EnsureImage(handle.gameObject, new Color(0.9f, 0.95f, 1f, 0.82f));
+            var handle = EnsureUiRect(background, "Handle", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(58f, 58f));
+            var handleImage = EnsureImage(handle.gameObject, new Color(0.9f, 0.95f, 1f, 0.58f));
             handleImage.raycastTarget = false;
             EnsureOutline(handle.gameObject, new Color(0.05f, 0.06f, 0.08f, 0.7f), new Vector2(1f, -1f));
             EnsureShadow(handle.gameObject, new Color(0f, 0f, 0f, 0.26f), new Vector2(0f, -3f));
 
-            var centerDot = EnsureUiRect(handle, "CenterDot", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18f, 18f));
+            var centerDot = EnsureUiRect(handle, "CenterDot", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(12f, 12f));
             EnsureImage(centerDot.gameObject, new Color(0.12f, 0.16f, 0.18f, 0.9f)).raycastTarget = false;
 
             var serializedObject = new SerializedObject(joystick);
@@ -744,7 +899,7 @@ namespace MobilOfl.EditorTools
             serializedObject.FindProperty("backgroundImage").objectReferenceValue = backgroundImage;
             serializedObject.FindProperty("handleImage").objectReferenceValue = handleImage;
             serializedObject.FindProperty("pulseRingImage").objectReferenceValue = pulseRingImage;
-            serializedObject.FindProperty("handleRange").floatValue = 72f;
+            serializedObject.FindProperty("handleRange").floatValue = 44f;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(joystick);
 
@@ -753,7 +908,7 @@ namespace MobilOfl.EditorTools
 
         private static MobileLookArea EnsureLookArea(RectTransform canvasRect)
         {
-            var lookAreaRect = EnsureUiRect(canvasRect, "LookArea", new Vector2(1f, 0.5f), new Vector2(-468f, 0f), new Vector2(936f, 1080f));
+            var lookAreaRect = EnsureUiRect(canvasRect, "LookArea", new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(960f, 1080f));
             var image = EnsureImage(lookAreaRect.gameObject, new Color(0.07f, 0.12f, 0.13f, 0.015f));
             image.raycastTarget = true;
             EnsureOutline(lookAreaRect.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.12f), new Vector2(1f, -1f));
@@ -784,11 +939,14 @@ namespace MobilOfl.EditorTools
             var buttonRect = EnsureUiRect(canvasRect, name, anchor, anchoredPosition, size);
             var image = EnsureImage(buttonRect.gameObject, color);
             image.raycastTarget = true;
+            RuntimeUiFactory.ApplyOneUiRounding(buttonRect.gameObject, Mathf.Min(size.x, size.y) * 0.42f);
             EnsureOutline(buttonRect.gameObject, new Color(0.42f, 0.37f, 0.26f, 0.82f), new Vector2(1f, -1f));
             EnsureShadow(buttonRect.gameObject, new Color(0f, 0f, 0f, 0.3f), new Vector2(0f, -4f));
+            SoftenGraphicEffects(buttonRect.gameObject, 0.14f);
 
             var accent = EnsureUiRect(buttonRect, "Accent", new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(size.x * 0.72f, 4f));
             EnsureImage(accent.gameObject, new Color(0.88f, 0.71f, 0.31f, 0.88f)).raycastTarget = false;
+            accent.gameObject.SetActive(false);
 
             var contentRect = EnsureUiRect(buttonRect, "Content", new Vector2(0.5f, 0.5f), Vector2.zero, size);
             contentRect.localScale = Vector3.one;
@@ -799,7 +957,7 @@ namespace MobilOfl.EditorTools
                 mobileButton = buttonRect.gameObject.AddComponent<MobileButton>();
             }
 
-            var text = EnsureText(contentRect, "Label", label, size.y >= 160f ? 28 : 24, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            var text = EnsureText(contentRect, "Label", label, size.y >= 100f ? 23 : 17, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
             text.rectTransform.anchorMin = new Vector2(0f, 0f);
             text.rectTransform.anchorMax = new Vector2(1f, 1f);
             text.rectTransform.offsetMin = new Vector2(8f, 8f);
@@ -811,17 +969,29 @@ namespace MobilOfl.EditorTools
             subLabel.rectTransform.pivot = new Vector2(0.5f, 0f);
             subLabel.rectTransform.anchoredPosition = new Vector2(0f, 10f);
             subLabel.rectTransform.sizeDelta = new Vector2(-12f, 16f);
+            subLabel.gameObject.SetActive(false);
 
             var serializedObject = new SerializedObject(mobileButton);
             serializedObject.FindProperty("background").objectReferenceValue = image;
             serializedObject.FindProperty("contentRoot").objectReferenceValue = contentRect;
             serializedObject.FindProperty("label").objectReferenceValue = text;
             serializedObject.FindProperty("idleColor").colorValue = color;
-            serializedObject.FindProperty("pressedColor").colorValue = Color.Lerp(color, new Color(0.26f, 0.76f, 0.72f, 1f), 0.55f);
+            serializedObject.FindProperty("pressedColor").colorValue = Color.Lerp(color, new Color(0.26f, 0.76f, 0.72f, 0.9f), 0.55f);
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(mobileButton);
 
             return mobileButton;
+        }
+
+        private static void SoftenGraphicEffects(GameObject target, float maxAlpha)
+        {
+            var effects = target.GetComponents<Shadow>();
+            for (var i = 0; i < effects.Length; i++)
+            {
+                var color = effects[i].effectColor;
+                color.a = Mathf.Min(color.a, maxAlpha);
+                effects[i].effectColor = color;
+            }
         }
 
         private static RectTransform EnsureUiRect(
@@ -1072,28 +1242,28 @@ namespace MobilOfl.EditorTools
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(hud);
 
-            var statusHud = Object.FindFirstObjectByType<CaseStatusHud>();
+            var statusHud = Object.FindAnyObjectByType<CaseStatusHud>();
             if (statusHud != null)
             {
                 statusHud.enabled = false;
                 EditorUtility.SetDirty(statusHud);
             }
 
-            var checklistHud = Object.FindFirstObjectByType<CaseChecklistHud>();
+            var checklistHud = Object.FindAnyObjectByType<CaseChecklistHud>();
             if (checklistHud != null)
             {
                 checklistHud.enabled = false;
                 EditorUtility.SetDirty(checklistHud);
             }
 
-            var waypointHud = Object.FindFirstObjectByType<InvestigationWaypointHud>();
+            var waypointHud = Object.FindAnyObjectByType<InvestigationWaypointHud>();
             if (waypointHud != null)
             {
                 waypointHud.enabled = false;
                 EditorUtility.SetDirty(waypointHud);
             }
 
-            var bannerHud = Object.FindFirstObjectByType<LocationBannerHud>();
+            var bannerHud = Object.FindAnyObjectByType<LocationBannerHud>();
             if (bannerHud != null)
             {
                 bannerHud.enabled = false;
@@ -1358,7 +1528,7 @@ namespace MobilOfl.EditorTools
 
         private static void EnsureDirectionalLight()
         {
-            var light = Object.FindFirstObjectByType<Light>();
+            var light = Object.FindAnyObjectByType<Light>();
             if (light != null && light.type == LightType.Directional)
             {
                 return;
@@ -1916,14 +2086,25 @@ namespace MobilOfl.EditorTools
             var npcObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             npcObject.name = displayName;
             npcObject.transform.SetParent(parent);
-            npcObject.transform.position = worldPosition;
-            npcObject.transform.localScale = new Vector3(0.8f, 1.2f, 0.8f);
+            npcObject.transform.position = new Vector3(worldPosition.x, ActorGroundY, worldPosition.z);
+            npcObject.transform.localScale = Vector3.one;
+
+            var capsule = npcObject.GetComponent<CapsuleCollider>();
+            if (capsule != null)
+            {
+                capsule.height = ActorHeight;
+                capsule.radius = ActorRadius;
+                capsule.center = new Vector3(0f, ActorHeight * 0.5f, 0f);
+            }
 
             var renderer = npcObject.GetComponent<Renderer>();
             if (renderer != null)
             {
                 renderer.sharedMaterial = CreatePreviewMaterial(displayName + "_Material", color);
+                renderer.enabled = false;
             }
+
+            CreateNpcCharacterVisual(npcObject.transform, displayName + "_Visual", color);
 
             var interactable = npcObject.GetComponent<NpcInteractable>();
             if (interactable == null)
@@ -1966,6 +2147,274 @@ namespace MobilOfl.EditorTools
             }
             patrolSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(patrol);
+        }
+
+        private static Renderer[] CreatePlaceholderCharacterVisual(Transform parent, string name, Color color)
+        {
+            var visualRoot = new GameObject(name);
+            visualRoot.transform.SetParent(parent, false);
+            visualRoot.transform.localPosition = Vector3.zero;
+
+            var material = CreatePreviewMaterial(name + "_Material", color);
+            var body = CreateVisualPrimitive(visualRoot.transform, "Body", PrimitiveType.Capsule, new Vector3(0f, 0.95f, 0f), new Vector3(0.58f, 0.82f, 0.58f), material);
+            var head = CreateVisualPrimitive(visualRoot.transform, "Head", PrimitiveType.Sphere, new Vector3(0f, 1.82f, 0f), new Vector3(0.42f, 0.42f, 0.42f), material);
+            var leftArm = CreateVisualPrimitive(visualRoot.transform, "LeftArm", PrimitiveType.Cylinder, new Vector3(-0.43f, 1.12f, 0f), new Vector3(0.09f, 0.48f, 0.09f), material);
+            var rightArm = CreateVisualPrimitive(visualRoot.transform, "RightArm", PrimitiveType.Cylinder, new Vector3(0.43f, 1.12f, 0f), new Vector3(0.09f, 0.48f, 0.09f), material);
+
+            var visual = visualRoot.AddComponent<PlaceholderCharacterVisual>();
+            var serializedObject = new SerializedObject(visual);
+            serializedObject.FindProperty("head").objectReferenceValue = head.transform;
+            serializedObject.FindProperty("body").objectReferenceValue = body.transform;
+            serializedObject.FindProperty("leftArm").objectReferenceValue = leftArm.transform;
+            serializedObject.FindProperty("rightArm").objectReferenceValue = rightArm.transform;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+
+            return new[]
+            {
+                body.GetComponent<Renderer>(),
+                head.GetComponent<Renderer>(),
+                leftArm.GetComponent<Renderer>(),
+                rightArm.GetComponent<Renderer>()
+            };
+        }
+
+        private static void NormalizePlayerActor(Transform playerRoot, Camera camera)
+        {
+            if (playerRoot == null)
+            {
+                return;
+            }
+
+            playerRoot.position = new Vector3(playerRoot.position.x, ActorGroundY, playerRoot.position.z);
+            playerRoot.localScale = Vector3.one;
+
+            var controller = playerRoot.GetComponent<CharacterController>();
+            if (controller != null)
+            {
+                controller.height = ActorHeight;
+                controller.radius = ActorRadius;
+                controller.center = new Vector3(0f, ActorHeight * 0.5f, 0f);
+                controller.stepOffset = 0.3f;
+                EditorUtility.SetDirty(controller);
+            }
+
+            if (camera != null && camera.transform.IsChildOf(playerRoot))
+            {
+                camera.transform.localPosition = new Vector3(0f, PlayerEyeHeight, 0f);
+                EditorUtility.SetDirty(camera.transform);
+            }
+
+            EditorUtility.SetDirty(playerRoot);
+        }
+
+        private static void NormalizeNpcActor(Transform npcRoot)
+        {
+            if (npcRoot == null)
+            {
+                return;
+            }
+
+            npcRoot.position = new Vector3(npcRoot.position.x, ActorGroundY, npcRoot.position.z);
+            npcRoot.localScale = Vector3.one;
+
+            var capsule = npcRoot.GetComponent<CapsuleCollider>();
+            if (capsule != null)
+            {
+                capsule.height = ActorHeight;
+                capsule.radius = ActorRadius;
+                capsule.center = new Vector3(0f, ActorHeight * 0.5f, 0f);
+                EditorUtility.SetDirty(capsule);
+            }
+
+            EditorUtility.SetDirty(npcRoot);
+        }
+
+        private static bool ActorNeedsNormalization(Transform actorRoot)
+        {
+            if (actorRoot == null)
+            {
+                return false;
+            }
+
+            if (Mathf.Abs(actorRoot.position.y - ActorGroundY) > 0.01f)
+            {
+                return true;
+            }
+
+            if ((actorRoot.localScale - Vector3.one).sqrMagnitude > 0.0001f)
+            {
+                return true;
+            }
+
+            var characterController = actorRoot.GetComponent<CharacterController>();
+            if (characterController != null)
+            {
+                return Mathf.Abs(characterController.height - ActorHeight) > 0.01f ||
+                       Mathf.Abs(characterController.radius - ActorRadius) > 0.01f ||
+                       (characterController.center - new Vector3(0f, ActorHeight * 0.5f, 0f)).sqrMagnitude > 0.0001f;
+            }
+
+            var capsule = actorRoot.GetComponent<CapsuleCollider>();
+            if (capsule == null)
+            {
+                return false;
+            }
+
+            return Mathf.Abs(capsule.height - ActorHeight) > 0.01f ||
+                   Mathf.Abs(capsule.radius - ActorRadius) > 0.01f ||
+                   (capsule.center - new Vector3(0f, ActorHeight * 0.5f, 0f)).sqrMagnitude > 0.0001f;
+        }
+
+        private static Renderer[] CreateNpcCharacterVisual(Transform parent, string name, Color fallbackColor)
+        {
+            return ReplaceCharacterVisual(parent, name, fallbackColor);
+        }
+
+        private static Renderer[] ReplaceCharacterVisual(Transform parent, string name, Color fallbackColor)
+        {
+            RemoveGeneratedCharacterVisuals(parent, name);
+
+            var prefab = SchoolBoyCharacterSetupTool.LoadCharacterPrefab();
+            if (prefab == null)
+            {
+                return CreatePlaceholderCharacterVisual(parent, name, fallbackColor);
+            }
+
+            var instance = PrefabUtility.InstantiatePrefab(prefab, parent) as GameObject;
+            if (instance == null)
+            {
+                return CreatePlaceholderCharacterVisual(parent, name, fallbackColor);
+            }
+
+            instance.name = name;
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            instance.transform.localScale = Vector3.one;
+            return instance.GetComponentsInChildren<Renderer>(true);
+        }
+
+        private static void EnsurePlayerCharacterVisual(Transform playerRoot, Camera camera)
+        {
+            if (playerRoot == null)
+            {
+                return;
+            }
+
+            EnsureLocalPlayerVisualLayer();
+            RemoveGeneratedCharacterVisuals(playerRoot, PlayerAvatarVisualName);
+
+            var prefab = SchoolBoyCharacterSetupTool.LoadCharacterPrefab();
+            if (prefab == null)
+            {
+                return;
+            }
+
+            var instance = PrefabUtility.InstantiatePrefab(prefab, playerRoot) as GameObject;
+            if (instance == null)
+            {
+                return;
+            }
+
+            instance.name = PlayerAvatarVisualName;
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            instance.transform.localScale = Vector3.one;
+            SetLayerRecursively(instance.transform, LocalPlayerVisualLayer);
+
+            if (camera != null)
+            {
+                camera.cullingMask &= ~(1 << LocalPlayerVisualLayer);
+                EditorUtility.SetDirty(camera);
+            }
+        }
+
+        private static void RemoveGeneratedCharacterVisuals(Transform parent, string expectedName)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            for (var i = parent.childCount - 1; i >= 0; i--)
+            {
+                var child = parent.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                var shouldRemove =
+                    child.name == expectedName ||
+                    child.name == PlayerAvatarVisualName ||
+                    child.name.EndsWith("_Visual", System.StringComparison.OrdinalIgnoreCase) ||
+                    child.GetComponent<CharacterMovementAnimator>() != null ||
+                    child.GetComponent<PlaceholderCharacterVisual>() != null;
+
+                if (shouldRemove)
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
+            }
+        }
+
+        private static void SetLayerRecursively(Transform root, int layer)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            root.gameObject.layer = layer;
+            for (var i = 0; i < root.childCount; i++)
+            {
+                SetLayerRecursively(root.GetChild(i), layer);
+            }
+        }
+
+        private static void EnsureLocalPlayerVisualLayer()
+        {
+            var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+            var layers = tagManager.FindProperty("layers");
+            if (layers == null || layers.arraySize <= LocalPlayerVisualLayer)
+            {
+                return;
+            }
+
+            var layerProperty = layers.GetArrayElementAtIndex(LocalPlayerVisualLayer);
+            if (string.IsNullOrWhiteSpace(layerProperty.stringValue))
+            {
+                layerProperty.stringValue = LocalPlayerVisualLayerName;
+                tagManager.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        private static GameObject CreateVisualPrimitive(
+            Transform parent,
+            string name,
+            PrimitiveType primitiveType,
+            Vector3 localPosition,
+            Vector3 localScale,
+            Material material)
+        {
+            var primitive = GameObject.CreatePrimitive(primitiveType);
+            primitive.name = name;
+            primitive.transform.SetParent(parent, false);
+            primitive.transform.localPosition = localPosition;
+            primitive.transform.localScale = localScale;
+
+            var collider = primitive.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Object.DestroyImmediate(collider);
+            }
+
+            var renderer = primitive.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = material;
+            }
+
+            return primitive;
         }
 
         private static void CreateEvidenceObject(

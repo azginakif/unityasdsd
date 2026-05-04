@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MobilOfl.Gameplay;
 using MobilOfl.Online;
 using UnityEngine;
@@ -8,12 +9,34 @@ namespace MobilOfl.UI
     public class UguiWorldMarkerHud : MonoBehaviour
     {
         [SerializeField] private Camera targetCamera;
-        [SerializeField] private float maxDistance = 28f;
-        [SerializeField] private float scanBonusDistance = 18f;
+        [SerializeField] private float maxDistance = 18f;
+        [SerializeField] private float scanBonusDistance = 14f;
+        [SerializeField] private int maxVisibleMarkers = 5;
+        [SerializeField] private float targetRefreshInterval = 0.25f;
 
         private RectTransform _root;
+        private readonly List<MarkerTarget> _targets = new List<MarkerTarget>(32);
+        private readonly List<MarkerView> _markerViews = new List<MarkerView>(8);
         private bool _built;
         private float _nextRefreshAt;
+
+        private struct MarkerTarget
+        {
+            public Vector3 WorldPosition;
+            public Transform SourceTransform;
+            public Vector3 WorldOffset;
+            public string Label;
+            public Color Color;
+            public float VerticalOffset;
+        }
+
+        private sealed class MarkerView
+        {
+            public RectTransform Root;
+            public Image Background;
+            public Image Accent;
+            public Text Label;
+        }
 
         private void Awake()
         {
@@ -24,6 +47,8 @@ namespace MobilOfl.UI
         {
             BuildIfNeeded();
             DisableLegacy();
+            ResolveCamera();
+            RefreshTargets();
         }
 
         private void Update()
@@ -38,9 +63,11 @@ namespace MobilOfl.UI
 
             if (Time.unscaledTime >= _nextRefreshAt)
             {
-                Refresh();
-                _nextRefreshAt = Time.unscaledTime + 0.12f;
+                RefreshTargets();
+                _nextRefreshAt = Time.unscaledTime + Mathf.Max(0.08f, targetRefreshInterval);
             }
+
+            UpdateMarkerViews();
         }
 
         private void BuildIfNeeded()
@@ -78,17 +105,18 @@ namespace MobilOfl.UI
             RuntimeUiFactory.Stretch(canvasTransform);
             RuntimeUiFactory.ClearChildren(canvasTransform);
             _root = canvasTransform;
+            EnsureMarkerPool();
             _built = true;
         }
 
-        private void Refresh()
+        private void RefreshTargets()
         {
             if (_root == null || targetCamera == null)
             {
                 return;
             }
 
-            RuntimeUiFactory.ClearChildren(_root);
+            _targets.Clear();
             DrawEvidenceMarkers();
             DrawToolMarkers();
             DrawNpcMarkers();
@@ -96,9 +124,46 @@ namespace MobilOfl.UI
             DrawSharedPingMarker();
         }
 
+        private void UpdateMarkerViews()
+        {
+            EnsureMarkerPool();
+            if (_root == null || targetCamera == null)
+            {
+                HideMarkerViews(0);
+                return;
+            }
+
+            var visibleCount = 0;
+            for (var i = 0; i < _targets.Count && visibleCount < Mathf.Max(0, maxVisibleMarkers); i++)
+            {
+                if (!TryProjectMarker(_targets[i], visibleCount, out var anchor, out var anchoredPosition, out var size, out var markerText, out var backgroundColor, out var accentColor))
+                {
+                    continue;
+                }
+
+                var view = _markerViews[visibleCount];
+                view.Root.gameObject.SetActive(true);
+                view.Root.anchorMin = anchor;
+                view.Root.anchorMax = anchor;
+                view.Root.pivot = new Vector2(0.5f, 0.5f);
+                view.Root.anchoredPosition = anchoredPosition;
+                view.Root.sizeDelta = size;
+                view.Background.color = backgroundColor;
+                if (view.Accent != null)
+                {
+                    view.Accent.color = accentColor;
+                }
+
+                view.Label.text = markerText;
+                visibleCount++;
+            }
+
+            HideMarkerViews(visibleCount);
+        }
+
         private void DrawEvidenceMarkers()
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -107,10 +172,10 @@ namespace MobilOfl.UI
                     continue;
                 }
 
-                DrawMarker(evidence.transform.position + Vector3.up * 1.1f, evidence.MarkerLabel, evidence.MarkerColor);
+                AddMarkerTarget(evidence.transform, Vector3.up * 1.1f, evidence.MarkerLabel, evidence.MarkerColor, 0f);
             }
 
-            var searchSpotList = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var searchSpotList = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < searchSpotList.Length; i++)
             {
                 var searchSpot = searchSpotList[i];
@@ -119,13 +184,13 @@ namespace MobilOfl.UI
                     continue;
                 }
 
-                DrawMarker(searchSpot.transform.position + Vector3.up * 1.1f, searchSpot.MarkerLabel, searchSpot.MarkerColor);
+                AddMarkerTarget(searchSpot.transform, Vector3.up * 1.1f, searchSpot.MarkerLabel, searchSpot.MarkerColor, 0f);
             }
         }
 
         private void DrawNpcMarkers()
         {
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -134,13 +199,13 @@ namespace MobilOfl.UI
                     continue;
                 }
 
-                DrawMarker(npc.transform.position + Vector3.up * 2.1f, npc.MarkerLabel, npc.MarkerColor);
+                AddMarkerTarget(npc.transform, Vector3.up * 2.1f, npc.MarkerLabel, npc.MarkerColor, 10f);
             }
         }
 
         private void DrawToolMarkers()
         {
-            var toolPickups = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var toolPickups = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < toolPickups.Length; i++)
             {
                 var toolPickup = toolPickups[i];
@@ -149,13 +214,13 @@ namespace MobilOfl.UI
                     continue;
                 }
 
-                DrawMarker(toolPickup.transform.position + Vector3.up * 1.05f, toolPickup.MarkerLabel, toolPickup.MarkerColor);
+                AddMarkerTarget(toolPickup.transform, Vector3.up * 1.05f, toolPickup.MarkerLabel, toolPickup.MarkerColor, 0f);
             }
         }
 
         private void DrawPlayerMarkers()
         {
-            var players = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var players = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
             for (var i = 0; i < players.Length; i++)
             {
                 var player = players[i];
@@ -164,7 +229,7 @@ namespace MobilOfl.UI
                     continue;
                 }
 
-                DrawMarker(player.MarkerWorldPosition, player.DisplayName, new Color(0.58f, 0.86f, 1f, 1f));
+                AddMarkerTarget(player.MarkerWorldPosition, player.DisplayName, new Color(0.58f, 0.86f, 1f, 1f), 10f);
             }
         }
 
@@ -176,40 +241,143 @@ namespace MobilOfl.UI
                 return;
             }
 
-            DrawMarker(networkCaseState.SharedPingPosition + Vector3.up * 0.8f, "PING: " + networkCaseState.SharedPingLabel, new Color(1f, 0.84f, 0.3f, 1f));
+            AddMarkerTarget(networkCaseState.SharedPingPosition + Vector3.up * 0.8f, "PING: " + networkCaseState.SharedPingLabel, new Color(1f, 0.84f, 0.3f, 1f), 0f);
         }
 
-        private void DrawMarker(Vector3 worldPosition, string label, Color color)
+        private void AddMarkerTarget(Vector3 worldPosition, string label, Color color, float verticalOffset)
         {
+            if (_targets.Count >= 32)
+            {
+                return;
+            }
+
+            _targets.Add(new MarkerTarget
+            {
+                WorldPosition = worldPosition,
+                Label = label,
+                Color = color,
+                VerticalOffset = verticalOffset
+            });
+        }
+
+        private void AddMarkerTarget(Transform sourceTransform, Vector3 worldOffset, string label, Color color, float verticalOffset)
+        {
+            if (_targets.Count >= 32 || sourceTransform == null)
+            {
+                return;
+            }
+
+            _targets.Add(new MarkerTarget
+            {
+                WorldPosition = sourceTransform.position + worldOffset,
+                SourceTransform = sourceTransform,
+                WorldOffset = worldOffset,
+                Label = label,
+                Color = color,
+                VerticalOffset = verticalOffset
+            });
+        }
+
+        private bool TryProjectMarker(MarkerTarget marker, int slotIndex, out Vector2 anchor, out Vector2 anchoredPosition, out Vector2 size, out string markerText, out Color backgroundColor, out Color accentColor)
+        {
+            anchor = Vector2.zero;
+            anchoredPosition = Vector2.zero;
+            size = Vector2.zero;
+            markerText = string.Empty;
+            backgroundColor = Color.clear;
+            accentColor = Color.clear;
+
+            var worldPosition = marker.SourceTransform != null
+                ? marker.SourceTransform.position + marker.WorldOffset
+                : marker.WorldPosition;
             var cameraPosition = targetCamera.transform.position;
             var effectiveMaxDistance = InvestigationScanner.IsScanActive ? maxDistance + scanBonusDistance : maxDistance;
             var distance = Vector3.Distance(cameraPosition, worldPosition);
             if (distance > effectiveMaxDistance)
             {
-                return;
+                return false;
             }
 
             var viewport = targetCamera.WorldToViewportPoint(worldPosition);
             if (viewport.z <= 0f || viewport.x < 0f || viewport.x > 1f || viewport.y < 0f || viewport.y > 1f)
             {
+                return false;
+            }
+
+            anchor = new Vector2(Mathf.Clamp(viewport.x, 0.1f, 0.9f), Mathf.Clamp(viewport.y, 0.14f, 0.88f));
+            var scanBoost = InvestigationScanner.IsScanActive ? 1f : 0f;
+            markerText = BuildMarkerText(marker.Label, distance);
+            var markerWidth = Mathf.Clamp(markerText.Length * 7.6f + 20f, 128f, 218f);
+            var slotOffset = ((slotIndex % 3) - 1) * 14f;
+            anchoredPosition = new Vector2(0f, marker.VerticalOffset + slotOffset);
+            size = Vector2.Lerp(new Vector2(markerWidth, 24f), new Vector2(markerWidth + 14f, 30f), scanBoost);
+            backgroundColor = Color.Lerp(new Color(0.04f, 0.07f, 0.1f, 0.76f), new Color(0.04f, 0.16f, 0.18f, 0.86f), scanBoost);
+            accentColor = Color.Lerp(marker.Color, new Color(0.28f, 0.95f, 0.85f, 1f), scanBoost * 0.5f);
+            return true;
+        }
+
+        private void EnsureMarkerPool()
+        {
+            if (_root == null)
+            {
                 return;
             }
 
-            var anchor = new Vector2(viewport.x, viewport.y);
-            var scanBoost = InvestigationScanner.IsScanActive ? 1f : 0f;
+            var poolSize = Mathf.Max(0, maxVisibleMarkers);
+            while (_markerViews.Count < poolSize)
+            {
+                _markerViews.Add(CreateMarkerView(_markerViews.Count));
+            }
+
+            for (var i = poolSize; i < _markerViews.Count; i++)
+            {
+                _markerViews[i].Root.gameObject.SetActive(false);
+            }
+        }
+
+        private MarkerView CreateMarkerView(int index)
+        {
             var card = RuntimeUiFactory.CreateCard(
-                "Marker",
+                "Marker" + index,
                 _root,
-                Color.Lerp(new Color(0.05f, 0.08f, 0.11f, 0.84f), new Color(0.04f, 0.16f, 0.18f, 0.9f), scanBoost),
-                Color.Lerp(color, new Color(0.28f, 0.95f, 0.85f, 1f), scanBoost * 0.5f));
-            card.anchorMin = anchor;
-            card.anchorMax = anchor;
-            card.pivot = new Vector2(0.5f, 0.5f);
-            card.anchoredPosition = new Vector2(0f, 0f);
-            card.sizeDelta = Vector2.Lerp(new Vector2(180f, 30f), new Vector2(206f, 36f), scanBoost);
-            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(10, 10, 8, 6), false);
-            var text = RuntimeUiFactory.CreateText("Label", card, $"{label}  [{distance:0}m]", 13, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+                new Color(0.04f, 0.07f, 0.1f, 0.76f),
+                ModernGuiTheme.AccentWarmColor);
+            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(8, 8, 6, 5));
+            var text = RuntimeUiFactory.CreateText("Label", card, string.Empty, 12, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             text.alignment = TextAnchor.MiddleCenter;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 10;
+            text.resizeTextMaxSize = 12;
+
+            var accent = card.Find("Accent");
+            return new MarkerView
+            {
+                Root = card,
+                Background = card.GetComponent<Image>(),
+                Accent = accent != null ? accent.GetComponent<Image>() : null,
+                Label = text
+            };
+        }
+
+        private void HideMarkerViews(int startIndex)
+        {
+            for (var i = Mathf.Max(0, startIndex); i < _markerViews.Count; i++)
+            {
+                _markerViews[i].Root.gameObject.SetActive(false);
+            }
+        }
+
+        private static string BuildMarkerText(string label, float distance)
+        {
+            var safeLabel = string.IsNullOrWhiteSpace(label) ? "Hedef" : label.Trim();
+            if (safeLabel.Length > 18)
+            {
+                safeLabel = safeLabel.Substring(0, 15).TrimEnd() + "...";
+            }
+
+            return $"{safeLabel} [{distance:0}m]";
         }
 
         private void ResolveCamera()
@@ -225,7 +393,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
             for (var i = 0; i < cameras.Length; i++)
             {
                 if (cameras[i] != null && cameras[i].isActiveAndEnabled)
@@ -238,7 +406,7 @@ namespace MobilOfl.UI
 
         private void DisableLegacy()
         {
-            var legacy = Object.FindFirstObjectByType<WorldMarkerHud>();
+            var legacy = Object.FindAnyObjectByType<WorldMarkerHud>();
             if (legacy != null)
             {
                 legacy.enabled = false;

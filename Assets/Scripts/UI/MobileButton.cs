@@ -20,6 +20,16 @@ namespace MobilOfl.UI
 
         public bool IsPressed => _isPressed;
 
+        public void ConfigureMobileVisuals(Color idle, Color pressed)
+        {
+            idleColor = idle;
+            pressedColor = pressed;
+            if (background != null)
+            {
+                background.color = idleColor;
+            }
+        }
+
         private void Awake()
         {
             if (background == null)

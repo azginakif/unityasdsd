@@ -8,6 +8,41 @@ namespace MobilOfl.Gameplay
 {
     public class CaseSessionManager : MonoBehaviour
     {
+        [Serializable]
+        public class ToolSnapshot
+        {
+            public string ToolId;
+            public string DisplayName;
+        }
+
+        [Serializable]
+        public class ConversationSnapshot
+        {
+            public string NpcId;
+            public string NpcDisplayName;
+            public string Line;
+        }
+
+        [Serializable]
+        public class TeamNoteSnapshot
+        {
+            public string AuthorName;
+            public string NoteText;
+        }
+
+        [Serializable]
+        public class CaseSessionSnapshot
+        {
+            public string CaseId;
+            public float ElapsedSeconds;
+            public bool IsCaseResolved;
+            public string ResultMessage;
+            public List<string> EvidenceIds = new List<string>();
+            public List<ToolSnapshot> Tools = new List<ToolSnapshot>();
+            public List<ConversationSnapshot> Conversations = new List<ConversationSnapshot>();
+            public List<TeamNoteSnapshot> TeamNotes = new List<TeamNoteSnapshot>();
+        }
+
         public static CaseSessionManager Instance { get; private set; }
 
         [SerializeField] private CaseDefinition activeCase;
@@ -19,9 +54,14 @@ namespace MobilOfl.Gameplay
         private readonly List<string> _messageHistory = new List<string>();
         private readonly List<string> _conversationHistory = new List<string>();
         private readonly List<string> _teamNotes = new List<string>();
+        private readonly List<string> _inferenceHistory = new List<string>();
+        private readonly List<ConversationSnapshot> _conversationSnapshots = new List<ConversationSnapshot>();
+        private readonly List<TeamNoteSnapshot> _teamNoteSnapshots = new List<TeamNoteSnapshot>();
         private readonly HashSet<string> _interviewedNpcIds = new HashSet<string>();
+        private readonly HashSet<string> _unlockedInferenceIds = new HashSet<string>();
         private float _caseStartedAt;
         private float _lastProgressAt;
+        private string _lastResultMessage = string.Empty;
 
         public event Action<EvidenceData> EvidenceCollected;
         public event Action<CaseDefinition> CaseStarted;
@@ -30,6 +70,8 @@ namespace MobilOfl.Gameplay
         public event Action<string, string, string, bool> NpcConversationRegistered;
         public event Action<string, string> TeamNoteAdded;
         public event Action<string, string> ToolUnlocked;
+        public event Action<string, string> InferenceUnlocked;
+        public event Action SessionRestored;
 
         public CaseDefinition ActiveCase => activeCase;
         public IReadOnlyCollection<string> CollectedEvidenceIds => _collectedEvidenceIds;
@@ -37,6 +79,7 @@ namespace MobilOfl.Gameplay
         public IReadOnlyList<string> MessageHistory => _messageHistory;
         public IReadOnlyList<string> ConversationHistory => _conversationHistory;
         public IReadOnlyList<string> TeamNotes => _teamNotes;
+        public IReadOnlyList<string> InferenceHistory => _inferenceHistory;
         public bool IsCaseResolved { get; private set; }
         public int InterviewedNpcCount => _interviewedNpcIds.Count;
         public float ElapsedCaseTimeSeconds => Mathf.Max(0f, Time.time - _caseStartedAt);
@@ -67,7 +110,12 @@ namespace MobilOfl.Gameplay
             _messageHistory.Clear();
             _conversationHistory.Clear();
             _teamNotes.Clear();
+            _inferenceHistory.Clear();
+            _conversationSnapshots.Clear();
+            _teamNoteSnapshots.Clear();
             _interviewedNpcIds.Clear();
+            _unlockedInferenceIds.Clear();
+            _lastResultMessage = string.Empty;
             IsCaseResolved = false;
             _caseStartedAt = Time.time;
             _lastProgressAt = Time.time;
@@ -122,6 +170,7 @@ namespace MobilOfl.Gameplay
             EvidenceCollected?.Invoke(evidence);
             RegisterProgress();
             PublishMessage($"Delil toplandi: {evidence.Title}");
+            EvaluateInferences();
             return true;
         }
 
@@ -150,6 +199,7 @@ namespace MobilOfl.Gameplay
                 PublishMessage($"Takim delili senkronize edildi: {evidence.Title}");
             }
 
+            EvaluateInferences();
             return true;
         }
 
@@ -176,6 +226,7 @@ namespace MobilOfl.Gameplay
             RegisterProgress();
             ToolUnlocked?.Invoke(toolId, resolvedName);
             PublishMessage(string.IsNullOrWhiteSpace(pickupMessage) ? $"Ekipman alindi: {resolvedName}" : pickupMessage);
+            EvaluateInferences();
             return true;
         }
 
@@ -201,6 +252,7 @@ namespace MobilOfl.Gameplay
                 PublishMessage($"Takim ekipmani senkronize edildi: {resolvedName}");
             }
 
+            EvaluateInferences();
             return true;
         }
 
@@ -228,11 +280,19 @@ namespace MobilOfl.Gameplay
 
             var conversationEntry = $"{npcDisplayName}: {line}";
             _conversationHistory.Add(conversationEntry);
+            _conversationSnapshots.Add(new ConversationSnapshot
+            {
+                NpcId = resolvedNpcId,
+                NpcDisplayName = npcDisplayName,
+                Line = line
+            });
             TrimHistory(_conversationHistory, 18);
+            TrimHistory(_conversationSnapshots, 18);
             RegisterProgress();
 
             NpcConversationRegistered?.Invoke(resolvedNpcId, npcDisplayName, line, revealedLead);
             PublishMessage(revealedLead ? $"{conversationEntry} [Yeni ipucu]" : conversationEntry);
+            EvaluateInferences();
         }
 
         public void ApplyNetworkConversation(string npcId, string npcDisplayName, string line)
@@ -250,9 +310,17 @@ namespace MobilOfl.Gameplay
 
             var conversationEntry = $"{npcDisplayName}: {line}";
             _conversationHistory.Add(conversationEntry);
+            _conversationSnapshots.Add(new ConversationSnapshot
+            {
+                NpcId = resolvedNpcId,
+                NpcDisplayName = npcDisplayName,
+                Line = line
+            });
             TrimHistory(_conversationHistory, 18);
+            TrimHistory(_conversationSnapshots, 18);
             RegisterProgress();
             PublishMessage($"{conversationEntry} [Takim senkronize]");
+            EvaluateInferences();
         }
 
         public bool AddTeamNote(string authorName, string noteText)
@@ -267,10 +335,13 @@ namespace MobilOfl.Gameplay
             var noteEntry = $"{resolvedAuthor}: {trimmedNote}";
 
             _teamNotes.Add(noteEntry);
+            _teamNoteSnapshots.Add(new TeamNoteSnapshot { AuthorName = resolvedAuthor, NoteText = trimmedNote });
             TrimHistory(_teamNotes, 18);
+            TrimHistory(_teamNoteSnapshots, 18);
             RegisterProgress();
             TeamNoteAdded?.Invoke(resolvedAuthor, trimmedNote);
             PublishMessage($"{resolvedAuthor} yeni not ekledi.");
+            EvaluateInferences();
             return true;
         }
 
@@ -286,9 +357,12 @@ namespace MobilOfl.Gameplay
             var noteEntry = $"{resolvedAuthor}: {trimmedNote}";
 
             _teamNotes.Add(noteEntry);
+            _teamNoteSnapshots.Add(new TeamNoteSnapshot { AuthorName = resolvedAuthor, NoteText = trimmedNote });
             TrimHistory(_teamNotes, 18);
+            TrimHistory(_teamNoteSnapshots, 18);
             RegisterProgress();
             PublishMessage($"{resolvedAuthor} notu takimla senkronize edildi.");
+            EvaluateInferences();
             return true;
         }
 
@@ -374,6 +448,163 @@ namespace MobilOfl.Gameplay
             }
 
             return "Eksik delil: " + string.Join(", ", missingEvidenceTitles);
+        }
+
+        public bool HasInference(string inferenceId)
+        {
+            return !string.IsNullOrWhiteSpace(inferenceId) && _unlockedInferenceIds.Contains(inferenceId);
+        }
+
+        public string GetInferenceSummary()
+        {
+            if (_inferenceHistory.Count == 0)
+            {
+                return "Henuz zincir cikarimi yok. Birden fazla delil ayni noktayi isaret ettiginde analiz burada acilacak.";
+            }
+
+            return string.Join("\n", _inferenceHistory.Select(item => "- " + item));
+        }
+
+        public CaseSessionSnapshot CreateSnapshot()
+        {
+            var snapshot = new CaseSessionSnapshot
+            {
+                CaseId = activeCase != null ? activeCase.CaseId : string.Empty,
+                ElapsedSeconds = ElapsedCaseTimeSeconds,
+                IsCaseResolved = IsCaseResolved,
+                ResultMessage = _lastResultMessage
+            };
+
+            snapshot.EvidenceIds.AddRange(_collectedEvidenceIds);
+
+            foreach (var toolId in _unlockedToolIds)
+            {
+                snapshot.Tools.Add(new ToolSnapshot
+                {
+                    ToolId = toolId,
+                    DisplayName = GetToolDisplayName(toolId)
+                });
+            }
+
+            foreach (var conversation in _conversationSnapshots)
+            {
+                if (conversation == null)
+                {
+                    continue;
+                }
+
+                snapshot.Conversations.Add(new ConversationSnapshot
+                {
+                    NpcId = conversation.NpcId,
+                    NpcDisplayName = conversation.NpcDisplayName,
+                    Line = conversation.Line
+                });
+            }
+
+            foreach (var note in _teamNoteSnapshots)
+            {
+                if (note == null)
+                {
+                    continue;
+                }
+
+                snapshot.TeamNotes.Add(new TeamNoteSnapshot
+                {
+                    AuthorName = note.AuthorName,
+                    NoteText = note.NoteText
+                });
+            }
+
+            return snapshot;
+        }
+
+        public bool RestoreSnapshot(CaseSessionSnapshot snapshot, bool publishMessage)
+        {
+            if (snapshot == null || activeCase == null || snapshot.CaseId != activeCase.CaseId)
+            {
+                return false;
+            }
+
+            _collectedEvidenceIds.Clear();
+            _unlockedToolIds.Clear();
+            _toolDisplayNames.Clear();
+            _messageHistory.Clear();
+            _conversationHistory.Clear();
+            _teamNotes.Clear();
+            _inferenceHistory.Clear();
+            _conversationSnapshots.Clear();
+            _teamNoteSnapshots.Clear();
+            _interviewedNpcIds.Clear();
+            _unlockedInferenceIds.Clear();
+
+            foreach (var evidenceId in snapshot.EvidenceIds)
+            {
+                if (!string.IsNullOrWhiteSpace(evidenceId) && _evidenceById.ContainsKey(evidenceId))
+                {
+                    _collectedEvidenceIds.Add(evidenceId);
+                }
+            }
+
+            foreach (var tool in snapshot.Tools)
+            {
+                if (tool == null || string.IsNullOrWhiteSpace(tool.ToolId))
+                {
+                    continue;
+                }
+
+                _unlockedToolIds.Add(tool.ToolId);
+                _toolDisplayNames[tool.ToolId] = ResolveToolDisplayName(tool.ToolId, tool.DisplayName);
+            }
+
+            foreach (var conversation in snapshot.Conversations)
+            {
+                if (conversation == null || string.IsNullOrWhiteSpace(conversation.NpcDisplayName) || string.IsNullOrWhiteSpace(conversation.Line))
+                {
+                    continue;
+                }
+
+                var resolvedNpcId = string.IsNullOrWhiteSpace(conversation.NpcId) ? conversation.NpcDisplayName : conversation.NpcId;
+                _interviewedNpcIds.Add(resolvedNpcId);
+                _conversationHistory.Add($"{conversation.NpcDisplayName}: {conversation.Line}");
+                _conversationSnapshots.Add(new ConversationSnapshot
+                {
+                    NpcId = resolvedNpcId,
+                    NpcDisplayName = conversation.NpcDisplayName,
+                    Line = conversation.Line
+                });
+            }
+
+            foreach (var note in snapshot.TeamNotes)
+            {
+                if (note == null || string.IsNullOrWhiteSpace(note.NoteText))
+                {
+                    continue;
+                }
+
+                var resolvedAuthor = string.IsNullOrWhiteSpace(note.AuthorName) ? "Takim" : note.AuthorName.Trim();
+                var trimmedNote = note.NoteText.Trim();
+                _teamNotes.Add($"{resolvedAuthor}: {trimmedNote}");
+                _teamNoteSnapshots.Add(new TeamNoteSnapshot { AuthorName = resolvedAuthor, NoteText = trimmedNote });
+            }
+
+            TrimHistory(_conversationHistory, 18);
+            TrimHistory(_conversationSnapshots, 18);
+            TrimHistory(_teamNotes, 18);
+            TrimHistory(_teamNoteSnapshots, 18);
+
+            _caseStartedAt = Time.time - Mathf.Max(0f, snapshot.ElapsedSeconds);
+            _lastResultMessage = snapshot.ResultMessage ?? string.Empty;
+            IsCaseResolved = snapshot.IsCaseResolved;
+            RegisterProgress();
+            EvaluateInferences(false);
+            SessionRestored?.Invoke();
+
+            if (publishMessage)
+            {
+                PublishMessage("Kayit yuklendi. Dosya kaldigin yerden devam ediyor.");
+            }
+
+            return true;
         }
 
         public string GetRecommendedNextStep()
@@ -508,6 +739,7 @@ namespace MobilOfl.Gameplay
                 resultMessage =
                     $"Dogru karar. Motivasyon: {activeCase.CulpritMotive}\nZaman cizelgesi: {activeCase.CulpritTimeline}";
                 IsCaseResolved = true;
+                _lastResultMessage = resultMessage;
                 RegisterProgress();
                 PublishMessage(resultMessage);
                 CaseResolved?.Invoke(true, resultMessage);
@@ -525,6 +757,7 @@ namespace MobilOfl.Gameplay
             if (success)
             {
                 IsCaseResolved = true;
+                _lastResultMessage = resultMessage;
             }
 
             RegisterProgress();
@@ -591,6 +824,11 @@ namespace MobilOfl.Gameplay
                 return "Henuz yeterli veri yok. Ilk delili toplayip olay zincirini kurmaya basla.";
             }
 
+            if (_inferenceHistory.Count > 0)
+            {
+                segments.Insert(0, "Acilan cikarimlar: " + string.Join(" ", _inferenceHistory));
+            }
+
             if (HasAnyAccusableSuspect())
             {
                 segments.Add("Toplanan deliller artik net bir zaman, mekan ve erisim zinciri kuruyor.");
@@ -602,6 +840,58 @@ namespace MobilOfl.Gameplay
         private void RegisterProgress()
         {
             _lastProgressAt = Time.time;
+        }
+
+        private void EvaluateInferences(bool publishMessages = true)
+        {
+            AddInferenceIf(
+                "inference.camera-corridor",
+                HasEvidence("evidence.security-log") && HasEvidence("evidence.guard-testimony"),
+                "Kamera kaydi ve guvenlik ifadesi ayni koridor zaman cizgisini dogruluyor.",
+                publishMessages);
+
+            AddInferenceIf(
+                "inference.note-owner",
+                HasEvidence("evidence.answer-key-note") && HasEvidence("evidence.student-testimony"),
+                "Kutuphanedeki not bilisim kulubu ogrencisinin defteriyle baglaniyor.",
+                publishMessages);
+
+            AddInferenceIf(
+                "inference.access-chain",
+                HasTool("tool.archive-pass") && HasEvidence("evidence.archive-ledger"),
+                "Arsiv karti ve giris defteri kisitli alanlara planli erisim zinciri kuruyor.",
+                publishMessages);
+
+            AddInferenceIf(
+                "inference.physical-access",
+                HasTool("tool.lockpick") && HasEvidence("evidence.locker-key"),
+                "Maymuncuk seti ve yedek anahtar dolap erisiminin nasil saglandigini acikliyor.",
+                publishMessages);
+
+            AddInferenceIf(
+                "inference.motive-window",
+                HasEvidence("evidence.canteen-testimony") &&
+                HasEvidence("evidence.archive-ledger") &&
+                HasEvidence("evidence.security-log"),
+                "Kantin ifadesi, arsiv defteri ve kamera kaydi olay saatine yakin hareket zincirini tamamliyor.",
+                publishMessages);
+        }
+
+        private void AddInferenceIf(string inferenceId, bool condition, string summary, bool publishMessages)
+        {
+            if (!condition || !_unlockedInferenceIds.Add(inferenceId))
+            {
+                return;
+            }
+
+            _inferenceHistory.Add(summary);
+            TrimHistory(_inferenceHistory, 10);
+            RegisterProgress();
+            if (publishMessages)
+            {
+                InferenceUnlocked?.Invoke(inferenceId, summary);
+                PublishMessage("Yeni cikarim: " + summary);
+            }
         }
 
         private bool IsCriticalEvidence(string evidenceId)
@@ -629,7 +919,7 @@ namespace MobilOfl.Gameplay
             };
         }
 
-        private static void TrimHistory(List<string> history, int maxEntries)
+        private static void TrimHistory<T>(List<T> history, int maxEntries)
         {
             while (history.Count > maxEntries)
             {

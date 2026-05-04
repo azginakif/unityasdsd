@@ -10,7 +10,7 @@ namespace MobilOfl.Gameplay
 
         public override bool TryInteract(GameObject interactor)
         {
-            var notebook = Object.FindFirstObjectByType<CaseNotebookHud>();
+            var notebook = Object.FindAnyObjectByType<CaseNotebookHud>();
             var session = CaseSessionManager.Instance;
             if (notebook == null || session == null)
             {

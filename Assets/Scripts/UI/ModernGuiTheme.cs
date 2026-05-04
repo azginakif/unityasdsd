@@ -4,13 +4,13 @@ namespace MobilOfl.UI
 {
     public static class ModernGuiTheme
     {
-        public static readonly Color PanelColor = new Color(0.07f, 0.09f, 0.12f, 0.975f);
-        public static readonly Color PanelSoftColor = new Color(0.11f, 0.14f, 0.18f, 0.95f);
-        public static readonly Color BorderColor = new Color(0.2f, 0.29f, 0.34f, 0.96f);
-        public static readonly Color AccentColor = new Color(0.89f, 0.77f, 0.45f, 1f);
-        public static readonly Color AccentWarmColor = new Color(0.33f, 0.82f, 0.78f, 1f);
-        public static readonly Color TextColor = new Color(0.96f, 0.97f, 0.94f, 1f);
-        public static readonly Color MutedTextColor = new Color(0.7f, 0.77f, 0.8f, 1f);
+        public static readonly Color PanelColor = new Color(0.055f, 0.07f, 0.105f, 0.88f);
+        public static readonly Color PanelSoftColor = new Color(0.085f, 0.115f, 0.165f, 0.86f);
+        public static readonly Color BorderColor = new Color(0.18f, 0.33f, 0.46f, 0.82f);
+        public static readonly Color AccentColor = new Color(0.18f, 0.72f, 0.95f, 1f);
+        public static readonly Color AccentWarmColor = new Color(0.96f, 0.68f, 0.28f, 1f);
+        public static readonly Color TextColor = new Color(0.96f, 0.98f, 1f, 1f);
+        public static readonly Color MutedTextColor = new Color(0.66f, 0.74f, 0.82f, 1f);
 
         private static Texture2D _whiteTexture;
         private static Texture2D _panelTexture;

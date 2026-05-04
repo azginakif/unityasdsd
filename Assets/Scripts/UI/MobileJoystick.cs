@@ -20,6 +20,11 @@ namespace MobilOfl.UI
 
         public Vector2 Value => _value;
 
+        public void ConfigureMobileVisuals(float range)
+        {
+            handleRange = Mathf.Max(24f, range);
+        }
+
         private void Awake()
         {
             if (background == null)
@@ -47,16 +52,16 @@ namespace MobilOfl.UI
             if (backgroundImage != null)
             {
                 var targetColor = active
-                    ? new Color(0.22f, 0.48f, 0.5f, 0.62f)
-                    : new Color(0.12f, 0.18f, 0.22f, 0.45f);
+                    ? new Color(0.22f, 0.48f, 0.5f, 0.36f)
+                    : new Color(0.12f, 0.18f, 0.22f, 0.16f);
                 backgroundImage.color = Color.Lerp(backgroundImage.color, targetColor, t);
             }
 
             if (handleImage != null)
             {
                 var targetColor = active
-                    ? new Color(0.96f, 0.98f, 1f, 0.98f)
-                    : new Color(0.9f, 0.95f, 1f, 0.82f);
+                    ? new Color(0.96f, 0.98f, 1f, 0.82f)
+                    : new Color(0.9f, 0.95f, 1f, 0.44f);
                 handleImage.color = Color.Lerp(handleImage.color, targetColor, t);
             }
 
@@ -73,7 +78,7 @@ namespace MobilOfl.UI
                 ringTransform.localScale = Vector3.Lerp(ringTransform.localScale, Vector3.one * targetScale, t);
 
                 var ringColor = pulseRingImage.color;
-                ringColor.a = Mathf.Lerp(ringColor.a, active ? 0.42f : 0.18f, t);
+                ringColor.a = Mathf.Lerp(ringColor.a, active ? 0.24f : 0.06f, t);
                 pulseRingImage.color = ringColor;
             }
         }

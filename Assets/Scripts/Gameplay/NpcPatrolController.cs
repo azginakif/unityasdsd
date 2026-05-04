@@ -137,7 +137,8 @@ namespace MobilOfl.Gameplay
 
             if (_playerStealth == null || !_playerStealth.isActiveAndEnabled)
             {
-                _playerStealth = Object.FindFirstObjectByType<PlayerStealthController>();
+                _playerStealth = Object.FindAnyObjectByType<PlayerStealthController>();
             }
         }
     }
+}
