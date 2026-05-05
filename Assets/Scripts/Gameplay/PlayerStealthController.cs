@@ -33,7 +33,8 @@ namespace MobilOfl.Gameplay
 
         public float NoiseLevel01 => _noiseLevel;
         public float AlertLevel01 => _alertLevel;
-        public bool IsHighAlert => _alertLevel >= forcedCalmInteractionThreshold;
+        public bool IsHighAlert => _alertLevel >= CalmInteractionThreshold;
+        private float CalmInteractionThreshold => Mathf.Max(0.9f, forcedCalmInteractionThreshold);
         public string MovementProfile => _characterController == null || !_characterController.isGrounded
             ? "Dengesiz"
             : movementController != null && movementController.IsCrouching
@@ -100,7 +101,7 @@ namespace MobilOfl.Gameplay
             _alertLevel = Mathf.Min(_alertLevel, Mathf.Clamp01(targetAlertLevel));
             _noiseLevel = Mathf.Min(_noiseLevel, Mathf.Clamp01(targetNoiseLevel));
             _sightPressure = Mathf.Min(_sightPressure, Mathf.Clamp01(targetAlertLevel));
-            if (_alertLevel <= forcedCalmInteractionThreshold * 0.52f)
+            if (_alertLevel <= CalmInteractionThreshold * 0.52f)
             {
                 _wasHighAlert = false;
             }
@@ -175,7 +176,7 @@ namespace MobilOfl.Gameplay
                     CaseSessionManager.Instance.PublishMessage("Koridor dikkat cekiyor. Bir sure sessiz kalman gerekecek.");
                 }
             }
-            else if (_wasHighAlert && _alertLevel <= forcedCalmInteractionThreshold * 0.52f)
+            else if (_wasHighAlert && _alertLevel <= CalmInteractionThreshold * 0.52f)
             {
                 _wasHighAlert = false;
                 if (CaseSessionManager.Instance != null)

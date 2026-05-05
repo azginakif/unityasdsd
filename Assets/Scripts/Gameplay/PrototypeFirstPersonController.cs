@@ -80,8 +80,11 @@ namespace MobilOfl.Gameplay
 
         private void OnEnable()
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            if (!MainMenuHud.IsBlockingGameplay)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
 
         private void Update()

@@ -143,6 +143,8 @@ namespace MobilOfl.UI
                     OpenMenu();
                 }
             }
+
+            SyncBlockingState();
         }
 
         private void OnGUI()

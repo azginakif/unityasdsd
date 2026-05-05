@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace MobilOfl.UI
 {
     [RequireComponent(typeof(Image))]
-    public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+    public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, ICanvasRaycastFilter
     {
         [SerializeField] private Image background;
         [SerializeField] private RectTransform contentRoot;
@@ -14,6 +14,7 @@ namespace MobilOfl.UI
         [SerializeField] private Color pressedColor = new Color(0.32f, 0.78f, 0.74f, 0.96f);
         [SerializeField] private float visualLerpSpeed = 14f;
         [SerializeField] private float pressedScale = 0.92f;
+        [SerializeField] private float touchPadding = 28f;
 
         private bool _isPressed;
         private bool _wasPressedThisFrame;
@@ -46,6 +47,8 @@ namespace MobilOfl.UI
             {
                 label = GetComponentInChildren<Text>();
             }
+
+            EnsureExpandedHitArea();
         }
 
         private void Update()
@@ -99,6 +102,49 @@ namespace MobilOfl.UI
         public void OnPointerUp(PointerEventData eventData)
         {
             _isPressed = false;
+        }
+
+        public bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
+        {
+            var rectTransform = transform as RectTransform;
+            if (rectTransform == null)
+            {
+                return true;
+            }
+
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, screenPoint, eventCamera, out var localPoint))
+            {
+                return false;
+            }
+
+            var rect = rectTransform.rect;
+            rect.xMin -= touchPadding;
+            rect.xMax += touchPadding;
+            rect.yMin -= touchPadding;
+            rect.yMax += touchPadding;
+            return rect.Contains(localPoint);
+        }
+
+        private void EnsureExpandedHitArea()
+        {
+            if (touchPadding <= 0f || transform.Find("ExpandedHitArea") != null)
+            {
+                return;
+            }
+
+            var hitAreaObject = new GameObject("ExpandedHitArea", typeof(RectTransform), typeof(Image));
+            var hitArea = hitAreaObject.GetComponent<RectTransform>();
+            hitArea.SetParent(transform, false);
+            hitArea.anchorMin = Vector2.zero;
+            hitArea.anchorMax = Vector2.one;
+            hitArea.pivot = new Vector2(0.5f, 0.5f);
+            hitArea.anchoredPosition = Vector2.zero;
+            hitArea.sizeDelta = Vector2.one * (touchPadding * 2f);
+            hitArea.SetAsLastSibling();
+
+            var image = hitAreaObject.GetComponent<Image>();
+            image.color = Color.clear;
+            image.raycastTarget = true;
         }
     }
 }

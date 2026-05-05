@@ -12,6 +12,7 @@ namespace MobilOfl.Gameplay
         [SerializeField] private string markerLabel = "Aranacak Alan";
         [SerializeField] private Color markerColor = default;
         [SerializeField] private float searchDuration = 1.7f;
+        [SerializeField] private float useDistance = 5.25f;
         [SerializeField] private string requiredToolId;
         [SerializeField] private string missingToolMessage = "Bu alan icin uygun ekipman gerekiyor.";
         [SerializeField] private string searchCompleteMessage = "Arama tamamlandi.";
@@ -34,7 +35,7 @@ namespace MobilOfl.Gameplay
             !CaseSessionManager.Instance.HasEvidence(hiddenEvidenceId);
 
         public override bool RequiresHold => true;
-        public override float HoldDuration => searchDuration;
+        public override float HoldDuration => Mathf.Clamp(searchDuration, 0.35f, 1.1f);
 
         public void ConfigureToolGate(string toolId, string message)
         {
@@ -82,7 +83,7 @@ namespace MobilOfl.Gameplay
                 return false;
             }
 
-            if (Vector3.Distance(interactor.transform.position, transform.position) > 3.6f)
+            if (GetDistanceToInteractor(interactor) > Mathf.Max(1f, useDistance))
             {
                 return false;
             }
@@ -170,6 +171,29 @@ namespace MobilOfl.Gameplay
                 "evidence.archive-ledger" => "tool.archive-pass",
                 _ => string.Empty
             };
+        }
+
+        private float GetDistanceToInteractor(GameObject interactor)
+        {
+            var interactorPosition = interactor.transform.position + Vector3.up * 1.05f;
+            var colliders = GetComponentsInChildren<Collider>(false);
+            var closestDistance = float.PositiveInfinity;
+
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                var collider = colliders[i];
+                if (collider == null || !collider.enabled)
+                {
+                    continue;
+                }
+
+                var closestPoint = collider.ClosestPoint(interactorPosition);
+                closestDistance = Mathf.Min(closestDistance, Vector3.Distance(interactorPosition, closestPoint));
+            }
+
+            return float.IsPositiveInfinity(closestDistance)
+                ? Vector3.Distance(interactor.transform.position, transform.position)
+                : closestDistance;
         }
 
         private string ResolveMissingToolMessage()

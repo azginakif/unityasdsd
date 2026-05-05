@@ -4,6 +4,7 @@ using MobilOfl.Online;
 using MobilOfl.UI;
 using MobilOfl.Visuals;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -32,6 +33,7 @@ namespace MobilOfl.EditorTools
         private const string MobileControlsCanvasName = "MobileControlsCanvas";
         private const string SchoolBlockRootName = "SampleSchoolBlock";
         private const string AtmosphereRootName = "SampleAtmosphere";
+        private const string FloreswaPrefabFolder = "Assets/Floreswa/Prefabs";
         private const string SessionManagerName = "CaseSessionManager";
         private const string DebugHudName = "DebugHUD";
         private const string RecommendedCompanyName = "Mobil OFL";
@@ -41,6 +43,18 @@ namespace MobilOfl.EditorTools
         private const string RecommendedIosAppId = "com.mobilofl.prototype";
         private const string RecommendedStandaloneAppId = "com.mobilofl.prototype";
         private static bool _sceneVisualRepairQueued;
+        private static readonly string[] FloreswaNpcPrefabPaths =
+        {
+            FloreswaPrefabFolder + "/male01_1.prefab",
+            FloreswaPrefabFolder + "/male01_2.prefab",
+            FloreswaPrefabFolder + "/male01_3.prefab",
+            FloreswaPrefabFolder + "/male02_1.prefab",
+            FloreswaPrefabFolder + "/male02_2.prefab",
+            FloreswaPrefabFolder + "/male02_3.prefab",
+            FloreswaPrefabFolder + "/male03_1.prefab",
+            FloreswaPrefabFolder + "/male03_2.prefab",
+            FloreswaPrefabFolder + "/male03_3.prefab"
+        };
 
         static CaseSceneAutoSetupTool()
         {
@@ -63,6 +77,7 @@ namespace MobilOfl.EditorTools
             EnsureFolder("Assets/Data");
             EnsureFolder(CaseAssetFolder);
             SchoolBoyCharacterSetupTool.SetupSchoolBoyCharacterAssets();
+            ConfigureFloreswaCharacterImports();
 
             var caseDefinition = LoadOrCreateCaseDefinition();
             PopulateCaseDefinition(caseDefinition);
@@ -108,8 +123,31 @@ namespace MobilOfl.EditorTools
         {
             if (ApplySchoolBoyToSceneActorsInternal(true))
             {
-                EditorUtility.DisplayDialog("Mobil OFL", "School boy karakteri player/NPC aktorlerine uygulandi.", "Tamam");
+                EditorUtility.DisplayDialog("Mobil OFL", "Ana karakter player'a, Floreswa karakterleri NPC'lere uygulandi.", "Tamam");
             }
+        }
+
+        [MenuItem("Mobil OFL/Production/Integrate Floreswa Characters")]
+        public static void IntegrateFloreswaCharacters()
+        {
+            SchoolBoyCharacterSetupTool.SetupSchoolBoyCharacterAssets();
+            EnsureSampleSchoolBlock();
+            ConfigureFloreswaCharacterImports();
+            ApplySchoolBoyToSceneActorsInternal(false);
+
+            var activeScene = SceneManager.GetActiveScene();
+            if (activeScene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(activeScene);
+                if (!string.IsNullOrWhiteSpace(activeScene.path))
+                {
+                    EditorSceneManager.SaveScene(activeScene);
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            EditorUtility.DisplayDialog("Mobil OFL", "Floreswa NPC karakterleri ve UAL animasyon paketi oyuna baglandi.", "Tamam");
         }
 
         public static bool ApplySchoolBoyToSceneActorsInternal()
@@ -149,7 +187,7 @@ namespace MobilOfl.EditorTools
                 }
 
                 NormalizeNpcActor(npc.transform);
-                ReplaceCharacterVisual(npc.transform, npc.name + "_Visual", Color.white);
+                ReplaceNpcCharacterVisual(npc.transform, npc.name + "_Visual", Color.white, npc.name);
             }
 
             var activeScene = SceneManager.GetActiveScene();
@@ -220,6 +258,7 @@ namespace MobilOfl.EditorTools
 
                 hasBrokenVisual |= ActorNeedsNormalization(npcs[i].transform);
                 hasBrokenVisual |= npcs[i].GetComponentInChildren<CharacterMovementAnimator>(true) == null;
+                hasBrokenVisual |= NpcNeedsFloreswaVisual(npcs[i].transform);
             }
 
             if (!hasBrokenVisual)
@@ -555,7 +594,10 @@ namespace MobilOfl.EditorTools
 
             var interactionSerializedObject = new SerializedObject(interaction);
             interactionSerializedObject.FindProperty("playerCamera").objectReferenceValue = camera;
-            interactionSerializedObject.FindProperty("interactDistance").floatValue = 4f;
+            interactionSerializedObject.FindProperty("interactDistance").floatValue = 5.6f;
+            interactionSerializedObject.FindProperty("minimumInteractDistance").floatValue = 5.6f;
+            interactionSerializedObject.FindProperty("aimAssistRadius").floatValue = 0.5f;
+            interactionSerializedObject.FindProperty("nearbyButtonRadius").floatValue = 2.65f;
             interactionSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(interaction);
 
@@ -583,7 +625,7 @@ namespace MobilOfl.EditorTools
             stealthSerializedObject.FindProperty("movementController").objectReferenceValue = movement;
             stealthSerializedObject.FindProperty("scanner").objectReferenceValue = scanner;
             stealthSerializedObject.FindProperty("npcAwarenessRadius").floatValue = 7.2f;
-            stealthSerializedObject.FindProperty("forcedCalmInteractionThreshold").floatValue = 0.72f;
+            stealthSerializedObject.FindProperty("forcedCalmInteractionThreshold").floatValue = 0.9f;
             stealthSerializedObject.FindProperty("scanNoiseBoost").floatValue = 0.18f;
             stealthSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(stealth);
@@ -654,7 +696,7 @@ namespace MobilOfl.EditorTools
                 "AL",
                 new Vector2(1f, 0f),
                 new Vector2(-100f, 154f),
-                new Vector2(104f, 104f),
+                new Vector2(126f, 126f),
                 new Color(0.08f, 0.3f, 0.25f, 0.5f));
             DisableMobileButton(canvasRect, "JumpButton");
             DisableMobileButton(canvasRect, "CrouchButton");
@@ -1689,6 +1731,7 @@ namespace MobilOfl.EditorTools
             CreateStairBlock(root.transform, "LeftStairs", new Vector3(-10.6f, 0.1f, 2.5f), -1f);
             CreateStairBlock(root.transform, "RightStairs", new Vector3(10.6f, 0.1f, 2.5f), 1f);
             CreateInvestigationCorner(root.transform);
+            CreateFloreswaDecorationSet(root.transform);
         }
 
         private static void CreateWall(Transform parent, string name, Vector3 position, Vector3 scale)
@@ -1796,6 +1839,44 @@ namespace MobilOfl.EditorTools
             CreateBlock(parent, name + "_PinB", position + new Vector3(0.32f, -0.08f, -0.04f), new Vector3(0.28f, 0.18f, 0.02f), new Color(0.8f, 0.88f, 0.98f));
         }
 
+        private static void ConfigureFloreswaCharacterImports()
+        {
+            for (var i = 0; i < FloreswaNpcPrefabPaths.Length; i++)
+            {
+                var modelPath = FloreswaNpcPrefabPaths[i]
+                    .Replace("/Prefabs/", "/Models/")
+                    .Replace(".prefab", ".fbx");
+                var importer = AssetImporter.GetAtPath(modelPath) as ModelImporter;
+                if (importer == null)
+                {
+                    continue;
+                }
+
+                var changed = false;
+                changed |= SetImporterValue(importer.animationType, ModelImporterAnimationType.Human, value => importer.animationType = value);
+                changed |= SetImporterValue(importer.avatarSetup, ModelImporterAvatarSetup.CreateFromThisModel, value => importer.avatarSetup = value);
+                changed |= SetImporterValue(importer.importCameras, false, value => importer.importCameras = value);
+                changed |= SetImporterValue(importer.importLights, false, value => importer.importLights = value);
+                changed |= SetImporterValue(importer.importAnimation, true, value => importer.importAnimation = value);
+                changed |= SetImporterValue(importer.animationCompression, ModelImporterAnimationCompression.Optimal, value => importer.animationCompression = value);
+                if (changed)
+                {
+                    importer.SaveAndReimport();
+                }
+            }
+        }
+
+        private static bool SetImporterValue<T>(T currentValue, T nextValue, System.Action<T> setter)
+        {
+            if (EqualityComparer<T>.Default.Equals(currentValue, nextValue))
+            {
+                return false;
+            }
+
+            setter(nextValue);
+            return true;
+        }
+
         private static void CreateInvestigationCorner(Transform parent)
         {
             CreateRoomLabel(parent, "VAKA MASASI", new Vector3(0f, 0.08f, -6.2f));
@@ -1804,6 +1885,122 @@ namespace MobilOfl.EditorTools
             CreateBench(parent, "InvestigationBench", new Vector3(0.15f, 0.32f, -4.65f));
             CreateBlock(parent, "InvestigationLampBase", new Vector3(1.15f, 0.8f, -5.75f), new Vector3(0.14f, 0.7f, 0.14f), new Color(0.18f, 0.18f, 0.22f));
             CreateBlock(parent, "InvestigationLampHead", new Vector3(1.15f, 1.2f, -5.48f), new Vector3(0.42f, 0.12f, 0.24f), new Color(0.88f, 0.82f, 0.48f));
+        }
+
+        private static void CreateFloreswaDecorationSet(Transform parent)
+        {
+            if (!AssetDatabase.IsValidFolder(FloreswaPrefabFolder))
+            {
+                return;
+            }
+
+            CreateImportedAsset(parent, FloreswaPrefabFolder + "/sofa.prefab", "Floreswa_Sofa_Corridor", new Vector3(1.8f, 0.05f, 6.5f), new Vector3(1.9f, 0.9f, 0.72f), new Vector3(0f, 180f, 0f), true);
+            CreateImportedAsset(parent, FloreswaPrefabFolder + "/sofa.prefab", "Floreswa_Sofa_Courtyard", new Vector3(-4f, 0.05f, 22f), new Vector3(1.9f, 0.9f, 0.72f), new Vector3(0f, 12f, 0f), true);
+            CreateImportedAsset(parent, FloreswaPrefabFolder + "/glasses01.prefab", "Floreswa_Glasses_TeacherDesk", new Vector3(7.25f, 0.86f, 10.08f), new Vector3(0.38f, 0.12f, 0.22f), new Vector3(0f, 28f, 0f), true);
+            CreateImportedAsset(parent, FloreswaPrefabFolder + "/glasses02.prefab", "Floreswa_Glasses_LibraryTable", new Vector3(7.12f, 0.86f, -1.78f), new Vector3(0.38f, 0.12f, 0.22f), new Vector3(0f, -18f, 0f), true);
+        }
+
+        private static GameObject CreateImportedAsset(Transform parent, string prefabPath, string name, Vector3 bottomCenter, Vector3 approximateSize, Vector3 eulerAngles, bool markStatic)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+            {
+                return null;
+            }
+
+            var instance = PrefabUtility.InstantiatePrefab(prefab, parent) as GameObject;
+            if (instance == null)
+            {
+                return null;
+            }
+
+            instance.name = name;
+            instance.transform.position = bottomCenter;
+            instance.transform.rotation = Quaternion.Euler(eulerAngles);
+            instance.transform.localScale = Vector3.one;
+            FitImportedAssetToApproximateSize(instance.transform, approximateSize);
+            AlignImportedAssetBottomCenter(instance.transform, bottomCenter);
+            if (markStatic)
+            {
+                SetStaticFlags(instance);
+            }
+
+            return instance;
+        }
+
+        private static void FitImportedAssetToApproximateSize(Transform root, Vector3 approximateSize)
+        {
+            var bounds = CalculateRendererBounds(root);
+            if (!bounds.HasValue)
+            {
+                return;
+            }
+
+            var size = bounds.Value.size;
+            if (size.x <= 0.001f || size.y <= 0.001f || size.z <= 0.001f)
+            {
+                return;
+            }
+
+            var scale = Mathf.Min(
+                approximateSize.x / size.x,
+                Mathf.Min(approximateSize.y / size.y, approximateSize.z / size.z));
+            if (float.IsNaN(scale) || float.IsInfinity(scale) || scale <= 0.001f)
+            {
+                return;
+            }
+
+            root.localScale *= scale;
+        }
+
+        private static void AlignImportedAssetBottomCenter(Transform root, Vector3 bottomCenter)
+        {
+            var bounds = CalculateRendererBounds(root);
+            if (!bounds.HasValue)
+            {
+                return;
+            }
+
+            var delta = new Vector3(
+                bottomCenter.x - bounds.Value.center.x,
+                bottomCenter.y - bounds.Value.min.y,
+                bottomCenter.z - bounds.Value.center.z);
+            root.position += delta;
+        }
+
+        private static Bounds? CalculateRendererBounds(Transform root)
+        {
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            Bounds? bounds = null;
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                if (bounds.HasValue)
+                {
+                    var next = bounds.Value;
+                    next.Encapsulate(renderers[i].bounds);
+                    bounds = next;
+                }
+                else
+                {
+                    bounds = renderers[i].bounds;
+                }
+            }
+
+            return bounds;
+        }
+
+        private static void SetStaticFlags(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            root.isStatic = true;
+            for (var i = 0; i < root.transform.childCount; i++)
+            {
+                SetStaticFlags(root.transform.GetChild(i).gameObject);
+            }
         }
 
         private static void CreateBookshelf(Transform parent, string name, Vector3 position)
@@ -1896,9 +2093,9 @@ namespace MobilOfl.EditorTools
                 caseDefinition,
                 "evidence.security-log",
                 "Etkilesim: Guvenlik Kaydi",
-                new Vector3(-7f, 0.75f, 10f),
+                new Vector3(-7f, 1.12f, 10f),
                 PrimitiveType.Cube,
-                new Vector3(1f, 1f, 1f));
+                new Vector3(1.45f, 0.72f, 1.1f));
 
             CreateEvidenceObject(
                 root.transform,
@@ -1943,7 +2140,7 @@ namespace MobilOfl.EditorTools
                 "Bu cekmece icin once maymuncuk seti bulman gerekiyor.",
                 "Ogretmenler odasindaki cekmecede yedek anahtar bulundu.",
                 new Vector3(7.4f, 0.8f, 10.2f),
-                new Vector3(0.9f, 0.28f, 0.8f),
+                new Vector3(1.35f, 0.42f, 1.08f),
                 new Color(0.74f, 0.62f, 0.28f, 1f));
 
             CreateSearchSpotObject(
@@ -1956,7 +2153,7 @@ namespace MobilOfl.EditorTools
                 "Arsiv raf kutusu icin once gecis karti bulman gerekiyor.",
                 "Arsiv rafinda sakli defter bulundu.",
                 new Vector3(-15f, 0.86f, 9.2f),
-                new Vector3(1.05f, 0.34f, 0.85f),
+                new Vector3(1.7f, 0.82f, 1.35f),
                 new Color(0.45f, 0.68f, 0.84f, 1f));
         }
 
@@ -2104,7 +2301,7 @@ namespace MobilOfl.EditorTools
                 renderer.enabled = false;
             }
 
-            CreateNpcCharacterVisual(npcObject.transform, displayName + "_Visual", color);
+            CreateNpcCharacterVisual(npcObject.transform, displayName + "_Visual", color, npcId);
 
             var interactable = npcObject.GetComponent<NpcInteractable>();
             if (interactable == null)
@@ -2265,16 +2462,42 @@ namespace MobilOfl.EditorTools
                    (capsule.center - new Vector3(0f, ActorHeight * 0.5f, 0f)).sqrMagnitude > 0.0001f;
         }
 
-        private static Renderer[] CreateNpcCharacterVisual(Transform parent, string name, Color fallbackColor)
+        private static bool NpcNeedsFloreswaVisual(Transform npcRoot)
         {
-            return ReplaceCharacterVisual(parent, name, fallbackColor);
+            if (npcRoot == null || !AssetDatabase.IsValidFolder(FloreswaPrefabFolder))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < npcRoot.childCount; i++)
+            {
+                var child = npcRoot.GetChild(i);
+                if (child == null || !child.name.EndsWith("_Visual", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var source = PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject);
+                var sourcePath = source == null ? string.Empty : AssetDatabase.GetAssetPath(source);
+                return !sourcePath.StartsWith(FloreswaPrefabFolder, System.StringComparison.OrdinalIgnoreCase);
+            }
+
+            return true;
         }
 
-        private static Renderer[] ReplaceCharacterVisual(Transform parent, string name, Color fallbackColor)
+        private static Renderer[] CreateNpcCharacterVisual(Transform parent, string name, Color fallbackColor, string npcId)
+        {
+            return ReplaceNpcCharacterVisual(parent, name, fallbackColor, npcId);
+        }
+
+        private static Renderer[] ReplaceNpcCharacterVisual(Transform parent, string name, Color fallbackColor, string npcId)
         {
             RemoveGeneratedCharacterVisuals(parent, name);
 
-            var prefab = SchoolBoyCharacterSetupTool.LoadCharacterPrefab();
+            var prefabPath = GetFloreswaNpcPrefabPath(npcId);
+            var prefab = string.IsNullOrWhiteSpace(prefabPath)
+                ? null
+                : AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             if (prefab == null)
             {
                 return CreatePlaceholderCharacterVisual(parent, name, fallbackColor);
@@ -2290,7 +2513,126 @@ namespace MobilOfl.EditorTools
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localRotation = Quaternion.identity;
             instance.transform.localScale = Vector3.one;
+            FitCharacterVisualToActor(instance.transform);
+            AttachNpcAnimator(instance, prefabPath);
             return instance.GetComponentsInChildren<Renderer>(true);
+        }
+
+        private static string GetFloreswaNpcPrefabPath(string npcId)
+        {
+            if (!AssetDatabase.IsValidFolder(FloreswaPrefabFolder))
+            {
+                return string.Empty;
+            }
+
+            var index = Mathf.Abs(string.IsNullOrWhiteSpace(npcId) ? 0 : npcId.GetHashCode()) % FloreswaNpcPrefabPaths.Length;
+            if (!string.IsNullOrWhiteSpace(npcId))
+            {
+                if (npcId.IndexOf("guard", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    index = 0;
+                }
+                else if (npcId.IndexOf("student", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    index = 3;
+                }
+                else if (npcId.IndexOf("teacher", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    index = 6;
+                }
+                else if (npcId.IndexOf("archive", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    index = 4;
+                }
+                else if (npcId.IndexOf("canteen", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    index = 7;
+                }
+            }
+
+            return FloreswaNpcPrefabPaths[index];
+        }
+
+        private static void AttachNpcAnimator(GameObject instance, string prefabPath)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            var animator = instance.GetComponentInChildren<Animator>(true);
+            if (animator == null)
+            {
+                animator = instance.AddComponent<Animator>();
+            }
+
+            var avatar = LoadFloreswaAvatar(prefabPath);
+            if (avatar != null)
+            {
+                animator.avatar = avatar;
+            }
+
+            animator.runtimeAnimatorController = SchoolBoyCharacterSetupTool.LoadOrCreateFloreswaNpcAnimatorController();
+            animator.applyRootMotion = false;
+            animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+
+            var proceduralAnimator = instance.GetComponent<FloreswaProceduralAnimator>();
+            if (animator.runtimeAnimatorController == null)
+            {
+                if (proceduralAnimator == null)
+                {
+                    proceduralAnimator = instance.AddComponent<FloreswaProceduralAnimator>();
+                }
+                proceduralAnimator.enabled = true;
+            }
+            else if (proceduralAnimator != null)
+            {
+                proceduralAnimator.enabled = false;
+            }
+
+            var movementAnimator = instance.GetComponent<CharacterMovementAnimator>();
+            if (movementAnimator == null)
+            {
+                movementAnimator = instance.AddComponent<CharacterMovementAnimator>();
+            }
+
+            var serializedObject = new SerializedObject(movementAnimator);
+            serializedObject.FindProperty("animator").objectReferenceValue = animator;
+            serializedObject.FindProperty("proceduralFallback").boolValue = animator.runtimeAnimatorController == null;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(movementAnimator);
+        }
+
+        private static Avatar LoadFloreswaAvatar(string prefabPath)
+        {
+            if (string.IsNullOrWhiteSpace(prefabPath))
+            {
+                return null;
+            }
+
+            var modelPath = prefabPath
+                .Replace("/Prefabs/", "/Models/")
+                .Replace(".prefab", ".fbx");
+            return AssetDatabase.LoadAllAssetsAtPath(modelPath)
+                .OfType<Avatar>()
+                .FirstOrDefault(avatar => avatar != null && avatar.isValid);
+        }
+
+        private static void FitCharacterVisualToActor(Transform visualRoot)
+        {
+            var bounds = CalculateRendererBounds(visualRoot);
+            if (!bounds.HasValue || bounds.Value.size.y <= 0.001f)
+            {
+                return;
+            }
+
+            var scale = ActorHeight / bounds.Value.size.y;
+            visualRoot.localScale *= scale;
+            bounds = CalculateRendererBounds(visualRoot);
+            if (bounds.HasValue && visualRoot.parent != null)
+            {
+                visualRoot.position += Vector3.up * (visualRoot.parent.position.y - bounds.Value.min.y);
+            }
         }
 
         private static void EnsurePlayerCharacterVisual(Transform playerRoot, Camera camera)
@@ -2486,7 +2828,8 @@ namespace MobilOfl.EditorTools
             serializedObject.FindProperty("hiddenEvidenceId").stringValue = evidenceId;
             serializedObject.FindProperty("markerLabel").stringValue = label;
             serializedObject.FindProperty("markerColor").colorValue = color;
-            serializedObject.FindProperty("searchDuration").floatValue = 1.85f;
+            serializedObject.FindProperty("searchDuration").floatValue = 0.95f;
+            serializedObject.FindProperty("useDistance").floatValue = 5.25f;
             serializedObject.FindProperty("requiredToolId").stringValue = requiredToolId;
             serializedObject.FindProperty("missingToolMessage").stringValue = missingToolMessage;
             serializedObject.FindProperty("searchCompleteMessage").stringValue = searchMessage;

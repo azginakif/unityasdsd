@@ -1,0 +1,22 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.4/staging' branch; Version is '6000.4.3f1 (39d1a88d4dd1) revision 3789224'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 10  (10.0.19045) 64bit Professional' Language: 'tr' Physical Memory: 32118 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-OF FEN LİSESİ-10" at "2026-05-05T07:51:12.960112Z"
+System  architecture: x64
+Process architecture: x64
+Date: 2026-05-05T07:51:12Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.4.3f1\Editor\Unity.exe
+-batchmode
+-quit
+-projectPath
+C:\Users\OF FEN LİSESİ-10\Desktop\New project 4
+-executeMethod
+MobilOfl.EditorTools.SchoolBoyCharacterSetupTool.SetupSchoolBoyCharacterAssets
+-logFile
+C:\Users\OF FEN LİSESİ-10\Desktop\New project 4\UnityCharacterPatch.log
+Successfully changed project path to: C:\Users\OF FEN LİSESİ-10\Desktop\New project 4
+C:/Users/OF FEN LİSESİ-10/Desktop/New project 4
+Exiting without the bug reporter. Application will terminate with return code 1

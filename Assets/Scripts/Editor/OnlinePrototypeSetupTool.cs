@@ -115,7 +115,7 @@ namespace MobilOfl.EditorTools
             stealthSerializedObject.FindProperty("movementController").objectReferenceValue = movement;
             stealthSerializedObject.FindProperty("scanner").objectReferenceValue = scanner;
             stealthSerializedObject.FindProperty("npcAwarenessRadius").floatValue = 7.2f;
-            stealthSerializedObject.FindProperty("forcedCalmInteractionThreshold").floatValue = 0.72f;
+            stealthSerializedObject.FindProperty("forcedCalmInteractionThreshold").floatValue = 0.9f;
             stealthSerializedObject.FindProperty("scanNoiseBoost").floatValue = 0.18f;
             stealthSerializedObject.ApplyModifiedPropertiesWithoutUndo();
 
