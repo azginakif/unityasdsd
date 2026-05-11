@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MobilOfl.Case;
 using MobilOfl.Gameplay;
@@ -14,6 +15,7 @@ namespace MobilOfl.EditorTools
     public static class ReleaseReadinessValidator
     {
         private const string CaseAssetPath = "Assets/Data/Cases/ExamTheftCase.asset";
+        private const string ProjectSettingsPath = "ProjectSettings/ProjectSettings.asset";
 
         [MenuItem("Mobil OFL/Validation/Run Release Readiness Check")]
         public static void RunReleaseReadinessCheck()
@@ -26,6 +28,7 @@ namespace MobilOfl.EditorTools
             ValidateCoreComponents(errors, warnings);
             ValidateInvestigationFlow(errors, warnings);
             ValidateOnlinePrototype(errors, warnings);
+            ValidateMobileReleaseSettings(errors, warnings);
 
             var report = BuildReport(errors, warnings);
             if (errors.Count > 0)
@@ -137,7 +140,87 @@ namespace MobilOfl.EditorTools
                 errors.Add($"Culprit suspect id supheli listesinde yok: {caseDefinition.CulpritSuspectId}");
             }
 
+            ValidateFinalAccusationOptions(caseDefinition, errors, warnings);
+
             ValidateNarrativeEvidenceChain(caseDefinition, evidenceIds, errors, warnings);
+        }
+
+        private static void ValidateFinalAccusationOptions(
+            CaseDefinition caseDefinition,
+            List<string> errors,
+            List<string> warnings)
+        {
+            if (string.IsNullOrWhiteSpace(caseDefinition.CulpritMotive))
+            {
+                errors.Add("Dogru motivasyon metni bos.");
+            }
+
+            if (string.IsNullOrWhiteSpace(caseDefinition.CulpritTimeline))
+            {
+                errors.Add("Dogru zaman cizelgesi metni bos.");
+            }
+
+            if (caseDefinition.MotiveOptions.Count < 2)
+            {
+                warnings.Add("Final karar icin motivasyon secenegi az. Dogru cevapla birlikte en az 2-3 secenek hedefle.");
+            }
+
+            if (caseDefinition.TimelineOptions.Count < 2)
+            {
+                warnings.Add("Final karar icin zaman cizelgesi secenegi az. Dogru cevapla birlikte en az 2-3 secenek hedefle.");
+            }
+
+            if (!ContainsOption(caseDefinition.MotiveOptions, caseDefinition.CulpritMotive))
+            {
+                errors.Add("Dogru motivasyon final secenekleri icinde yok.");
+            }
+
+            if (!ContainsOption(caseDefinition.TimelineOptions, caseDefinition.CulpritTimeline))
+            {
+                errors.Add("Dogru zaman cizelgesi final secenekleri icinde yok.");
+            }
+
+            AddDuplicateOptionWarnings("motivasyon", caseDefinition.MotiveOptions, warnings);
+            AddDuplicateOptionWarnings("zaman cizelgesi", caseDefinition.TimelineOptions, warnings);
+        }
+
+        private static bool ContainsOption(IReadOnlyList<string> options, string expected)
+        {
+            if (options == null || string.IsNullOrWhiteSpace(expected))
+            {
+                return false;
+            }
+
+            return options.Any(option => string.Equals(
+                option?.Trim(),
+                expected.Trim(),
+                System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static void AddDuplicateOptionWarnings(
+            string label,
+            IReadOnlyList<string> options,
+            List<string> warnings)
+        {
+            if (options == null)
+            {
+                return;
+            }
+
+            var seen = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var option in options)
+            {
+                if (string.IsNullOrWhiteSpace(option))
+                {
+                    warnings.Add($"Final {label} seceneklerinde bos satir var.");
+                    continue;
+                }
+
+                if (!seen.Add(option.Trim()))
+                {
+                    warnings.Add($"Final {label} seceneklerinde tekrarlanan cevap var: {option.Trim()}");
+                }
+            }
         }
 
         private static void ValidateNarrativeEvidenceChain(
@@ -214,10 +297,10 @@ namespace MobilOfl.EditorTools
 
         private static void ValidateInvestigationFlow(List<string> errors, List<string> warnings)
         {
-            var evidence = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include);
-            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include);
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
-            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include);
+            var evidence = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
             RequireTool("tool.archive-pass", tools, errors);
             RequireTool("tool.lockpick", tools, errors);
@@ -245,6 +328,44 @@ namespace MobilOfl.EditorTools
             RequireComponent<NetworkManager>("NetworkManager", warnings);
             RequireComponent<NetworkCaseState>("NetworkCaseState", warnings);
             RequireComponent<RelayNetworkBootstrap>("RelayNetworkBootstrap", warnings);
+        }
+
+        private static void ValidateMobileReleaseSettings(List<string> errors, List<string> warnings)
+        {
+            if (!File.Exists(ProjectSettingsPath))
+            {
+                warnings.Add("ProjectSettings.asset okunamadi. Android release ayarlari kontrol edilemedi.");
+                return;
+            }
+
+            var projectSettings = File.ReadAllText(ProjectSettingsPath);
+
+            if (projectSettings.Contains("Android: com.mobilofl.prototype"))
+            {
+                warnings.Add("Android application id hala prototype paket adini kullaniyor: com.mobilofl.prototype");
+            }
+
+            if (projectSettings.Contains("AndroidKeystoreName: \n") ||
+                projectSettings.Contains("AndroidKeystoreName: \r\n"))
+            {
+                warnings.Add("Android release icin keystore atanmamis.");
+            }
+
+            if (projectSettings.Contains("m_BuildTargetIcons: []"))
+            {
+                warnings.Add("Build target ikonlari bos. Store/release icin uygulama ikonlari hazirlanmali.");
+            }
+
+            if (projectSettings.Contains("AndroidTargetSdkVersion: 0"))
+            {
+                warnings.Add("Android target SDK otomatik ayarda. Store gonderimi oncesi hedef SDK bilincli secilmeli.");
+            }
+
+            if (projectSettings.Contains("bundleVersion: 0.0.0") ||
+                projectSettings.Contains("bundleVersion: 0.1.0"))
+            {
+                warnings.Add("Bundle version erken prototip degerinde gorunuyor. Release surumleme planini kontrol et.");
+            }
         }
 
         private static void RequireComponent<T>(string label, List<string> target) where T : Object

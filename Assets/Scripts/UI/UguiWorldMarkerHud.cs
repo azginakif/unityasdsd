@@ -163,7 +163,7 @@ namespace MobilOfl.UI
 
         private void DrawEvidenceMarkers()
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -175,7 +175,7 @@ namespace MobilOfl.UI
                 AddMarkerTarget(evidence.transform, Vector3.up * 1.1f, evidence.MarkerLabel, evidence.MarkerColor, 0f);
             }
 
-            var searchSpotList = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Exclude);
+            var searchSpotList = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < searchSpotList.Length; i++)
             {
                 var searchSpot = searchSpotList[i];
@@ -190,7 +190,7 @@ namespace MobilOfl.UI
 
         private void DrawNpcMarkers()
         {
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -205,7 +205,7 @@ namespace MobilOfl.UI
 
         private void DrawToolMarkers()
         {
-            var toolPickups = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Exclude);
+            var toolPickups = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < toolPickups.Length; i++)
             {
                 var toolPickup = toolPickups[i];
@@ -220,7 +220,7 @@ namespace MobilOfl.UI
 
         private void DrawPlayerMarkers()
         {
-            var players = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
+            var players = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < players.Length; i++)
             {
                 var player = players[i];
@@ -307,7 +307,7 @@ namespace MobilOfl.UI
             anchor = new Vector2(Mathf.Clamp(viewport.x, 0.1f, 0.9f), Mathf.Clamp(viewport.y, 0.14f, 0.88f));
             var scanBoost = InvestigationScanner.IsScanActive ? 1f : 0f;
             markerText = BuildMarkerText(marker.Label, distance);
-            var markerWidth = Mathf.Clamp(markerText.Length * 7.6f + 20f, 128f, 218f);
+            var markerWidth = Mathf.Clamp(markerText.Length * 7.6f + 20f, 128f, 270f);
             var slotOffset = ((slotIndex % 3) - 1) * 14f;
             anchoredPosition = new Vector2(0f, marker.VerticalOffset + slotOffset);
             size = Vector2.Lerp(new Vector2(markerWidth, 24f), new Vector2(markerWidth + 14f, 30f), scanBoost);
@@ -372,9 +372,9 @@ namespace MobilOfl.UI
         private static string BuildMarkerText(string label, float distance)
         {
             var safeLabel = string.IsNullOrWhiteSpace(label) ? "Hedef" : label.Trim();
-            if (safeLabel.Length > 18)
+            if (safeLabel.Length > 24)
             {
-                safeLabel = safeLabel.Substring(0, 15).TrimEnd() + "...";
+                safeLabel = safeLabel.Substring(0, 21).TrimEnd() + "...";
             }
 
             return $"{safeLabel} [{distance:0}m]";
@@ -393,7 +393,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < cameras.Length; i++)
             {
                 if (cameras[i] != null && cameras[i].isActiveAndEnabled)

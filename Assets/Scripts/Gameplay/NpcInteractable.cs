@@ -48,7 +48,9 @@ namespace MobilOfl.Gameplay
                 !string.IsNullOrWhiteSpace(witnessEvidenceId) &&
                 CaseSessionManager.Instance.HasEvidence(witnessEvidenceId);
 
-            var line = hasRequiredEvidence ? evidenceLine : defaultLine;
+            var line = hasRequiredEvidence
+                ? evidenceLine
+                : defaultLine;
             var revealsNewLead =
                 hasRequiredEvidence &&
                 !string.IsNullOrWhiteSpace(witnessEvidenceId) &&

@@ -20,6 +20,8 @@ namespace MobilOfl.Case
         [SerializeField] private string culpritSuspectId;
         [SerializeField] [TextArea] private string culpritMotive = "Motivasyon";
         [SerializeField] [TextArea] private string culpritTimeline = "Zaman cizelgesi";
+        [SerializeField] private List<string> motiveOptions = new List<string>();
+        [SerializeField] private List<string> timelineOptions = new List<string>();
 
         public string CaseId => caseId;
         public string CaseTitle => caseTitle;
@@ -29,5 +31,7 @@ namespace MobilOfl.Case
         public string CulpritSuspectId => culpritSuspectId;
         public string CulpritMotive => culpritMotive;
         public string CulpritTimeline => culpritTimeline;
+        public IReadOnlyList<string> MotiveOptions => motiveOptions;
+        public IReadOnlyList<string> TimelineOptions => timelineOptions;
     }
 }

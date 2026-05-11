@@ -39,15 +39,8 @@ namespace MobilOfl.UI
             {
                 _playerName = PlayerProfileSettings.Sanitize(value);
                 PlayerProfileSettings.SavePlayerName(_playerName);
-
-                var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
-                for (var i = 0; i < avatars.Length; i++)
-                {
-                    if (avatars[i] != null && avatars[i].IsOwner)
-                    {
-                        avatars[i].SubmitDisplayName(_playerName);
-                    }
-                }
+                SubmitLocalProfileToNetworkAvatar();
+                RefreshLocalReadyRosterEntry();
             }
         }
 
@@ -556,6 +549,28 @@ namespace MobilOfl.UI
         {
             _playerName = PlayerProfileSettings.Sanitize(_playerName);
             PlayerProfileSettings.SavePlayerName(_playerName);
+            SubmitLocalProfileToNetworkAvatar();
+        }
+
+        private void SubmitLocalProfileToNetworkAvatar()
+        {
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (var i = 0; i < avatars.Length; i++)
+            {
+                if (avatars[i] != null && avatars[i].IsOwner)
+                {
+                    avatars[i].SubmitDisplayName(_playerName);
+                }
+            }
+        }
+
+        private static void RefreshLocalReadyRosterEntry()
+        {
+            var networkCaseState = NetworkCaseState.Instance;
+            if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
+            {
+                networkCaseState.RequestSetReady(networkCaseState.GetLocalReadyState());
+            }
         }
 
         private void SyncBlockingState()
@@ -624,7 +639,7 @@ namespace MobilOfl.UI
         {
             AudioListener.volume = Mathf.Clamp01(_masterVolume);
 
-            var controllers = Object.FindObjectsByType<PrototypeFirstPersonController>(FindObjectsInactive.Exclude);
+            var controllers = Object.FindObjectsByType<PrototypeFirstPersonController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < controllers.Length; i++)
             {
                 if (controllers[i] != null)

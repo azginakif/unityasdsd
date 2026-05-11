@@ -43,7 +43,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < avatars.Length; i++)
             {
                 if (avatars[i] != null && avatars[i].IsOwner)

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace MobilOfl.UI
 {
-    public class MobileLookArea : MonoBehaviour, IDragHandler, IPointerUpHandler
+    public class MobileLookArea : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
         [SerializeField] private float sensitivity = 1f;
         [SerializeField] private float maxDeltaPerEvent = 80f;
@@ -65,6 +65,17 @@ namespace MobilOfl.UI
 
             var clampedDelta = Vector2.ClampMagnitude(eventData.delta, maxDeltaPerEvent);
             _lookDelta += clampedDelta * sensitivity;
+            _lastDragTime = Time.unscaledTime;
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (_activePointerId != int.MinValue)
+            {
+                return;
+            }
+
+            _activePointerId = eventData.pointerId;
             _lastDragTime = Time.unscaledTime;
         }
 

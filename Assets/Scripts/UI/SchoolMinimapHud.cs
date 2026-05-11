@@ -81,7 +81,7 @@ namespace MobilOfl.UI
 
         private void DrawMarkers(Rect mapRect)
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -93,7 +93,7 @@ namespace MobilOfl.UI
                 DrawMarker(mapRect, evidence.transform.position, evidence.MarkerColor, 7f);
             }
 
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -121,12 +121,13 @@ namespace MobilOfl.UI
 
         private void DrawMarker(Rect mapRect, Vector3 worldPosition, Color color, float size)
         {
-            if (worldPosition.x < worldMin.x || worldPosition.x > worldMax.x || worldPosition.z < worldMin.y || worldPosition.z > worldMax.y)
+            var mapPosition = SchoolLocationUtility.NormalizeToPrototypeSpace(worldPosition);
+            if (mapPosition.x < worldMin.x || mapPosition.x > worldMax.x || mapPosition.z < worldMin.y || mapPosition.z > worldMax.y)
             {
                 return;
             }
 
-            DrawPoint(WorldToMap(mapRect, worldPosition), color, size);
+            DrawPoint(WorldToMap(mapRect, mapPosition), color, size);
         }
 
         private void DrawPoint(Vector2 point, Color color, float size)
@@ -136,8 +137,9 @@ namespace MobilOfl.UI
 
         private Vector2 WorldToMap(Rect mapRect, Vector3 worldPosition)
         {
-            var normalizedX = Mathf.InverseLerp(worldMin.x, worldMax.x, worldPosition.x);
-            var normalizedY = Mathf.InverseLerp(worldMin.y, worldMax.y, worldPosition.z);
+            var mapPosition = SchoolLocationUtility.NormalizeToPrototypeSpace(worldPosition);
+            var normalizedX = Mathf.InverseLerp(worldMin.x, worldMax.x, mapPosition.x);
+            var normalizedY = Mathf.InverseLerp(worldMin.y, worldMax.y, mapPosition.z);
             return new Vector2(
                 Mathf.Lerp(mapRect.xMin, mapRect.xMax, normalizedX),
                 Mathf.Lerp(mapRect.yMax, mapRect.yMin, normalizedY));
@@ -154,7 +156,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (var i = 0; i < avatars.Length; i++)
             {
                 if (avatars[i] != null && avatars[i].IsOwner)

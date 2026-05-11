@@ -89,7 +89,8 @@ namespace DevsDaddy.Shared.UIFramework.Core.Components
         private IEnumerator LoadSprite(Action<Sprite> onComplete, Action<string> onError = null) {
             UnityWebRequest request = UnityWebRequestTexture.GetTexture(spriteUrl);
             yield return request.SendWebRequest();
-            if (request.isNetworkError || request.isHttpError)
+            if (request.result == UnityWebRequest.Result.ConnectionError ||
+                request.result == UnityWebRequest.Result.ProtocolError)
             {
                 onError?.Invoke("Failed to download texture. Error: " + request.error);
             }

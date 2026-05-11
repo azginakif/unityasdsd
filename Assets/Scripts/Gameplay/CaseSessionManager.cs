@@ -709,6 +709,14 @@ namespace MobilOfl.Gameplay
 
         public bool TryResolveCase(string suspectId, out string resultMessage)
         {
+            resultMessage = "Final karar icin supheliyle birlikte motivasyon ve zaman cizelgesi de secilmeli.";
+            PublishMessage(resultMessage);
+            CaseResolved?.Invoke(false, resultMessage);
+            return false;
+        }
+
+        public bool TryResolveCase(string suspectId, string motive, string timeline, out string resultMessage)
+        {
             resultMessage = string.Empty;
 
             if (activeCase == null)
@@ -734,7 +742,11 @@ namespace MobilOfl.Gameplay
                 return false;
             }
 
-            if (suspectId == activeCase.CulpritSuspectId)
+            var correctSuspect = suspectId == activeCase.CulpritSuspectId;
+            var correctMotive = IsFinalAnswerMatch(motive, activeCase.CulpritMotive);
+            var correctTimeline = IsFinalAnswerMatch(timeline, activeCase.CulpritTimeline);
+
+            if (correctSuspect && correctMotive && correctTimeline)
             {
                 resultMessage =
                     $"Dogru karar. Motivasyon: {activeCase.CulpritMotive}\nZaman cizelgesi: {activeCase.CulpritTimeline}";
@@ -746,7 +758,23 @@ namespace MobilOfl.Gameplay
                 return true;
             }
 
-            resultMessage = "Yanlis supheli secildi.";
+            if (!correctSuspect)
+            {
+                resultMessage = "Yanlis supheli secildi.";
+            }
+            else if (!correctMotive && !correctTimeline)
+            {
+                resultMessage = "Supheli dogru olabilir, ama motivasyon ve zaman cizelgesi kanitlarla uyusmuyor.";
+            }
+            else if (!correctMotive)
+            {
+                resultMessage = "Supheli dogru olabilir, ama motivasyon kanitlarla uyusmuyor.";
+            }
+            else
+            {
+                resultMessage = "Supheli dogru olabilir, ama zaman cizelgesi kanitlarla uyusmuyor.";
+            }
+
             PublishMessage(resultMessage);
             CaseResolved?.Invoke(false, resultMessage);
             return false;
@@ -897,6 +925,19 @@ namespace MobilOfl.Gameplay
         private bool IsCriticalEvidence(string evidenceId)
         {
             return _evidenceById.TryGetValue(evidenceId, out var evidence) && evidence != null && evidence.IsCritical;
+        }
+
+        private static bool IsFinalAnswerMatch(string selected, string expected)
+        {
+            return string.Equals(
+                NormalizeFinalAnswer(selected),
+                NormalizeFinalAnswer(expected),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeFinalAnswer(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
         }
 
         private string ResolveToolDisplayName(string toolId, string preferredDisplayName)

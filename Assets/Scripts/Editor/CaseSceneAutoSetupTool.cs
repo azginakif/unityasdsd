@@ -10,6 +10,8 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -30,9 +32,13 @@ namespace MobilOfl.EditorTools
         private const float PlayerEyeHeight = 1.62f;
         private const float ActorHeight = 1.8f;
         private const float ActorRadius = 0.35f;
+        private const float NpcActorHeight = 2.08f;
+        private const float NpcActorRadius = 0.43f;
+        private const float NpcPatrolMoveSpeed = 1.45f;
         private const string MobileControlsCanvasName = "MobileControlsCanvas";
         private const string SchoolBlockRootName = "SampleSchoolBlock";
         private const string AtmosphereRootName = "SampleAtmosphere";
+        private const string CinematicVolumeProfilePath = "Assets/map/Scenes/SampleScene/OFL_CinematicLightingProfile.asset";
         private const string FloreswaPrefabFolder = "Assets/Floreswa/Prefabs";
         private const string SessionManagerName = "CaseSessionManager";
         private const string DebugHudName = "DebugHUD";
@@ -56,19 +62,100 @@ namespace MobilOfl.EditorTools
             FloreswaPrefabFolder + "/male03_3.prefab"
         };
 
+        private readonly struct SceneLayoutProfile
+        {
+            public SceneLayoutProfile(bool usesImportedSchoolMap, Vector3 origin, Quaternion playerRotation)
+            {
+                UsesImportedSchoolMap = usesImportedSchoolMap;
+                Origin = origin;
+                PlayerRotation = playerRotation;
+            }
+
+            public bool UsesImportedSchoolMap { get; }
+            public Vector3 Origin { get; }
+            public Quaternion PlayerRotation { get; }
+            public float ActorGroundY => UsesImportedSchoolMap ? Origin.y : CaseSceneAutoSetupTool.ActorGroundY;
+
+            public Vector3 ToWorld(Vector3 prototypePosition)
+            {
+                if (!UsesImportedSchoolMap)
+                {
+                    return prototypePosition;
+                }
+
+                return new Vector3(
+                    Origin.x + prototypePosition.z * 0.55f,
+                    Origin.y + prototypePosition.y - CaseSceneAutoSetupTool.ActorGroundY,
+                    Origin.z + prototypePosition.x * 4f);
+            }
+
+            public Vector3 ToActorWorld(Vector3 prototypePosition)
+            {
+                var world = ToWorld(prototypePosition);
+                world.y = ActorGroundY;
+                return world;
+            }
+
+            public Vector3 ToPatrolOffset(Vector3 prototypeOffset)
+            {
+                if (!UsesImportedSchoolMap)
+                {
+                    return prototypeOffset;
+                }
+
+                return new Vector3(
+                    prototypeOffset.z * 0.55f,
+                    prototypeOffset.y,
+                    prototypeOffset.x * 4f);
+            }
+        }
+
         static CaseSceneAutoSetupTool()
         {
             QueueAutoRepairMissingSceneCharacterVisuals();
             EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
         }
 
+        private static SceneLayoutProfile ResolveSceneLayoutProfile()
+        {
+            var hasImportedSchoolMap =
+                GameObject.Find("COMPUTERdemoscene (2)") != null ||
+                GameObject.Find("schoolbus") != null ||
+                GameObject.Find("CHEMISTRYlabdemoscene") != null;
+
+            if (!hasImportedSchoolMap)
+            {
+                return new SceneLayoutProfile(false, Vector3.zero, Quaternion.identity);
+            }
+
+            return new SceneLayoutProfile(
+                true,
+                new Vector3(920f, 5.08f, -585f),
+                Quaternion.Euler(0f, 90f, 0f));
+        }
+
         [MenuItem("Mobil OFL/Setup/Auto Setup Investigation Scene")]
         public static void AutoSetupInvestigationScene()
+        {
+            AutoSetupInvestigationScene(true);
+        }
+
+        [MenuItem("Mobil OFL/Setup/Auto Setup Investigation Scene Silent")]
+        public static void AutoSetupInvestigationSceneSilent()
+        {
+            AutoSetupInvestigationScene(false);
+        }
+
+        private static void AutoSetupInvestigationScene(bool showDialog)
         {
             var activeScene = SceneManager.GetActiveScene();
             if (!activeScene.IsValid())
             {
-                EditorUtility.DisplayDialog("Mobil OFL", "Aktif sahne bulunamadi.", "Tamam");
+                if (showDialog)
+                {
+                    EditorUtility.DisplayDialog("Mobil OFL", "Aktif sahne bulunamadi.", "Tamam");
+                }
+
                 return;
             }
 
@@ -79,10 +166,13 @@ namespace MobilOfl.EditorTools
             SchoolBoyCharacterSetupTool.SetupSchoolBoyCharacterAssets();
             ConfigureFloreswaCharacterImports();
 
+            var layout = ResolveSceneLayoutProfile();
             var caseDefinition = LoadOrCreateCaseDefinition();
             PopulateCaseDefinition(caseDefinition);
 
-            var playerSetup = EnsurePlayer();
+            var playerSetup = EnsurePlayer(layout);
+            DisableImportedMapTestActors(layout);
+            DisableExtraAudioListeners(playerSetup.Camera);
 
             EnsureSessionManager(caseDefinition);
             var progressTracker = EnsureProgressTracker();
@@ -99,23 +189,33 @@ namespace MobilOfl.EditorTools
             EnsureNotebookHud(notebookButton);
             EnsureResultHud();
             EnsureDirectionalLight();
-            EnsureSampleSchoolBlock();
-            EnsureHideSpots();
-            EnsureInvestigationDeskInteractable();
-            EnsureAtmosphereLights();
-            EnsureEvidenceObjects(caseDefinition);
-            EnsureNpcObjects(caseDefinition);
+            EnsureSampleSchoolBlock(layout);
+            EnsureHideSpots(layout);
+            EnsureInvestigationDeskInteractable(layout);
+            EnsureAtmosphereLights(layout);
+            EnsureImportedMapDoorInteractables(layout);
+            RepairNegativeScaleBoxColliders(layout);
+            EnsureEvidenceObjects(caseDefinition, layout);
+            EnsureNpcObjects(caseDefinition, layout);
             OnlinePrototypeSetupTool.ConfigureOnlinePrototypeInScene(false);
             EnsureMainMenuHud();
 
             EditorSceneManager.MarkSceneDirty(activeScene);
+            if (!string.IsNullOrWhiteSpace(activeScene.path))
+            {
+                EditorSceneManager.SaveScene(activeScene);
+            }
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            EditorUtility.DisplayDialog(
-                "Mobil OFL",
-                "Vaka asset'i olusturuldu, sahne kuruldu ve onerilen proje ayarlari uygulandi.",
-                "Tamam");
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog(
+                    "Mobil OFL",
+                    "Vaka asset'i olusturuldu, sahne kuruldu ve onerilen proje ayarlari uygulandi.",
+                    "Tamam");
+            }
         }
 
         [MenuItem("Mobil OFL/Characters/Apply School Boy To Scene Actors")]
@@ -131,7 +231,7 @@ namespace MobilOfl.EditorTools
         public static void IntegrateFloreswaCharacters()
         {
             SchoolBoyCharacterSetupTool.SetupSchoolBoyCharacterAssets();
-            EnsureSampleSchoolBlock();
+            EnsureSampleSchoolBlock(ResolveSceneLayoutProfile());
             ConfigureFloreswaCharacterImports();
             ApplySchoolBoyToSceneActorsInternal(false);
 
@@ -177,7 +277,7 @@ namespace MobilOfl.EditorTools
                 EnsurePlayerCharacterVisual(player.transform, Camera.main);
             }
 
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (var i = 0; i < npcs.Length; i++)
             {
                 var npc = npcs[i];
@@ -248,7 +348,7 @@ namespace MobilOfl.EditorTools
                 hasBrokenVisual |= player.GetComponentInChildren<CharacterMovementAnimator>(true) == null;
             }
 
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (var i = 0; i < npcs.Length; i++)
             {
                 if (npcs[i] == null)
@@ -516,7 +616,7 @@ namespace MobilOfl.EditorTools
             }
         }
 
-        private static PlayerSetup EnsurePlayer()
+        private static PlayerSetup EnsurePlayer(SceneLayoutProfile layout)
         {
             var playerRoot = GameObject.Find(PlayerRootName);
             if (playerRoot == null)
@@ -524,8 +624,8 @@ namespace MobilOfl.EditorTools
                 playerRoot = new GameObject(PlayerRootName);
             }
 
-            playerRoot.transform.position = new Vector3(0f, ActorGroundY, -8f);
-            playerRoot.transform.rotation = Quaternion.identity;
+            playerRoot.transform.position = layout.ToActorWorld(new Vector3(0f, ActorGroundY, -8f));
+            playerRoot.transform.rotation = layout.PlayerRotation;
 
             var controller = playerRoot.GetComponent<CharacterController>();
             if (controller == null)
@@ -556,12 +656,7 @@ namespace MobilOfl.EditorTools
                 stealth = playerRoot.AddComponent<PlayerStealthController>();
             }
 
-            var camera = Camera.main;
-            if (camera == null)
-            {
-                camera = Object.FindAnyObjectByType<Camera>();
-            }
-
+            var camera = FindPreferredPlayerCamera(playerRoot.transform);
             if (camera == null)
             {
                 var cameraObject = new GameObject("Main Camera");
@@ -574,11 +669,15 @@ namespace MobilOfl.EditorTools
             camera.transform.SetParent(playerRoot.transform);
             camera.transform.localPosition = new Vector3(0f, PlayerEyeHeight, 0f);
             camera.transform.localRotation = Quaternion.identity;
+            camera.depth = 0f;
+            camera.enabled = true;
 
             if (camera.GetComponent<AudioListener>() == null)
             {
                 camera.gameObject.AddComponent<AudioListener>();
             }
+
+            RemoveDuplicatePlayerCameras(playerRoot.transform, camera);
 
             var oldInteractionOnCamera = camera.GetComponent<PlayerInteractionController>();
             if (oldInteractionOnCamera != null)
@@ -641,6 +740,93 @@ namespace MobilOfl.EditorTools
                 Scanner = scanner,
                 Stealth = stealth
             };
+        }
+
+        private static Camera FindPreferredPlayerCamera(Transform playerRoot)
+        {
+            if (playerRoot == null)
+            {
+                return Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
+            }
+
+            var cameras = playerRoot.GetComponentsInChildren<Camera>(true);
+            Camera preferred = null;
+            var preferredScore = float.NegativeInfinity;
+            for (var i = 0; i < cameras.Length; i++)
+            {
+                var candidate = cameras[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                var score = candidate.depth;
+                if (candidate.enabled && candidate.gameObject.activeInHierarchy)
+                {
+                    score += 1000f;
+                }
+
+                if (candidate.CompareTag("MainCamera"))
+                {
+                    score += 100f;
+                }
+
+                if (candidate.GetComponent<AudioListener>() != null && candidate.GetComponent<AudioListener>().enabled)
+                {
+                    score += 2f;
+                }
+
+                if (preferred == null || score > preferredScore)
+                {
+                    preferred = candidate;
+                    preferredScore = score;
+                }
+            }
+
+            if (preferred != null)
+            {
+                return preferred;
+            }
+
+            var mainCamera = Camera.main;
+            return mainCamera != null ? mainCamera : Object.FindAnyObjectByType<Camera>();
+        }
+
+        private static void RemoveDuplicatePlayerCameras(Transform playerRoot, Camera primaryCamera)
+        {
+            if (playerRoot == null || primaryCamera == null)
+            {
+                return;
+            }
+
+            var cameras = playerRoot.GetComponentsInChildren<Camera>(true);
+            for (var i = 0; i < cameras.Length; i++)
+            {
+                var candidate = cameras[i];
+                if (candidate == null || candidate == primaryCamera)
+                {
+                    continue;
+                }
+
+                Object.DestroyImmediate(candidate.gameObject);
+            }
+        }
+
+        private static void DisableImportedMapTestActors(SceneLayoutProfile layout)
+        {
+            if (!layout.UsesImportedSchoolMap)
+            {
+                return;
+            }
+
+            var testPlayer = GameObject.Find("First Person Test Player");
+            if (testPlayer == null)
+            {
+                return;
+            }
+
+            testPlayer.SetActive(false);
+            EditorUtility.SetDirty(testPlayer);
         }
 
         private static MobileButton EnsureMobileControls(PlayerSetup playerSetup)
@@ -950,10 +1136,11 @@ namespace MobilOfl.EditorTools
 
         private static MobileLookArea EnsureLookArea(RectTransform canvasRect)
         {
-            var lookAreaRect = EnsureUiRect(canvasRect, "LookArea", new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(960f, 1080f));
+            var lookAreaRect = EnsureUiRect(canvasRect, "LookArea", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1920f, 1080f));
             var image = EnsureImage(lookAreaRect.gameObject, new Color(0.07f, 0.12f, 0.13f, 0.015f));
             image.raycastTarget = true;
             EnsureOutline(lookAreaRect.gameObject, new Color(0.26f, 0.76f, 0.72f, 0.12f), new Vector2(1f, -1f));
+            lookAreaRect.SetAsFirstSibling();
 
             var lookArea = lookAreaRect.GetComponent<MobileLookArea>();
             if (lookArea == null)
@@ -963,6 +1150,7 @@ namespace MobilOfl.EditorTools
 
             var serializedObject = new SerializedObject(lookArea);
             serializedObject.FindProperty("overlayGraphic").objectReferenceValue = image;
+            serializedObject.FindProperty("sensitivity").floatValue = 1.75f;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(lookArea);
 
@@ -1472,12 +1660,38 @@ namespace MobilOfl.EditorTools
             }
         }
 
-                private static void EnsureInvestigationDeskInteractable()
+        private static void EnsureInvestigationDeskInteractable(SceneLayoutProfile layout)
         {
             var deskObject = GameObject.Find("InvestigationDesk");
             if (deskObject == null)
             {
-                return;
+                var root = GameObject.Find("SampleInvestigationRoot");
+                if (root == null)
+                {
+                    root = new GameObject("SampleInvestigationRoot");
+                }
+
+                deskObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                deskObject.name = "InvestigationDesk";
+                deskObject.transform.SetParent(root.transform);
+            }
+
+            if (layout.UsesImportedSchoolMap)
+            {
+                deskObject.transform.position = layout.ToWorld(new Vector3(0.15f, 0.45f, -5.6f));
+                deskObject.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+                deskObject.transform.localScale = new Vector3(1.8f, 0.3f, 0.9f);
+
+                var renderer = deskObject.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.sharedMaterial = CreatePreviewMaterial("InvestigationDesk_Material", new Color(0.45f, 0.28f, 0.14f, 1f));
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                    renderer.receiveShadows = true;
+                }
+
+                EnsureInvestigationBoard(layout);
+                EditorUtility.SetDirty(deskObject);
             }
 
             var interactable = deskObject.GetComponent<InvestigationDeskInteractable>();
@@ -1504,6 +1718,264 @@ namespace MobilOfl.EditorTools
             }
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(interactable);
+        }
+
+        private static void EnsureInvestigationBoard(SceneLayoutProfile layout)
+        {
+            var root = GameObject.Find("SampleInvestigationRoot");
+            if (root == null)
+            {
+                root = new GameObject("SampleInvestigationRoot");
+            }
+
+            var boardObject = GameObject.Find("InvestigationBoard");
+            if (boardObject == null)
+            {
+                boardObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                boardObject.name = "InvestigationBoard";
+                boardObject.transform.SetParent(root.transform);
+            }
+
+            boardObject.transform.position = layout.ToWorld(new Vector3(-1.65f, 1.65f, -6.5f));
+            boardObject.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+            boardObject.transform.localScale = new Vector3(1.55f, 0.88f, 0.08f);
+
+            var renderer = boardObject.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = CreatePreviewMaterial("InvestigationBoard_Material", new Color(0.1f, 0.18f, 0.22f, 1f));
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                renderer.receiveShadows = true;
+            }
+
+            EditorUtility.SetDirty(boardObject);
+        }
+
+        private static void EnsureImportedMapDoorInteractables(SceneLayoutProfile layout)
+        {
+            if (!layout.UsesImportedSchoolMap)
+            {
+                return;
+            }
+
+            RemoveInvalidImportedMapDoorInteractables();
+
+            var transforms = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                var doorTransform = transforms[i];
+                if (!IsMovableImportedMapDoorMesh(doorTransform))
+                {
+                    continue;
+                }
+
+                var hinge = EnsureDoorHinge(doorTransform);
+                if (hinge == null)
+                {
+                    continue;
+                }
+
+                var doorObject = doorTransform.gameObject;
+                var hasNegativeScale = HasNegativeLossyScale(doorTransform);
+                var collider = doorObject.GetComponent<Collider>();
+                if (hasNegativeScale && collider is BoxCollider)
+                {
+                    Object.DestroyImmediate(collider);
+                    collider = null;
+                }
+
+                if (collider == null)
+                {
+                    var meshFilter = doorObject.GetComponent<MeshFilter>();
+                    collider = hasNegativeScale && meshFilter != null
+                        ? doorObject.AddComponent<MeshCollider>()
+                        : doorObject.AddComponent<BoxCollider>();
+                }
+
+                collider.isTrigger = false;
+
+                var childInteractable = doorObject.GetComponent<DoorInteractable>();
+                if (childInteractable != null)
+                {
+                    Object.DestroyImmediate(childInteractable);
+                }
+
+                var interactable = hinge.GetComponent<DoorInteractable>();
+                if (interactable == null)
+                {
+                    interactable = hinge.AddComponent<DoorInteractable>();
+                }
+
+                interactable.ConfigurePrompt("Kapiyi ac/kapat");
+                interactable.ConfigureAccess(string.Empty, string.Empty, false);
+                EditorUtility.SetDirty(collider);
+                EditorUtility.SetDirty(interactable);
+                EditorUtility.SetDirty(doorObject);
+                EditorUtility.SetDirty(hinge);
+            }
+        }
+
+        private static void RemoveInvalidImportedMapDoorInteractables()
+        {
+            var interactables = Object.FindObjectsByType<DoorInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (var i = 0; i < interactables.Length; i++)
+            {
+                var interactable = interactables[i];
+                if (interactable == null)
+                {
+                    continue;
+                }
+
+                if (interactable.name.StartsWith("DoorHinge_", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                Object.DestroyImmediate(interactable);
+            }
+        }
+
+        private static GameObject EnsureDoorHinge(Transform doorTransform)
+        {
+            if (doorTransform == null)
+            {
+                return null;
+            }
+
+            if (doorTransform.parent != null && doorTransform.parent.name.StartsWith("DoorHinge_", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return doorTransform.parent.gameObject;
+            }
+
+            var hingeName = "DoorHinge_" + doorTransform.name.Replace(" ", "_").Replace("(", string.Empty).Replace(")", string.Empty);
+            var existingHinge = doorTransform.parent != null ? doorTransform.parent.Find(hingeName) : null;
+            var hinge = existingHinge != null ? existingHinge.gameObject : new GameObject(hingeName);
+            var originalParent = doorTransform.parent;
+            var originalSiblingIndex = doorTransform.GetSiblingIndex();
+            var hingePosition = CalculateDoorHingePosition(doorTransform);
+
+            hinge.transform.SetParent(originalParent, false);
+            hinge.transform.position = hingePosition;
+            hinge.transform.rotation = doorTransform.rotation;
+            hinge.transform.localScale = Vector3.one;
+            hinge.transform.SetSiblingIndex(originalSiblingIndex);
+            doorTransform.SetParent(hinge.transform, true);
+            EditorUtility.SetDirty(hinge);
+            EditorUtility.SetDirty(doorTransform);
+            return hinge;
+        }
+
+        private static Vector3 CalculateDoorHingePosition(Transform doorTransform)
+        {
+            var meshFilter = doorTransform.GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+            {
+                var bounds = meshFilter.sharedMesh.bounds;
+                var localHinge = bounds.center + Vector3.left * bounds.extents.x;
+                return doorTransform.TransformPoint(localHinge);
+            }
+
+            var renderer = doorTransform.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                return renderer.bounds.center - doorTransform.right * renderer.bounds.extents.x;
+            }
+
+            return doorTransform.position - doorTransform.right * 0.45f;
+        }
+
+        private static bool IsMovableImportedMapDoorMesh(Transform target)
+        {
+            if (target == null || !target.gameObject.scene.IsValid())
+            {
+                return false;
+            }
+
+            if (target.GetComponent<Renderer>() == null)
+            {
+                return false;
+            }
+
+            var root = target.root;
+            if (root != null && root.name == SchoolBlockRootName)
+            {
+                return false;
+            }
+
+            var name = target.name.Trim();
+            var lowerName = name.ToLowerInvariant();
+            if (lowerName.Contains("wall") || lowerName.Contains("frame") || lowerName.Contains("marker"))
+            {
+                return false;
+            }
+
+            return lowerName == "door" ||
+                   lowerName.StartsWith("door ", System.StringComparison.Ordinal) ||
+                   lowerName.StartsWith("door(", System.StringComparison.Ordinal) ||
+                   lowerName.StartsWith("door_", System.StringComparison.Ordinal) ||
+                   lowerName.StartsWith("kapi", System.StringComparison.Ordinal);
+        }
+
+        private static void RepairNegativeScaleBoxColliders(SceneLayoutProfile layout)
+        {
+            if (!layout.UsesImportedSchoolMap)
+            {
+                return;
+            }
+
+            var boxColliders = Object.FindObjectsByType<BoxCollider>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (var i = 0; i < boxColliders.Length; i++)
+            {
+                var boxCollider = boxColliders[i];
+                if (boxCollider == null || !HasNegativeLossyScale(boxCollider.transform))
+                {
+                    continue;
+                }
+
+                var meshFilter = boxCollider.GetComponent<MeshFilter>();
+                if (meshFilter == null || meshFilter.sharedMesh == null)
+                {
+                    boxCollider.enabled = false;
+                    EditorUtility.SetDirty(boxCollider);
+                    continue;
+                }
+
+                var gameObject = boxCollider.gameObject;
+                var meshCollider = gameObject.GetComponent<MeshCollider>();
+                if (meshCollider == null)
+                {
+                    meshCollider = gameObject.AddComponent<MeshCollider>();
+                }
+
+                meshCollider.sharedMesh = meshFilter.sharedMesh;
+                meshCollider.convex = false;
+                Object.DestroyImmediate(boxCollider);
+                EditorUtility.SetDirty(meshCollider);
+                EditorUtility.SetDirty(gameObject);
+            }
+        }
+
+        private static bool HasNegativeLossyScale(Transform target)
+        {
+            return target != null &&
+                   (target.lossyScale.x < 0f || target.lossyScale.y < 0f || target.lossyScale.z < 0f);
+        }
+
+        private static void DisableExtraAudioListeners(Camera primaryCamera)
+        {
+            var listeners = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (var i = 0; i < listeners.Length; i++)
+            {
+                var listener = listeners[i];
+                if (listener == null)
+                {
+                    continue;
+                }
+
+                var shouldStayEnabled = primaryCamera != null && listener.transform.IsChildOf(primaryCamera.transform);
+                listener.enabled = shouldStayEnabled;
+                EditorUtility.SetDirty(listener);
+            }
         }
 
         private static void EnsureResultHud()
@@ -1570,16 +2042,13 @@ namespace MobilOfl.EditorTools
 
         private static void EnsureDirectionalLight()
         {
-            var light = Object.FindAnyObjectByType<Light>();
-            if (light != null && light.type == LightType.Directional)
-            {
-                return;
-            }
+            var light = Object.FindObjectsByType<Light>(FindObjectsSortMode.None)
+                .FirstOrDefault(candidate => candidate != null && candidate.type == LightType.Directional);
 
             var lightObject = GameObject.Find("Directional Light");
             if (lightObject == null)
             {
-                lightObject = new GameObject("Directional Light");
+                lightObject = light != null ? light.gameObject : new GameObject("Directional Light");
             }
 
             light = lightObject.GetComponent<Light>();
@@ -1589,12 +2058,18 @@ namespace MobilOfl.EditorTools
             }
 
             light.type = LightType.Directional;
-            light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-            light.intensity = 0.55f;
-            light.color = new Color(0.78f, 0.86f, 1f);
+            light.transform.rotation = Quaternion.Euler(42f, -138f, 0f);
+            light.intensity = 1.05f;
+            light.color = new Color(1f, 0.88f, 0.68f);
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.72f;
+            light.shadowBias = 0.035f;
+            light.shadowNormalBias = 0.25f;
+            light.bounceIntensity = 1.25f;
+            RenderSettings.sun = light;
         }
 
-        private static void EnsureAtmosphereLights()
+        private static void EnsureAtmosphereLights(SceneLayoutProfile layout)
         {
             var root = GameObject.Find(AtmosphereRootName);
             if (root == null)
@@ -1607,17 +2082,35 @@ namespace MobilOfl.EditorTools
                 Object.DestroyImmediate(root.transform.GetChild(i).gameObject);
             }
 
-            CreateFluorescentLight(root.transform, "CorridorLightA", new Vector3(0f, 2.85f, -3f), new Color(0.7f, 0.95f, 1f), 2.2f);
-            CreateFluorescentLight(root.transform, "CorridorLightB", new Vector3(0f, 2.85f, 5f), new Color(0.7f, 0.95f, 1f), 2.0f);
-            CreateFluorescentLight(root.transform, "CorridorLightC", new Vector3(0f, 2.85f, 12f), new Color(0.7f, 0.95f, 1f), 1.8f);
-            CreateRoomAccentLight(root.transform, "SecurityBlueGlow", new Vector3(-7f, 2.1f, 10f), new Color(0.15f, 0.45f, 1f), 2.2f);
-            CreateRoomAccentLight(root.transform, "LibraryWarmGlow", new Vector3(7f, 2.1f, -2f), new Color(1f, 0.72f, 0.35f), 1.7f);
+            CreateFluorescentLight(root.transform, "CorridorLightA", layout.ToWorld(new Vector3(0f, 2.85f, -3f)), new Color(0.72f, 0.92f, 1f), 1.6f);
+            CreateFluorescentLight(root.transform, "CorridorLightB", layout.ToWorld(new Vector3(0f, 2.85f, 5f)), new Color(0.72f, 0.92f, 1f), 1.45f);
+            CreateFluorescentLight(root.transform, "CorridorLightC", layout.ToWorld(new Vector3(0f, 2.85f, 12f)), new Color(0.72f, 0.92f, 1f), 1.35f);
+            CreateFluorescentLight(root.transform, "CorridorLightD", layout.ToWorld(new Vector3(0f, 2.85f, 19f)), new Color(0.68f, 0.88f, 1f), 1.25f);
+            CreateRoomAccentLight(root.transform, "SecurityBlueGlow", layout.ToWorld(new Vector3(-7f, 2.1f, 10f)), new Color(0.14f, 0.42f, 1f), 1.6f);
+            CreateRoomAccentLight(root.transform, "LibraryWarmGlow", layout.ToWorld(new Vector3(7f, 2.1f, -2f)), new Color(1f, 0.68f, 0.34f), 1.35f);
+            CreateRoomAccentLight(root.transform, "TeachersRoomWarmFill", layout.ToWorld(new Vector3(3.8f, 2.15f, 8.5f)), new Color(1f, 0.73f, 0.45f), 1.15f);
+            CreateRoomAccentLight(root.transform, "ChemistryCoolFill", layout.ToWorld(new Vector3(-3.8f, 2.2f, -11f)), new Color(0.58f, 0.8f, 1f), 1.05f);
+            CreateWindowSunSpot(root.transform, "ClassroomWindowSun", layout.ToWorld(new Vector3(-8.5f, 2.65f, -11.25f)), new Vector3(56f, 32f, 0f), 3.2f, 12f, 58f);
+            CreateWindowSunSpot(root.transform, "LibraryWindowSun", layout.ToWorld(new Vector3(5.2f, 2.65f, -11.25f)), new Vector3(56f, -18f, 0f), 2.7f, 11f, 54f);
+            CreateWindowSunSpot(root.transform, "OfficeWindowSun", layout.ToWorld(new Vector3(7.5f, 2.55f, 10.8f)), new Vector3(56f, -148f, 0f), 2.35f, 10f, 50f);
+            CreateWindowSunSpot(root.transform, "CourtyardSunWash", layout.ToWorld(new Vector3(0f, 4.2f, 22f)), new Vector3(62f, -154f, 0f), 2.8f, 16f, 70f);
+            CreateSunPatch(root.transform, "ClassroomSunPatch", layout.ToWorld(new Vector3(-8.6f, 0.075f, -7.6f)), new Vector3(3.4f, 0.025f, 1.4f), 28f);
+            CreateSunPatch(root.transform, "LibrarySunPatch", layout.ToWorld(new Vector3(5.4f, 0.075f, -7.4f)), new Vector3(3.1f, 0.025f, 1.25f), -18f);
+            CreateSunPatch(root.transform, "OfficeSunPatch", layout.ToWorld(new Vector3(7.2f, 0.075f, 7.3f)), new Vector3(2.7f, 0.025f, 1.15f), -34f);
+            CreateReflectionProbe(root.transform, "CorridorReflectionProbe", layout.ToWorld(new Vector3(0f, 1.55f, 8.5f)), new Vector3(15f, 4.2f, 18f));
+            CreateReflectionProbe(root.transform, "CourtyardReflectionProbe", layout.ToWorld(new Vector3(0f, 1.8f, 22f)), new Vector3(20f, 5f, 14f));
 
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogDensity = 0.018f;
-            RenderSettings.fogColor = new Color(0.08f, 0.11f, 0.13f);
-            RenderSettings.ambientLight = new Color(0.12f, 0.14f, 0.16f);
+            RenderSettings.fogDensity = 0.011f;
+            RenderSettings.fogColor = new Color(0.13f, 0.16f, 0.18f);
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.54f, 0.62f, 0.72f);
+            RenderSettings.ambientEquatorColor = new Color(0.28f, 0.31f, 0.34f);
+            RenderSettings.ambientGroundColor = new Color(0.12f, 0.105f, 0.085f);
+            RenderSettings.ambientIntensity = 0.9f;
+            RenderSettings.reflectionIntensity = 0.75f;
+            EnsureCinematicPostProcess();
         }
 
         private static void CreateFluorescentLight(Transform parent, string name, Vector3 position, Color color, float intensity)
@@ -1633,6 +2126,7 @@ namespace MobilOfl.EditorTools
             light.color = color;
             light.intensity = intensity;
             light.range = 6f;
+            light.shadows = LightShadows.None;
 
             var flicker = lightObject.AddComponent<LightFlicker>();
             var serializedObject = new SerializedObject(flicker);
@@ -1655,15 +2149,164 @@ namespace MobilOfl.EditorTools
             light.color = color;
             light.intensity = intensity;
             light.range = 5f;
+            light.shadows = LightShadows.None;
         }
 
-        private static void EnsureSampleSchoolBlock()
+        private static void CreateWindowSunSpot(
+            Transform parent,
+            string name,
+            Vector3 position,
+            Vector3 eulerAngles,
+            float intensity,
+            float range,
+            float spotAngle)
+        {
+            var lightObject = new GameObject(name);
+            lightObject.transform.SetParent(parent);
+            lightObject.transform.position = position;
+            lightObject.transform.rotation = Quaternion.Euler(eulerAngles);
+
+            var light = lightObject.AddComponent<Light>();
+            light.type = LightType.Spot;
+            light.color = new Color(1f, 0.78f, 0.48f);
+            light.intensity = intensity;
+            light.range = range;
+            light.spotAngle = spotAngle;
+            light.innerSpotAngle = spotAngle * 0.48f;
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.42f;
+            light.shadowBias = 0.025f;
+            light.shadowNormalBias = 0.18f;
+        }
+
+        private static void CreateSunPatch(Transform parent, string name, Vector3 position, Vector3 scale, float yaw)
+        {
+            var patch = CreateBlock(parent, name, position, scale, new Color(1f, 0.71f, 0.34f, 0.48f));
+            patch.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+
+            var renderer = patch.GetComponent<Renderer>();
+            if (renderer == null || renderer.sharedMaterial == null)
+            {
+                return;
+            }
+
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            var material = renderer.sharedMaterial;
+            if (material.HasProperty("_EmissionColor"))
+            {
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", new Color(1f, 0.48f, 0.14f) * 0.75f);
+            }
+        }
+
+        private static void CreateReflectionProbe(Transform parent, string name, Vector3 position, Vector3 size)
+        {
+            var probeObject = new GameObject(name);
+            probeObject.transform.SetParent(parent);
+            probeObject.transform.position = position;
+
+            var probe = probeObject.AddComponent<ReflectionProbe>();
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
+            probe.size = size;
+            probe.intensity = 0.65f;
+            probe.resolution = 64;
+            probe.hdr = true;
+        }
+
+        private static void EnsureCinematicPostProcess()
+        {
+            var volumeObject = GameObject.Find("Global Volume") ?? GameObject.Find("Global Volume (1)") ?? new GameObject("Global Volume");
+            var volume = volumeObject.GetComponent<Volume>();
+            if (volume == null)
+            {
+                volume = volumeObject.AddComponent<Volume>();
+            }
+
+            volume.isGlobal = true;
+            volume.priority = 10f;
+            volume.weight = 1f;
+
+            EnsureFolder("Assets/map/Scenes/SampleScene");
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(CinematicVolumeProfilePath);
+            if (profile == null)
+            {
+                profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                AssetDatabase.CreateAsset(profile, CinematicVolumeProfilePath);
+            }
+
+            volume.sharedProfile = profile;
+            profile.components.RemoveAll(component => component == null);
+
+            var tonemapping = EnsureVolumeComponent<Tonemapping>(profile);
+            tonemapping.mode.Override(TonemappingMode.Neutral);
+
+            var bloom = EnsureVolumeComponent<Bloom>(profile);
+            bloom.threshold.Override(1.05f);
+            bloom.intensity.Override(0.34f);
+            bloom.scatter.Override(0.55f);
+            bloom.highQualityFiltering.Override(true);
+
+            var colorAdjustments = EnsureVolumeComponent<ColorAdjustments>(profile);
+            colorAdjustments.postExposure.Override(0.08f);
+            colorAdjustments.contrast.Override(12f);
+            colorAdjustments.saturation.Override(5f);
+            colorAdjustments.colorFilter.Override(new Color(1f, 0.94f, 0.84f));
+
+            var whiteBalance = EnsureVolumeComponent<WhiteBalance>(profile);
+            whiteBalance.temperature.Override(11f);
+            whiteBalance.tint.Override(-4f);
+
+            var vignette = EnsureVolumeComponent<Vignette>(profile);
+            vignette.intensity.Override(0.18f);
+            vignette.smoothness.Override(0.35f);
+            vignette.color.Override(new Color(0.02f, 0.028f, 0.035f));
+
+            EditorUtility.SetDirty(profile);
+            EditorUtility.SetDirty(volume);
+        }
+
+        private static T EnsureVolumeComponent<T>(VolumeProfile profile)
+            where T : VolumeComponent
+        {
+            if (!profile.TryGet<T>(out var component))
+            {
+                component = profile.Add<T>(true);
+            }
+
+            if (!AssetDatabase.Contains(component))
+            {
+                component.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(component, profile);
+            }
+
+            component.active = true;
+            EditorUtility.SetDirty(component);
+            return component;
+        }
+
+        private static void EnsureSampleSchoolBlock(SceneLayoutProfile layout)
         {
             var root = GameObject.Find(SchoolBlockRootName);
+            if (layout.UsesImportedSchoolMap)
+            {
+                if (root != null)
+                {
+                    root.SetActive(false);
+                    EditorUtility.SetDirty(root);
+                }
+
+                return;
+            }
+
             if (root == null)
             {
                 root = new GameObject(SchoolBlockRootName);
             }
+
+            root.SetActive(true);
 
             for (var i = root.transform.childCount - 1; i >= 0; i--)
             {
@@ -1739,25 +2382,25 @@ namespace MobilOfl.EditorTools
             CreateBlock(parent, name, position, scale, new Color(0.72f, 0.74f, 0.68f));
         }
 
-        private static void EnsureHideSpots()
+        private static void EnsureHideSpots(SceneLayoutProfile layout)
         {
             CreateHideSpot(
                 "HideSpot_CorridorBench",
-                new Vector3(1.8f, 0.65f, 6.5f),
+                layout.ToWorld(new Vector3(1.8f, 0.65f, 6.5f)),
                 new Vector3(1.85f, 0.42f, 0.72f),
                 "Bankta sakinles",
                 "Koridor bankinda oturup dikkat seviyeni dusurdun.");
 
             CreateHideSpot(
                 "HideSpot_LibraryShelf",
-                new Vector3(8.45f, 1.1f, -4.8f),
+                layout.ToWorld(new Vector3(8.45f, 1.1f, -4.8f)),
                 new Vector3(0.9f, 1.8f, 1.4f),
                 "Raf arkasinda bekle",
                 "Raflarin arasinda bekleyip nefesini toparladin.");
 
             CreateHideSpot(
                 "HideSpot_CourtyardBench",
-                new Vector3(-4f, 0.65f, 22f),
+                layout.ToWorld(new Vector3(-4f, 0.65f, 22f)),
                 new Vector3(1.85f, 0.42f, 0.72f),
                 "Avluda sakinles",
                 "Avluya cekilip dikkat seviyeni dusurdun.");
@@ -2058,24 +2701,65 @@ namespace MobilOfl.EditorTools
 
         private static Material CreatePreviewMaterial(string name, Color color)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-            {
-                shader = Shader.Find("Standard");
-            }
-
-            if (shader == null)
-            {
-                shader = Shader.Find("Sprites/Default");
-            }
-
-            var material = new Material(shader);
+            var material = new Material(FindCompatiblePreviewShader());
             material.name = name;
-            material.color = color;
+            SetPreviewMaterialColor(material, color);
             return material;
         }
 
-        private static void EnsureEvidenceObjects(CaseDefinition caseDefinition)
+        private static Shader FindCompatiblePreviewShader()
+        {
+            var shaderNames = new[]
+            {
+                "Standard",
+                "Universal Render Pipeline/Lit",
+                "Universal Render Pipeline/Simple Lit",
+                "Universal Render Pipeline/Unlit",
+                "Unlit/Color",
+                "Sprites/Default"
+            };
+
+            for (var i = 0; i < shaderNames.Length; i++)
+            {
+                var shader = Shader.Find(shaderNames[i]);
+                if (shader != null && shader.isSupported)
+                {
+                    return shader;
+                }
+            }
+
+            return Shader.Find("Sprites/Default") ?? Shader.Find("Standard");
+        }
+
+        private static void SetPreviewMaterialColor(Material material, Color color)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (material.HasProperty("_BaseColor"))
+            {
+                material.SetColor("_BaseColor", color);
+            }
+
+            if (material.HasProperty("_Color"))
+            {
+                material.SetColor("_Color", color);
+            }
+
+            if (material.HasProperty("_Glossiness"))
+            {
+                material.SetFloat("_Glossiness", 0f);
+            }
+
+            if (material.HasProperty("_Smoothness"))
+            {
+                material.SetFloat("_Smoothness", 0f);
+            }
+        }
+
+        private static void EnsureEvidenceObjects(CaseDefinition caseDefinition, SceneLayoutProfile layout)
         {
             var root = GameObject.Find(EvidenceRootName);
             if (root == null)
@@ -2093,7 +2777,7 @@ namespace MobilOfl.EditorTools
                 caseDefinition,
                 "evidence.security-log",
                 "Etkilesim: Guvenlik Kaydi",
-                new Vector3(-7f, 1.12f, 10f),
+                layout.ToWorld(new Vector3(-7f, 1.12f, 10f)),
                 PrimitiveType.Cube,
                 new Vector3(1.45f, 0.72f, 1.1f));
 
@@ -2102,7 +2786,7 @@ namespace MobilOfl.EditorTools
                 caseDefinition,
                 "evidence.answer-key-note",
                 "Etkilesim: Not Kagidi",
-                new Vector3(7f, 0.75f, -2f),
+                layout.ToWorld(new Vector3(7f, 0.75f, -2f)),
                 PrimitiveType.Cube,
                 new Vector3(1.2f, 0.2f, 1.2f));
 
@@ -2113,7 +2797,7 @@ namespace MobilOfl.EditorTools
                 "Arsiv Gecis Karti",
                 "Etkilesim: Arsiv Gecis Karti",
                 "Arsiv gecis karti alindi. Artik kisitli raf alanina girebilirsin.",
-                new Vector3(7.8f, 0.86f, 9.5f),
+                layout.ToWorld(new Vector3(7.8f, 0.86f, 9.5f)),
                 PrimitiveType.Cylinder,
                 new Vector3(0.36f, 0.08f, 0.36f),
                 new Color(0.22f, 0.88f, 0.82f, 1f));
@@ -2125,7 +2809,7 @@ namespace MobilOfl.EditorTools
                 "Maymuncuk Seti",
                 "Etkilesim: Maymuncuk Seti",
                 "Maymuncuk seti alindi. Kilitli cekmece ve kutulari artik acabilirsin.",
-                new Vector3(-8.1f, 0.82f, 9.8f),
+                layout.ToWorld(new Vector3(-8.1f, 0.82f, 9.8f)),
                 PrimitiveType.Cylinder,
                 new Vector3(0.34f, 0.12f, 0.34f),
                 new Color(0.96f, 0.68f, 0.18f, 1f));
@@ -2139,7 +2823,7 @@ namespace MobilOfl.EditorTools
                 "tool.lockpick",
                 "Bu cekmece icin once maymuncuk seti bulman gerekiyor.",
                 "Ogretmenler odasindaki cekmecede yedek anahtar bulundu.",
-                new Vector3(7.4f, 0.8f, 10.2f),
+                layout.ToWorld(new Vector3(7.4f, 0.8f, 10.2f)),
                 new Vector3(1.35f, 0.42f, 1.08f),
                 new Color(0.74f, 0.62f, 0.28f, 1f));
 
@@ -2152,12 +2836,12 @@ namespace MobilOfl.EditorTools
                 "tool.archive-pass",
                 "Arsiv raf kutusu icin once gecis karti bulman gerekiyor.",
                 "Arsiv rafinda sakli defter bulundu.",
-                new Vector3(-15f, 0.86f, 9.2f),
+                layout.ToWorld(new Vector3(-15f, 0.86f, 9.2f)),
                 new Vector3(1.7f, 0.82f, 1.35f),
                 new Color(0.45f, 0.68f, 0.84f, 1f));
         }
 
-        private static void EnsureNpcObjects(CaseDefinition caseDefinition)
+        private static void EnsureNpcObjects(CaseDefinition caseDefinition, SceneLayoutProfile layout)
         {
             var root = GameObject.Find(NpcRootName);
             if (root == null)
@@ -2176,7 +2860,7 @@ namespace MobilOfl.EditorTools
                 "npc.guard",
                 "Guvenlik Gorevlisi",
                 "Etkilesim: Guvenlik Gorevlisi ile konus",
-                new Vector3(-2f, 0.95f, 9f),
+                layout.ToActorWorld(new Vector3(-2f, 0.95f, 9f)),
                 "Kayitlari gormeden kimseyi suclayamam.",
                 "Kamera kaydini bulduysan soyleyebilirim: gece 22:15'te bilisim kulubu ogrencisi laboratuvar koridorundaydi.",
                 "evidence.security-log",
@@ -2185,8 +2869,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    new Vector3(0f, 0f, 2.2f),
-                    new Vector3(1.1f, 0f, -1.8f)
+                    layout.ToPatrolOffset(new Vector3(0f, 0f, 2.2f)),
+                    layout.ToPatrolOffset(new Vector3(1.1f, 0f, -1.8f))
                 });
 
             CreateNpcObject(
@@ -2195,7 +2879,7 @@ namespace MobilOfl.EditorTools
                 "npc.library-student",
                 "Kutuphane Ogrencisi",
                 "Etkilesim: Ogrenci ile konus",
-                new Vector3(5f, 0.95f, -2f),
+                layout.ToActorWorld(new Vector3(5f, 0.95f, -2f)),
                 "O notun kime ait oldugunu bilmiyorum.",
                 "Cevap anahtari notunu gordum. Bilisim kulubu ogrencisinin defterinden dustu.",
                 "evidence.answer-key-note",
@@ -2204,8 +2888,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    new Vector3(1.4f, 0f, 0.6f),
-                    new Vector3(-1.2f, 0f, -0.8f)
+                    layout.ToPatrolOffset(new Vector3(1.4f, 0f, 0.6f)),
+                    layout.ToPatrolOffset(new Vector3(-1.2f, 0f, -0.8f))
                 });
 
             CreateNpcObject(
@@ -2214,7 +2898,7 @@ namespace MobilOfl.EditorTools
                 "npc.teacher-assistant",
                 "Ogretmen Yardimcisi",
                 "Etkilesim: Ogretmen Yardimcisi ile konus",
-                new Vector3(5f, 0.95f, 8f),
+                layout.ToActorWorld(new Vector3(5f, 0.95f, 8f)),
                 "Dolap anahtari kayboldu ama bunu herkes biliyor olabilir.",
                 "Yedek anahtar bende degildi. Dolabin yanina en son bilisim kulubu ogrencisi geldi.",
                 "evidence.locker-key",
@@ -2223,8 +2907,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    new Vector3(-1.3f, 0f, 0.9f),
-                    new Vector3(1f, 0f, -0.9f)
+                    layout.ToPatrolOffset(new Vector3(-1.3f, 0f, 0.9f)),
+                    layout.ToPatrolOffset(new Vector3(1f, 0f, -0.9f))
                 });
 
             CreateNpcObject(
@@ -2233,7 +2917,7 @@ namespace MobilOfl.EditorTools
                 "npc.archive-clerk",
                 "Arsiv Sorumlusu",
                 "Etkilesim: Arsiv Sorumlusu ile konus",
-                new Vector3(-13.2f, 0.95f, 8.8f),
+                layout.ToActorWorld(new Vector3(-13.2f, 0.95f, 8.8f)),
                 "Defter olmadan arsiv odasi hakkinda resmi bir sey soyleyemem.",
                 "Giris defterine gore bilisim kulubu ogrencisi sinavdan hemen once arsiv anahtarini sormustu.",
                 "evidence.archive-ledger",
@@ -2242,8 +2926,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    new Vector3(0.8f, 0f, 1.7f),
-                    new Vector3(-0.9f, 0f, -1.4f)
+                    layout.ToPatrolOffset(new Vector3(0.8f, 0f, 1.7f)),
+                    layout.ToPatrolOffset(new Vector3(-0.9f, 0f, -1.4f))
                 });
 
             CreateNpcObject(
@@ -2252,7 +2936,7 @@ namespace MobilOfl.EditorTools
                 "npc.canteen-worker",
                 "Kantin Calisani",
                 "Etkilesim: Kantin Calisani ile konus",
-                new Vector3(13.2f, 0.95f, 8.8f),
+                layout.ToActorWorld(new Vector3(13.2f, 0.95f, 8.8f)),
                 "Gec saatte kim geldigini hatirlamiyorum.",
                 "Simdi hatirladim; o nottan sonra ayni ogrenci gece enerji icecegi alip laboratuvar tarafina kostu.",
                 "evidence.answer-key-note",
@@ -2261,8 +2945,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    new Vector3(-1.6f, 0f, 0.6f),
-                    new Vector3(1.2f, 0f, -0.7f)
+                    layout.ToPatrolOffset(new Vector3(-1.6f, 0f, 0.6f)),
+                    layout.ToPatrolOffset(new Vector3(1.2f, 0f, -0.7f))
                 });
         }
 
@@ -2283,15 +2967,15 @@ namespace MobilOfl.EditorTools
             var npcObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             npcObject.name = displayName;
             npcObject.transform.SetParent(parent);
-            npcObject.transform.position = new Vector3(worldPosition.x, ActorGroundY, worldPosition.z);
+            npcObject.transform.position = worldPosition;
             npcObject.transform.localScale = Vector3.one;
 
             var capsule = npcObject.GetComponent<CapsuleCollider>();
             if (capsule != null)
             {
-                capsule.height = ActorHeight;
-                capsule.radius = ActorRadius;
-                capsule.center = new Vector3(0f, ActorHeight * 0.5f, 0f);
+                capsule.height = NpcActorHeight;
+                capsule.radius = NpcActorRadius;
+                capsule.center = new Vector3(0f, NpcActorHeight * 0.5f, 0f);
             }
 
             var renderer = npcObject.GetComponent<Renderer>();
@@ -2331,11 +3015,13 @@ namespace MobilOfl.EditorTools
             var patrolSerializedObject = new SerializedObject(patrol);
             patrolSerializedObject.FindProperty("npcInteractable").objectReferenceValue = interactable;
             patrolSerializedObject.FindProperty("patrolEnabled").boolValue = patrolOffsets != null && patrolOffsets.Length > 1;
-            patrolSerializedObject.FindProperty("moveSpeed").floatValue = 1.18f;
-            patrolSerializedObject.FindProperty("waitDuration").floatValue = 1.15f;
+            patrolSerializedObject.FindProperty("moveSpeed").floatValue = NpcPatrolMoveSpeed;
+            patrolSerializedObject.FindProperty("turnSpeed").floatValue = 5.8f;
+            patrolSerializedObject.FindProperty("waitDuration").floatValue = 0.85f;
             patrolSerializedObject.FindProperty("viewDistance").floatValue = 6.6f;
             patrolSerializedObject.FindProperty("viewAngle").floatValue = 62f;
             patrolSerializedObject.FindProperty("sightPressurePerSecond").floatValue = 0.58f;
+            patrolSerializedObject.FindProperty("eyeHeight").floatValue = NpcActorHeight * 0.78f;
             var offsetsProperty = patrolSerializedObject.FindProperty("patrolOffsets");
             offsetsProperty.arraySize = patrolOffsets == null ? 0 : patrolOffsets.Length;
             for (var i = 0; i < offsetsProperty.arraySize; i++)
@@ -2344,6 +3030,16 @@ namespace MobilOfl.EditorTools
             }
             patrolSerializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(patrol);
+
+            if (patrolOffsets != null && patrolOffsets.Length > 1)
+            {
+                var facing = patrolOffsets.FirstOrDefault(offset => offset.sqrMagnitude > 0.01f);
+                facing.y = 0f;
+                if (facing.sqrMagnitude > 0.01f)
+                {
+                    npcObject.transform.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
+                }
+            }
         }
 
         private static Renderer[] CreatePlaceholderCharacterVisual(Transform parent, string name, Color color)
@@ -2382,7 +3078,8 @@ namespace MobilOfl.EditorTools
                 return;
             }
 
-            playerRoot.position = new Vector3(playerRoot.position.x, ActorGroundY, playerRoot.position.z);
+            var groundY = ResolveSceneLayoutProfile().ActorGroundY;
+            playerRoot.position = new Vector3(playerRoot.position.x, groundY, playerRoot.position.z);
             playerRoot.localScale = Vector3.one;
 
             var controller = playerRoot.GetComponent<CharacterController>();
@@ -2411,15 +3108,16 @@ namespace MobilOfl.EditorTools
                 return;
             }
 
-            npcRoot.position = new Vector3(npcRoot.position.x, ActorGroundY, npcRoot.position.z);
+            var groundY = ResolveSceneLayoutProfile().ActorGroundY;
+            npcRoot.position = new Vector3(npcRoot.position.x, groundY, npcRoot.position.z);
             npcRoot.localScale = Vector3.one;
 
             var capsule = npcRoot.GetComponent<CapsuleCollider>();
             if (capsule != null)
             {
-                capsule.height = ActorHeight;
-                capsule.radius = ActorRadius;
-                capsule.center = new Vector3(0f, ActorHeight * 0.5f, 0f);
+                capsule.height = NpcActorHeight;
+                capsule.radius = NpcActorRadius;
+                capsule.center = new Vector3(0f, NpcActorHeight * 0.5f, 0f);
                 EditorUtility.SetDirty(capsule);
             }
 
@@ -2433,7 +3131,8 @@ namespace MobilOfl.EditorTools
                 return false;
             }
 
-            if (Mathf.Abs(actorRoot.position.y - ActorGroundY) > 0.01f)
+            var groundY = ResolveSceneLayoutProfile().ActorGroundY;
+            if (Mathf.Abs(actorRoot.position.y - groundY) > 0.01f)
             {
                 return true;
             }
@@ -2457,9 +3156,9 @@ namespace MobilOfl.EditorTools
                 return false;
             }
 
-            return Mathf.Abs(capsule.height - ActorHeight) > 0.01f ||
-                   Mathf.Abs(capsule.radius - ActorRadius) > 0.01f ||
-                   (capsule.center - new Vector3(0f, ActorHeight * 0.5f, 0f)).sqrMagnitude > 0.0001f;
+            return Mathf.Abs(capsule.height - NpcActorHeight) > 0.01f ||
+                   Mathf.Abs(capsule.radius - NpcActorRadius) > 0.01f ||
+                   (capsule.center - new Vector3(0f, NpcActorHeight * 0.5f, 0f)).sqrMagnitude > 0.0001f;
         }
 
         private static bool NpcNeedsFloreswaVisual(Transform npcRoot)
@@ -2513,7 +3212,7 @@ namespace MobilOfl.EditorTools
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localRotation = Quaternion.identity;
             instance.transform.localScale = Vector3.one;
-            FitCharacterVisualToActor(instance.transform);
+            FitCharacterVisualToActor(instance.transform, NpcActorHeight);
             AttachNpcAnimator(instance, prefabPath);
             return instance.GetComponentsInChildren<Renderer>(true);
         }
@@ -2573,22 +3272,26 @@ namespace MobilOfl.EditorTools
             }
 
             animator.runtimeAnimatorController = SchoolBoyCharacterSetupTool.LoadOrCreateFloreswaNpcAnimatorController();
+            animator.speed = 1f;
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+            animator.enabled = animator.runtimeAnimatorController != null;
 
             var proceduralAnimator = instance.GetComponent<FloreswaProceduralAnimator>();
-            if (animator.runtimeAnimatorController == null)
+            if (proceduralAnimator == null)
             {
-                if (proceduralAnimator == null)
-                {
-                    proceduralAnimator = instance.AddComponent<FloreswaProceduralAnimator>();
-                }
-                proceduralAnimator.enabled = true;
+                proceduralAnimator = instance.AddComponent<FloreswaProceduralAnimator>();
             }
-            else if (proceduralAnimator != null)
-            {
-                proceduralAnimator.enabled = false;
-            }
+
+            proceduralAnimator.enabled = animator.runtimeAnimatorController == null;
+            var proceduralSerializedObject = new SerializedObject(proceduralAnimator);
+            proceduralSerializedObject.FindProperty("runSpeed").floatValue = NpcPatrolMoveSpeed;
+            proceduralSerializedObject.FindProperty("armSwingDegrees").floatValue = 4.2f;
+            proceduralSerializedObject.FindProperty("legSwingDegrees").floatValue = 1.8f;
+            proceduralSerializedObject.FindProperty("moveBobAmount").floatValue = 0.018f;
+            proceduralSerializedObject.FindProperty("bodySwayDegrees").floatValue = 0.6f;
+            proceduralSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(proceduralAnimator);
 
             var movementAnimator = instance.GetComponent<CharacterMovementAnimator>();
             if (movementAnimator == null)
@@ -2599,8 +3302,24 @@ namespace MobilOfl.EditorTools
             var serializedObject = new SerializedObject(movementAnimator);
             serializedObject.FindProperty("animator").objectReferenceValue = animator;
             serializedObject.FindProperty("proceduralFallback").boolValue = animator.runtimeAnimatorController == null;
+            serializedObject.FindProperty("runSpeed").floatValue = 3.25f;
+            serializedObject.FindProperty("moveBobAmount").floatValue = 0.018f;
+            serializedObject.FindProperty("swayDegrees").floatValue = 0.6f;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(movementAnimator);
+
+            var footFix = instance.GetComponent<NpcFootAlignmentFix>();
+            if (footFix == null)
+            {
+                footFix = instance.AddComponent<NpcFootAlignmentFix>();
+            }
+
+            var footFixSerializedObject = new SerializedObject(footFix);
+            footFixSerializedObject.FindProperty("animator").objectReferenceValue = animator;
+            footFixSerializedObject.FindProperty("leftFootYawCorrection").floatValue = -8f;
+            footFixSerializedObject.FindProperty("leftToeYawCorrection").floatValue = -4f;
+            footFixSerializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(footFix);
         }
 
         private static Avatar LoadFloreswaAvatar(string prefabPath)
@@ -2620,13 +3339,18 @@ namespace MobilOfl.EditorTools
 
         private static void FitCharacterVisualToActor(Transform visualRoot)
         {
+            FitCharacterVisualToActor(visualRoot, ActorHeight);
+        }
+
+        private static void FitCharacterVisualToActor(Transform visualRoot, float targetHeight)
+        {
             var bounds = CalculateRendererBounds(visualRoot);
             if (!bounds.HasValue || bounds.Value.size.y <= 0.001f)
             {
                 return;
             }
 
-            var scale = ActorHeight / bounds.Value.size.y;
+            var scale = Mathf.Max(0.01f, targetHeight) / bounds.Value.size.y;
             visualRoot.localScale *= scale;
             bounds = CalculateRendererBounds(visualRoot);
             if (bounds.HasValue && visualRoot.parent != null)

@@ -34,6 +34,7 @@ namespace MobilOfl.UI
         private Text _readyButtonText;
         private Text _pauseSummaryText;
         private Text _pauseSettingsText;
+        private Text _roleButtonText;
         private Button _soloButton;
         private Button _hostButton;
         private Button _openingJoinButton;
@@ -42,6 +43,7 @@ namespace MobilOfl.UI
         private Button _readyButton;
         private Button _closeButton;
         private Button _resetSaveButton;
+        private Button _roleButton;
         private float _openBlend;
         private float _nextRefreshAt;
         private bool _built;
@@ -211,7 +213,7 @@ namespace MobilOfl.UI
         private void BuildHeader(Transform parent)
         {
             _headerRoot = RuntimeUiFactory.CreateUiRoot("Header", parent);
-            RuntimeUiFactory.EnsureLayoutElement(_headerRoot, preferredHeight: 102f);
+            RuntimeUiFactory.EnsureLayoutElement(_headerRoot, preferredHeight: 146f);
             var row = RuntimeUiFactory.AddHorizontalLayout(_headerRoot, 16f, new RectOffset(0, 0, 0, 0), true);
             row.childForceExpandWidth = false;
 
@@ -227,12 +229,16 @@ namespace MobilOfl.UI
             _modeBadgeText = RuntimeUiFactory.CreateText("ModeBadgeText", modeBadge, "BASLANGIC", 14, ModernGuiTheme.AccentWarmColor, FontStyle.Bold, TextAnchor.MiddleLeft);
 
             var profile = RuntimeUiFactory.CreateCard("ProfileCard", _headerRoot, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
-            RuntimeUiFactory.EnsureLayoutElement(profile, preferredWidth: 330f, preferredHeight: 94f);
-            RuntimeUiFactory.AddVerticalLayout(profile, 9f, new RectOffset(16, 16, 14, 14));
+            RuntimeUiFactory.EnsureLayoutElement(profile, preferredWidth: 360f, preferredHeight: 138f);
+            RuntimeUiFactory.AddVerticalLayout(profile, 8f, new RectOffset(16, 16, 14, 14));
             RuntimeUiFactory.CreateText("ProfileLabel", profile, "OYUNCU", 13, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _playerNameField = RuntimeUiFactory.CreateInputField("PlayerNameField", profile, "Oyuncu adi", 20);
             RuntimeUiFactory.EnsureLayoutElement(_playerNameField.transform, preferredHeight: 44f);
             _playerNameField.onValueChanged.AddListener(OnPlayerNameChanged);
+
+            _roleButton = RuntimeUiFactory.CreateButton("ProfileButton", profile, "Dedektif Profili", new Color(0.1f, 0.13f, 0.16f, 1f), 14);
+            RuntimeUiFactory.EnsureLayoutElement(_roleButton.transform, preferredHeight: 36f);
+            _roleButtonText = _roleButton.GetComponentInChildren<Text>();
         }
 
         private void BuildOpeningView(Transform parent)
@@ -446,6 +452,10 @@ namespace MobilOfl.UI
             var settingsText = $"Ses %{Mathf.RoundToInt(logic.MasterVolume * 100f)}  |  Bakis {logic.CameraSensitivity:0.0}";
             _openingSettingsText.text = settingsText;
             _pauseSettingsText.text = settingsText;
+            if (_roleButtonText != null)
+            {
+                _roleButtonText.text = "Dedektif Profili";
+            }
             _pauseSummaryText.text = BuildPauseSummary(session, bootstrap, networkCaseState);
             _lobbyCodeText.text = BuildLobbyCode(bootstrap);
             _lobbyHintText.text = BuildLobbyHint(bootstrap, networkCaseState);
@@ -508,7 +518,10 @@ namespace MobilOfl.UI
             {
                 foreach (var entry in roster)
                 {
-                    CreateRosterLine(entry.DisplayName + (entry.IsReady ? "  |  Hazir" : "  |  Beklemede"), entry.IsReady ? ModernGuiTheme.TextColor : ModernGuiTheme.MutedTextColor, entry.IsReady);
+                    CreateRosterLine(
+                        entry.DisplayName + (entry.IsReady ? "  |  Hazir" : "  |  Beklemede"),
+                        entry.IsReady ? ModernGuiTheme.TextColor : ModernGuiTheme.MutedTextColor,
+                        entry.IsReady);
                 }
             }
 

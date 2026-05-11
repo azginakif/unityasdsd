@@ -50,7 +50,7 @@ namespace MobilOfl.Visuals
             var targetSpeed01 = Mathf.Clamp01(speed / Mathf.Max(0.1f, runSpeed));
             _smoothedSpeed01 = Mathf.Lerp(_smoothedSpeed01, targetSpeed01, 1f - Mathf.Exp(-damping * Time.deltaTime));
 
-            if (animator != null)
+            if (animator != null && animator.enabled && animator.runtimeAnimatorController != null)
             {
                 animator.SetFloat(speedParameter, _smoothedSpeed01);
             }

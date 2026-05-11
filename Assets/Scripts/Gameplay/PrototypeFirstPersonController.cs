@@ -50,6 +50,7 @@ namespace MobilOfl.Gameplay
         private float _sprintStamina = 1f;
         private bool _isSprinting;
         private bool _isCrouching;
+        private Transform _pitchPivot;
 
         public float SprintStamina01 => _sprintStamina;
         public bool IsSprinting => _isSprinting;
@@ -72,9 +73,11 @@ namespace MobilOfl.Gameplay
             _standingCenter = _characterController.center;
             _currentBobAmplitude = headBobAmplitude;
 
+            ResolveActivePlayerCamera();
             if (cameraPivot != null)
             {
                 _cameraBaseLocalPosition = cameraPivot.localPosition;
+                EnsurePitchPivot();
             }
         }
 
@@ -127,9 +130,15 @@ namespace MobilOfl.Gameplay
 
             if (cameraPivot == null)
             {
+                ResolveActivePlayerCamera();
+            }
+
+            if (cameraPivot == null)
+            {
                 return;
             }
 
+            EnsurePitchPivot();
             UpdateLook();
         }
 
@@ -166,7 +175,15 @@ namespace MobilOfl.Gameplay
 
             _pitch -= mouseY;
             _pitch = Mathf.Clamp(_pitch, -maxLookAngle, maxLookAngle);
-            cameraPivot.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
+            EnsurePitchPivot();
+            if (_pitchPivot != null)
+            {
+                _pitchPivot.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
+            }
+            else
+            {
+                cameraPivot.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
+            }
         }
 
         private void UpdateMovement()
@@ -272,13 +289,110 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
+            EnsurePitchPivot();
             var crouchOffset = _isCrouching ? -0.34f : 0f;
             var bobOffset = Mathf.Sin(_headBobTime) * _currentBobAmplitude;
             var targetPosition = _cameraBaseLocalPosition + new Vector3(0f, crouchOffset + bobOffset, 0f);
-            cameraPivot.localPosition = Vector3.Lerp(
-                cameraPivot.localPosition,
+            var moveTarget = _pitchPivot != null ? _pitchPivot : cameraPivot;
+            moveTarget.localPosition = Vector3.Lerp(
+                moveTarget.localPosition,
                 targetPosition,
                 1f - Mathf.Exp(-crouchTransitionSpeed * Time.deltaTime));
+        }
+
+        private void EnsurePitchPivot()
+        {
+            if (cameraPivot == null)
+            {
+                return;
+            }
+
+            if (_pitchPivot != null && cameraPivot.IsChildOf(_pitchPivot))
+            {
+                return;
+            }
+
+            var existing = transform.Find("CameraPitchPivot");
+            if (existing == null)
+            {
+                var pivotObject = new GameObject("CameraPitchPivot");
+                existing = pivotObject.transform;
+                existing.SetParent(transform, false);
+            }
+
+            existing.localPosition = cameraPivot.localPosition;
+            existing.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
+            existing.localScale = Vector3.one;
+
+            cameraPivot.SetParent(existing, false);
+            cameraPivot.localPosition = Vector3.zero;
+            cameraPivot.localRotation = Quaternion.identity;
+            _pitchPivot = existing;
+            _cameraBaseLocalPosition = _pitchPivot.localPosition;
+        }
+
+        private void ResolveActivePlayerCamera()
+        {
+            var cameras = GetComponentsInChildren<Camera>(true);
+            if (cameras == null || cameras.Length == 0)
+            {
+                return;
+            }
+
+            Camera selectedCamera = null;
+            var selectedScore = float.NegativeInfinity;
+            for (var i = 0; i < cameras.Length; i++)
+            {
+                var candidate = cameras[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                var score = candidate.depth;
+                if (candidate.enabled && candidate.gameObject.activeInHierarchy)
+                {
+                    score += 1000f;
+                }
+
+                if (candidate.CompareTag("MainCamera"))
+                {
+                    score += 100f;
+                }
+
+                if (cameraPivot == candidate.transform)
+                {
+                    score += 1f;
+                }
+
+                if (selectedCamera == null || score > selectedScore)
+                {
+                    selectedCamera = candidate;
+                    selectedScore = score;
+                }
+            }
+
+            if (selectedCamera == null)
+            {
+                return;
+            }
+
+            cameraPivot = selectedCamera.transform;
+            for (var i = 0; i < cameras.Length; i++)
+            {
+                var candidate = cameras[i];
+                if (candidate == null || candidate == selectedCamera)
+                {
+                    continue;
+                }
+
+                candidate.enabled = false;
+                var listener = candidate.GetComponent<AudioListener>();
+                if (listener != null)
+                {
+                    listener.enabled = false;
+                }
+            }
         }
 
         private void UpdateHeadBob(Vector3 moveInput, bool isSprinting)

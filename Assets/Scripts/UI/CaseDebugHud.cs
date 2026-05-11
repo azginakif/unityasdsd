@@ -83,7 +83,11 @@ namespace MobilOfl.UI
 
                     if (GUILayout.Button(suspect.DisplayName))
                     {
-                        CaseSessionManager.Instance.TryResolveCase(suspect.Id, out var result);
+                        CaseSessionManager.Instance.TryResolveCase(
+                            suspect.Id,
+                            activeCase.CulpritMotive,
+                            activeCase.CulpritTimeline,
+                            out var result);
                         Debug.Log(result);
                     }
                 }

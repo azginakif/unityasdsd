@@ -1,5 +1,6 @@
 using MobilOfl.Online;
 using MobilOfl.UI;
+using MobilOfl.Visuals;
 using UnityEngine;
 
 namespace MobilOfl.Gameplay
@@ -25,6 +26,7 @@ namespace MobilOfl.Gameplay
         [SerializeField] private LayerMask occlusionMask = ~0;
 
         private PlayerStealthController _playerStealth;
+        private bool _footFixEnsured;
         private Vector3 _anchorPosition;
         private int _currentPatrolIndex;
         private float _waitUntil;
@@ -139,6 +141,30 @@ namespace MobilOfl.Gameplay
             {
                 _playerStealth = Object.FindAnyObjectByType<PlayerStealthController>();
             }
+
+            EnsureFootAlignmentFix();
+        }
+
+        private void EnsureFootAlignmentFix()
+        {
+            if (_footFixEnsured)
+            {
+                return;
+            }
+
+            var visualAnimator = GetComponentInChildren<Animator>(true);
+            if (visualAnimator == null)
+            {
+                return;
+            }
+
+            var fix = visualAnimator.GetComponent<NpcFootAlignmentFix>();
+            if (fix == null)
+            {
+                fix = visualAnimator.gameObject.AddComponent<NpcFootAlignmentFix>();
+            }
+
+            _footFixEnsured = true;
         }
     }
 }

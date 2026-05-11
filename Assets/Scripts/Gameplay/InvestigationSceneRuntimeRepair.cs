@@ -48,8 +48,8 @@ namespace MobilOfl.Gameplay
                 return true;
             }
 
-            return Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include).Length > 0 ||
-                   Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include).Length > 0;
+            return Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length > 0 ||
+                   Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length > 0;
         }
 
         private static void EnsurePlayerCharacterVisual()
@@ -88,7 +88,7 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (var i = 0; i < npcs.Length; i++)
             {
                 var npc = npcs[i];
@@ -144,7 +144,7 @@ namespace MobilOfl.Gameplay
 
         private static void EnsureKnownSearchSpotGates()
         {
-            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include);
+            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (var searchSpot in searchSpots)
             {
                 if (searchSpot == null)
@@ -215,7 +215,7 @@ namespace MobilOfl.Gameplay
 
         private static bool HasToolPickup(string toolId)
         {
-            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include);
+            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (var tool in tools)
             {
                 if (tool != null && tool.ToolId == toolId)
@@ -229,21 +229,62 @@ namespace MobilOfl.Gameplay
 
         private static Material CreateMaterial(string name, Color color)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-            {
-                shader = Shader.Find("Standard");
-            }
-
-            if (shader == null)
-            {
-                shader = Shader.Find("Sprites/Default");
-            }
-
-            var material = new Material(shader);
+            var material = new Material(FindCompatiblePreviewShader());
             material.name = name;
-            material.color = color;
+            SetPreviewMaterialColor(material, color);
             return material;
+        }
+
+        private static Shader FindCompatiblePreviewShader()
+        {
+            var shaderNames = new[]
+            {
+                "Standard",
+                "Universal Render Pipeline/Lit",
+                "Universal Render Pipeline/Simple Lit",
+                "Universal Render Pipeline/Unlit",
+                "Unlit/Color",
+                "Sprites/Default"
+            };
+
+            for (var i = 0; i < shaderNames.Length; i++)
+            {
+                var shader = Shader.Find(shaderNames[i]);
+                if (shader != null && shader.isSupported)
+                {
+                    return shader;
+                }
+            }
+
+            return Shader.Find("Sprites/Default") ?? Shader.Find("Standard");
+        }
+
+        private static void SetPreviewMaterialColor(Material material, Color color)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (material.HasProperty("_BaseColor"))
+            {
+                material.SetColor("_BaseColor", color);
+            }
+
+            if (material.HasProperty("_Color"))
+            {
+                material.SetColor("_Color", color);
+            }
+
+            if (material.HasProperty("_Glossiness"))
+            {
+                material.SetFloat("_Glossiness", 0f);
+            }
+
+            if (material.HasProperty("_Smoothness"))
+            {
+                material.SetFloat("_Smoothness", 0f);
+            }
         }
     }
 }

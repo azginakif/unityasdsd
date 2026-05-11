@@ -1,4 +1,5 @@
-
+using System;
+using System.Collections.Generic;
 using MobilOfl.Case;
 using MobilOfl.Gameplay;
 using MobilOfl.Online;
@@ -43,7 +44,6 @@ namespace MobilOfl.UI
         private RectTransform _overviewContent;
         private RectTransform _evidenceTabRoot;
         private HorizontalLayoutGroup _evidenceHorizontalLayout;
-        private VerticalLayoutGroup _evidenceVerticalLayout;
         private RectTransform _evidenceListCard;
         private RectTransform _evidenceDetailCard;
         private RectTransform _evidenceListContent;
@@ -54,6 +54,8 @@ namespace MobilOfl.UI
         private InputField _noteInput;
         private Text _noteCounterText;
         private string _selectedEvidenceId;
+        private string _selectedMotive;
+        private string _selectedTimeline;
         private NotebookTab _selectedTab;
         private float _nextRefreshAt;
         private bool _built;
@@ -351,7 +353,6 @@ namespace MobilOfl.UI
             _evidenceHorizontalLayout = RuntimeUiFactory.AddHorizontalLayout(_evidenceTabRoot, 14f, new RectOffset(0, 0, 0, 0), true);
             _evidenceHorizontalLayout.childForceExpandWidth = true;
             _evidenceHorizontalLayout.childForceExpandHeight = true;
-            _evidenceVerticalLayout = null;
 
             var listCard = RuntimeUiFactory.CreateCard("EvidenceListCard", _evidenceTabRoot, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
             _evidenceListCard = listCard;
@@ -603,13 +604,13 @@ namespace MobilOfl.UI
             AddSectionCard(_overviewContent, "Kritik Cikarimlar", session.GetInferenceSummary());
             AddSectionCard(_overviewContent, "Dosya Analizi", session.GetReasoningSummary());
 
-            var exploration = Object.FindAnyObjectByType<SchoolExplorationTracker>();
+            var exploration = UnityEngine.Object.FindAnyObjectByType<SchoolExplorationTracker>();
             var explorationText = exploration == null || exploration.VisitedZoneCount == 0
                 ? "Henuz bolge kaydi yok."
                 : string.Join("  |  ", exploration.VisitedZones);
             AddSectionCard(_overviewContent, "Gezilen Bolgeler", explorationText);
 
-            var bootstrap = Object.FindAnyObjectByType<RelayNetworkBootstrap>();
+            var bootstrap = UnityEngine.Object.FindAnyObjectByType<RelayNetworkBootstrap>();
             if (bootstrap != null)
             {
                 var onlineText = bootstrap.CurrentStatus;
@@ -722,6 +723,12 @@ namespace MobilOfl.UI
         private void RebuildSuspects(CaseSessionManager session)
         {
             RuntimeUiFactory.ClearChildren(_suspectsContent);
+
+            if (session.HasAnyAccusableSuspect())
+            {
+                CreateFinalDecisionCard(session);
+            }
+
             foreach (var suspect in session.ActiveCase.Suspects)
             {
                 if (suspect == null)
@@ -730,7 +737,7 @@ namespace MobilOfl.UI
                 }
 
                 var card = RuntimeUiFactory.CreateCard("SuspectCard" + suspect.Id, _suspectsContent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentWarmColor);
-                RuntimeUiFactory.EnsureLayoutElement(card, flexibleWidth: 1f, preferredHeight: 270f);
+                RuntimeUiFactory.EnsureLayoutElement(card, flexibleWidth: 1f, preferredHeight: 292f);
                 RuntimeUiFactory.AddVerticalLayout(card, 8f, new RectOffset(16, 16, 16, 14));
                 RuntimeUiFactory.CreateText("Name", card, suspect.DisplayName, 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
                 CreateStatusChip(card, session.CanAccuse(suspect.Id) ? "SUCLAMA HAZIR" : "EK DELIL GEREKIYOR", session.CanAccuse(suspect.Id) ? ModernGuiTheme.AccentWarmColor : ModernGuiTheme.BorderColor);
@@ -747,14 +754,114 @@ namespace MobilOfl.UI
                 var accuseButton = RuntimeUiFactory.CreateButton(
                     "AccuseButton" + suspect.Id,
                     card,
-                    session.CanAccuse(suspect.Id) && !session.IsCaseResolved ? "Bu supheliyi sucla" : "Daha fazla delil gerekiyor",
-                    session.CanAccuse(suspect.Id) && !session.IsCaseResolved ? new Color(0.24f, 0.18f, 0.08f, 1f) : new Color(0.11f, 0.13f, 0.15f, 1f),
+                    session.CanAccuse(suspect.Id) && !session.IsCaseResolved ? "Secili zincirle sucla" : "Daha fazla delil gerekiyor",
+                    session.CanAccuse(suspect.Id) && !session.IsCaseResolved && HasFinalDecisionSelections()
+                        ? new Color(0.24f, 0.18f, 0.08f, 1f)
+                        : new Color(0.11f, 0.13f, 0.15f, 1f),
                     15);
                 RuntimeUiFactory.EnsureLayoutElement(accuseButton.transform, preferredHeight: 46f);
-                accuseButton.interactable = session.CanAccuse(suspect.Id) && !session.IsCaseResolved;
+                accuseButton.interactable = session.CanAccuse(suspect.Id) && !session.IsCaseResolved && HasFinalDecisionSelections();
                 var capturedSuspectId = suspect.Id;
                 accuseButton.onClick.AddListener(() => TryAccuse(capturedSuspectId));
             }
+        }
+
+        private void CreateFinalDecisionCard(CaseSessionManager session)
+        {
+            var card = RuntimeUiFactory.CreateCard("FinalDecisionCard", _suspectsContent, ModernGuiTheme.PanelSoftColor, ModernGuiTheme.AccentColor);
+            RuntimeUiFactory.EnsureLayoutElement(card, flexibleWidth: 1f, preferredHeight: UseMobileNotebookLayout() ? 720f : 640f);
+            RuntimeUiFactory.AddVerticalLayout(card, 10f, new RectOffset(16, 16, 16, 14));
+            RuntimeUiFactory.CreateText("FinalTitle", card, "FINAL KARAR ZINCIRI", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            RuntimeUiFactory.CreateText(
+                "FinalHint",
+                card,
+                "Suclama icin supheliyi, motivasyonu ve olay siralamasini birlikte dogrula.",
+                14,
+                ModernGuiTheme.MutedTextColor,
+                FontStyle.Normal,
+                TextAnchor.UpperLeft);
+
+            CreateFinalChoiceGroup(
+                card,
+                "Motivasyon",
+                session.ActiveCase.MotiveOptions,
+                session.ActiveCase.CulpritMotive,
+                _selectedMotive,
+                value =>
+                {
+                    _selectedMotive = value;
+                    RefreshImmediate();
+                });
+
+            CreateFinalChoiceGroup(
+                card,
+                "Zaman Cizelgesi",
+                session.ActiveCase.TimelineOptions,
+                session.ActiveCase.CulpritTimeline,
+                _selectedTimeline,
+                value =>
+                {
+                    _selectedTimeline = value;
+                    RefreshImmediate();
+                });
+        }
+
+        private void CreateFinalChoiceGroup(
+            Transform parent,
+            string title,
+            IReadOnlyList<string> configuredOptions,
+            string fallbackOption,
+            string selectedValue,
+            Action<string> onSelected)
+        {
+            RuntimeUiFactory.CreateText(title + "Label", parent, title.ToUpperInvariant(), 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+
+            var options = BuildChoiceOptions(configuredOptions, fallbackOption);
+            var host = RuntimeUiFactory.CreateUiRoot(title + "Options", parent);
+            RuntimeUiFactory.EnsureLayoutElement(host, preferredHeight: Mathf.Max(72f, options.Count * 74f));
+            RuntimeUiFactory.AddVerticalLayout(host, 6f, new RectOffset(0, 0, 0, 0));
+
+            for (var i = 0; i < options.Count; i++)
+            {
+                var option = options[i];
+                var selected = string.Equals(option, selectedValue, StringComparison.Ordinal);
+                var button = RuntimeUiFactory.CreateButton(
+                    title + "Option" + i,
+                    host,
+                    option,
+                    selected ? new Color(0.24f, 0.18f, 0.08f, 1f) : new Color(0.1f, 0.12f, 0.15f, 1f),
+                    13);
+                RuntimeUiFactory.EnsureLayoutElement(button.transform, flexibleWidth: 1f, preferredHeight: 68f);
+                var capturedOption = option;
+                button.onClick.AddListener(() => onSelected(capturedOption));
+            }
+        }
+
+        private static List<string> BuildChoiceOptions(IReadOnlyList<string> configuredOptions, string fallbackOption)
+        {
+            var options = new List<string>();
+            if (configuredOptions != null)
+            {
+                for (var i = 0; i < configuredOptions.Count; i++)
+                {
+                    if (!string.IsNullOrWhiteSpace(configuredOptions[i]))
+                    {
+                        options.Add(configuredOptions[i]);
+                    }
+                }
+            }
+
+            if (options.Count == 0 && !string.IsNullOrWhiteSpace(fallbackOption))
+            {
+                options.Add(fallbackOption);
+            }
+
+            return options;
+        }
+
+        private bool HasFinalDecisionSelections()
+        {
+            return !string.IsNullOrWhiteSpace(_selectedMotive) && !string.IsNullOrWhiteSpace(_selectedTimeline);
         }
 
         private void AddSectionCard(Transform parent, string title, string body)
@@ -882,14 +989,27 @@ namespace MobilOfl.UI
 
         private void TryAccuse(string suspectId)
         {
+            var session = CaseSessionManager.Instance;
+            if (session == null)
+            {
+                return;
+            }
+
+            if (!HasFinalDecisionSelections())
+            {
+                session.PublishMessage("Final suclama icin once motivasyon ve zaman cizelgesi sec.");
+                RefreshImmediate();
+                return;
+            }
+
             var networkCaseState = NetworkCaseState.Instance;
             if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
             {
-                networkCaseState.RequestResolveSuspect(suspectId);
+                networkCaseState.RequestResolveSuspect(suspectId, _selectedMotive, _selectedTimeline);
             }
-            else if (CaseSessionManager.Instance != null)
+            else
             {
-                CaseSessionManager.Instance.TryResolveCase(suspectId, out _);
+                session.TryResolveCase(suspectId, _selectedMotive, _selectedTimeline, out _);
             }
 
             RefreshImmediate();

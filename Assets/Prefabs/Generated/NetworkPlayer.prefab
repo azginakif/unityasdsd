@@ -170,7 +170,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 916f4ab39e7b58e4fb75ae5c7a50b5e7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.PrototypeFirstPersonController
+  m_EditorClassIdentifier: 
   cameraPivot: {fileID: 8045666057178384635}
   walkSpeed: 4.5
   sprintSpeed: 6.5
@@ -209,7 +209,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 529d26772a1c3b74e85a023619b49ac1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.PlayerInteractionController
+  m_EditorClassIdentifier: 
   playerCamera: {fileID: 291103391134749725}
   interactDistance: 4
   minimumInteractDistance: 5.25
@@ -233,7 +233,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c07e2e1249404825b5c6ec6a85f7a2fd, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.InvestigationScanner
+  m_EditorClassIdentifier: 
   playerCamera: {fileID: 291103391134749725}
   playerInteraction: {fileID: 814082020620784088}
   scanKey: 31
@@ -253,7 +253,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1f0aa38f93ce44dcbeaa95211b8d8814, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.PlayerStealthController
+  m_EditorClassIdentifier: 
   movementController: {fileID: 2075874614360215883}
   scanner: {fileID: 2177019396565199461}
   walkNoise: 0.34
@@ -277,7 +277,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f830cc7af3874e8fbb2f6d793f7c7bbf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.TeamPingController
+  m_EditorClassIdentifier: 
   playerCamera: {fileID: 291103391134749725}
   playerInteraction: {fileID: 814082020620784088}
   pingKey: 32
@@ -293,8 +293,8 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1021947592
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 2552106296
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -318,7 +318,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
+  m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
   AutoOwnerAuthorityTickOffset: 1
@@ -364,7 +364,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e05f528fb679f24d97063a3fa464452, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Online.NetworkPlayerAvatar
+  m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   movementController: {fileID: 2075874614360215883}
   interactionController: {fileID: 814082020620784088}

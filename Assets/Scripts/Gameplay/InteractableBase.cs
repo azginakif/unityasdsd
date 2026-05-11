@@ -10,6 +10,11 @@ namespace MobilOfl.Gameplay
         public virtual bool RequiresHold => false;
         public virtual float HoldDuration => 0f;
 
+        public virtual float GetHoldDuration(GameObject interactor)
+        {
+            return HoldDuration;
+        }
+
         public void ConfigurePrompt(string text)
         {
             if (!string.IsNullOrWhiteSpace(text))

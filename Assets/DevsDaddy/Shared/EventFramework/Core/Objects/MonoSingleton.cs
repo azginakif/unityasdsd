@@ -29,7 +29,7 @@ namespace DevsDaddy.Shared.EventFramework.Core.Objects
             }
 
             var typeInterface = typeof(TInterface);
-            var objects = FindObjectsOfType<TImplementation>();
+            var objects = FindObjectsByType<TImplementation>(FindObjectsSortMode.None);
             if(!objects.IsNullOrEmpty())
             {
                 foreach (var obj in objects)

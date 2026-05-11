@@ -93,7 +93,7 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
-            var duration = Mathf.Max(0.05f, _currentInteractable.HoldDuration);
+            var duration = Mathf.Max(0.05f, _currentInteractable.GetHoldDuration(gameObject));
             _holdProgress += Time.deltaTime / duration;
             if (_holdProgress < 1f)
             {

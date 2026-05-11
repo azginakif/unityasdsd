@@ -711,7 +711,7 @@ namespace MobilOfl.UI
         {
             if (playerInteraction == null || !playerInteraction.isActiveAndEnabled)
             {
-                var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude);
+                var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
                 for (var i = 0; i < candidates.Length; i++)
                 {
                     if (candidates[i] != null && candidates[i].isActiveAndEnabled)

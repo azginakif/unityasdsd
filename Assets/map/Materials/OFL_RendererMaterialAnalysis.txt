@@ -1,0 +1,798 @@
+OFL Renderer Material Analysis
+Scene: Assets/map/Scenes/SampleScene.unity
+Renderer count: 1874
+
+[0] Cube
+    bounds.size=(183.70, 1.00, 281.30) scale=(183.70, 1.00, 281.30)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[1] COMPUTERdemoscene (2)/wall_003(Clone) (55)
+    bounds.size=(5.83, 0.07, 305.57) scale=(2.91, -152.79, 1.00)
+    slot 0: mat='Material.012' shader='Standard' supported=True color=FFFFFFFF tex='<none>'
+[2] Cube (9)
+    bounds.size=(5.09, 17.10, 201.41) scale=(5.09, 17.10, 201.41)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[3] COMPUTERdemoscene (2)/wall_003(Clone) (10)
+    bounds.size=(1.12, 1.61, 90.62) scale=(45.31, 0.80, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[4] COMPUTERdemoscene (2)/wall_003(Clone) (49)
+    bounds.size=(37.33, 0.07, 53.18) scale=(18.66, 26.59, 1.00)
+    slot 0: mat='Material.012' shader='Standard' supported=True color=FFFFFFFF tex='<none>'
+[5] COMPUTERdemoscene (2)/wall_003(Clone) (52)
+    bounds.size=(37.33, 0.07, 53.18) scale=(18.66, 26.59, 1.00)
+    slot 0: mat='Material.012' shader='Standard' supported=True color=FFFFFFFF tex='<none>'
+[6] COMPUTERdemoscene (2)/wall_003(Clone) (54)
+    bounds.size=(37.33, 0.07, 53.18) scale=(18.66, 26.59, 1.00)
+    slot 0: mat='Material.012' shader='Standard' supported=True color=FFFFFFFF tex='<none>'
+[7] COMPUTERdemoscene (2)/wall_003(Clone) (50)
+    bounds.size=(37.33, 0.07, 53.18) scale=(18.66, 26.59, 1.00)
+    slot 0: mat='Material.012' shader='Standard' supported=True color=FFFFFFFF tex='<none>'
+[8] COMPUTERdemoscene (2)/wall_003(Clone) (43)
+    bounds.size=(0.79, 1.61, 62.47) scale=(31.24, 0.80, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[9] COMPUTERdemoscene (2)/wall_003(Clone) (51)
+    bounds.size=(37.33, 0.07, 11.02) scale=(18.66, 5.51, 1.00)
+    slot 0: mat='Material.012' shader='Standard' supported=True color=FFFFFFFF tex='<none>'
+[10] COMPUTERdemoscene (2)/wall_003(Clone) (53)
+    bounds.size=(37.33, 0.07, 11.02) scale=(18.66, 5.51, 1.00)
+    slot 0: mat='Material.012' shader='Standard' supported=True color=FFFFFFFF tex='<none>'
+[11] SampleSchoolBlock/MainFloor
+    bounds.size=(20.00, 0.10, 24.00) scale=(20.00, 0.10, 24.00)
+    slot 0: mat='MainFloor_Material' shader='Standard' supported=True color=737A75FF tex='<none>'
+[12] SampleSchoolBlock/LeftOuterWall
+    bounds.size=(0.25, 3.00, 24.00) scale=(0.25, 3.00, 24.00)
+    slot 0: mat='LeftOuterWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[13] SampleSchoolBlock/RightOuterWall
+    bounds.size=(0.25, 3.00, 24.00) scale=(0.25, 3.00, 24.00)
+    slot 0: mat='RightOuterWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[14] SampleSchoolBlock/CorridorFloor
+    bounds.size=(4.00, 0.08, 22.00) scale=(4.00, 0.08, 22.00)
+    slot 0: mat='CorridorFloor_Material' shader='Standard' supported=True color=8C9485FF tex='<none>'
+[15] COMPUTERdemoscene (2)/wall_003(Clone) (44)
+    bounds.size=(0.07, 5.17, 21.18) scale=(10.59, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[16] SampleSchoolBlock/CourtyardFloor
+    bounds.size=(18.00, 0.10, 10.00) scale=(18.00, 0.10, 10.00)
+    slot 0: mat='CourtyardFloor_Material' shader='Standard' supported=True color=5C6E57FF tex='<none>'
+[17] SampleSchoolBlock/BackWall
+    bounds.size=(20.00, 3.00, 0.25) scale=(20.00, 3.00, 0.25)
+    slot 0: mat='BackWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[18] SampleSchoolBlock/RightAnnexFloor
+    bounds.size=(10.00, 0.10, 16.00) scale=(10.00, 0.10, 16.00)
+    slot 0: mat='RightAnnexFloor_Material' shader='Standard' supported=True color=7A8070FF tex='<none>'
+[19] SampleSchoolBlock/LeftAnnexFloor
+    bounds.size=(10.00, 0.10, 16.00) scale=(10.00, 0.10, 16.00)
+    slot 0: mat='LeftAnnexFloor_Material' shader='Standard' supported=True color=7A8070FF tex='<none>'
+[20] SampleSchoolBlock/CourtyardBackWall
+    bounds.size=(18.00, 3.00, 0.25) scale=(18.00, 3.00, 0.25)
+    slot 0: mat='CourtyardBackWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[21] SampleSchoolBlock/LeftAnnexOuterWall
+    bounds.size=(0.25, 3.00, 16.00) scale=(0.25, 3.00, 16.00)
+    slot 0: mat='LeftAnnexOuterWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[22] SampleSchoolBlock/RightAnnexOuterWall
+    bounds.size=(0.25, 3.00, 16.00) scale=(0.25, 3.00, 16.00)
+    slot 0: mat='RightAnnexOuterWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[23] COMPUTERdemoscene (2)/Cube (15)
+    bounds.size=(1.00, 15.10, 3.92) scale=(1.00, 15.10, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[24] COMPUTERdemoscene (2)/Cube (14)
+    bounds.size=(1.00, 15.10, 3.92) scale=(1.00, 15.10, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[25] COMPUTERdemoscene (2)/Cube (17)
+    bounds.size=(1.00, 15.10, 3.92) scale=(1.00, 15.10, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[26] COMPUTERdemoscene (2)/Cube (16)
+    bounds.size=(1.00, 15.10, 3.92) scale=(1.00, 15.10, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[27] COMPUTERdemoscene (2)/wallfloorartroom (2)
+    bounds.size=(9.16, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[28] COMPUTERdemoscene (2)/wallfloorartroom (4)
+    bounds.size=(9.16, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[29] COMPUTERdemoscene (2)/wallfloorartroom (1)
+    bounds.size=(9.16, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[30] COMPUTERdemoscene (2)/wallfloorartroom (3)
+    bounds.size=(9.16, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[31] COMPUTERdemoscene (2)/wallfloorartroom
+    bounds.size=(9.16, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[32] classroom_demoscene (1)/demoscene_21
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[33] COMPUTERdemoscene (2)/demoscene_21 (1)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[34] COMPUTERdemoscene (2)/demoscene_21 (15)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[35] COMPUTERdemoscene (2)/demoscene_21 (2)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[36] COMPUTERdemoscene (2)/demoscene_21 (3)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[37] COMPUTERdemoscene (2)/demoscene_21 (6)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[38] classroom_demoscene/demoscene_21
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[39] COMPUTERdemoscene (2)/demoscene_21 (11)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[40] COMPUTERdemoscene (2)/demoscene_21 (12)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[41] COMPUTERdemoscene (2)/demoscene_21 (16)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[42] COMPUTERdemoscene (2)/demoscene_21 (5)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[43] classroom_demoscene (2)/demoscene_21
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[44] COMPUTERdemoscene (2)/demoscene_21 (8)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[45] COMPUTERdemoscene (2)/demoscene_21 (14)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[46] COMPUTERdemoscene (2)/demoscene_21 (10)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[47] COMPUTERdemoscene (2)/demoscene_21 (9)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[48] COMPUTERdemoscene (2)/demoscene_21 (7)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[49] COMPUTERdemoscene (2)/demoscene_21 (13)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[50] COMPUTERdemoscene (2)/demoscene_21
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[51] COMPUTERdemoscene (2)/demoscene_21 (4)
+    bounds.size=(8.78, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[52] COMPUTERdemoscene (2)/COMPUTERdemoscene (2)
+    bounds.size=(7.04, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[53] COMPUTERdemoscene (2)/COMPUTERdemoscene (4)
+    bounds.size=(7.04, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[54] COMPUTERdemoscene (2)/COMPUTERdemoscene (1)
+    bounds.size=(7.04, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[55] COMPUTERdemoscene (2)/COMPUTERdemoscene (3)
+    bounds.size=(7.04, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[56] CHEMISTRYlabdemoscene/CHEMISTRYlabdemoscene_3
+    bounds.size=(6.43, 3.54, 10.03) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[57] toiletdemoscene/toiletdemoscene
+    bounds.size=(8.71, 3.54, 8.00) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[58] SampleSchoolBlock/CourtyardLeftWall
+    bounds.size=(0.25, 3.00, 10.00) scale=(0.25, 3.00, 10.00)
+    slot 0: mat='CourtyardLeftWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[59] SampleSchoolBlock/RightAnnexBackWall
+    bounds.size=(10.00, 3.00, 0.25) scale=(10.00, 3.00, 0.25)
+    slot 0: mat='RightAnnexBackWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[60] SampleSchoolBlock/LeftAnnexBackWall
+    bounds.size=(10.00, 3.00, 0.25) scale=(10.00, 3.00, 0.25)
+    slot 0: mat='LeftAnnexBackWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[61] SampleSchoolBlock/CourtyardRightWall
+    bounds.size=(0.25, 3.00, 10.00) scale=(0.25, 3.00, 10.00)
+    slot 0: mat='CourtyardRightWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[62] schoolbus (1)
+    bounds.size=(9.73, 2.46, 2.61) scale=(1.71, 1.71, 1.71)
+    slot 0: mat='fer' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 2: mat='emission' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[63] schoolbus
+    bounds.size=(9.73, 2.46, 2.61) scale=(1.71, 1.71, 1.71)
+    slot 0: mat='fer' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 2: mat='emission' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[64] walldoor_002
+    bounds.size=(0.11, 4.10, 9.47) scale=(4.73, 2.05, 1.00)
+    slot 0: mat='wall2t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall2t_color'
+[65] PRINCIPALOFFICEdemoscene_4 (10)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[66] PRINCIPALOFFICEdemoscene_4 (3)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[67] PRINCIPALOFFICEdemoscene_4 (9)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[68] PRINCIPALOFFICEdemoscene_4 (7)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[69] PRINCIPALOFFICEdemoscene_4
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[70] PRINCIPALOFFICEdemoscene_4 (4)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[71] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (4)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[72] PRINCIPALOFFICEdemoscene_4 (5)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[73] PRINCIPALOFFICEdemoscene_4 (13)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[74] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (8)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[75] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (1)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[76] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (7)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[77] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[78] PRINCIPALOFFICEdemoscene_4 (1)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[79] PRINCIPALOFFICEdemoscene_4 (8)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[80] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (3)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[81] PRINCIPALOFFICEdemoscene_4 (6)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[82] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (6)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[83] PRINCIPALOFFICEdemoscene_4 (12)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[84] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (5)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[85] PRINCIPALOFFICEdemoscene_4 (11)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[86] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (2)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[87] PRINCIPALOFFICEdemoscene_4 (2)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[88] COMPUTERdemoscene (2)/PRINCIPALOFFICEdemoscene_4 (9)
+    bounds.size=(6.43, 3.54, 6.26) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[89] COMPUTERdemoscene (2)/wall_003 (2)
+    bounds.size=(1.15, 9.08, 1.87) scale=(1.07, 4.54, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[90] COMPUTERdemoscene (2)/demoscene_7 (3)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[91] classroom_demoscene (1)/demoscene_7
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[92] classroom_demoscene/demoscene_7
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[93] COMPUTERdemoscene (2)/demoscene_7 (10)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[94] classroom_demoscene (2)/demoscene_7
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[95] COMPUTERdemoscene (2)/demoscene_7 (11)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[96] COMPUTERdemoscene (2)/demoscene_7 (9)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[97] COMPUTERdemoscene (2)/demoscene_7 (5)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[98] COMPUTERdemoscene (2)/demoscene_7 (6)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[99] COMPUTERdemoscene (2)/demoscene_7 (13)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[100] COMPUTERdemoscene (2)/demoscene_7 (12)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[101] COMPUTERdemoscene (2)/demoscene_7 (7)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[102] COMPUTERdemoscene (2)/demoscene_7
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[103] COMPUTERdemoscene (2)/demoscene_7 (8)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[104] COMPUTERdemoscene (2)/demoscene_7 (1)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[105] COMPUTERdemoscene (2)/demoscene_7 (2)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[106] COMPUTERdemoscene (2)/demoscene_7 (4)
+    bounds.size=(6.96, 1.12, 5.45) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[107] COMPUTERdemoscene (2)/COMPUTERdemoscene_23 (2)
+    bounds.size=(1.19, 1.10, 8.61) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[108] COMPUTERdemoscene (2)/COMPUTERdemoscene_23 (1)
+    bounds.size=(1.19, 1.10, 8.61) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[109] COMPUTERdemoscene (2)/COMPUTERdemoscene_23 (3)
+    bounds.size=(1.19, 1.10, 8.61) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[110] COMPUTERdemoscene (2)/COMPUTERdemoscene_23 (4)
+    bounds.size=(1.19, 1.10, 8.61) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[111] SampleSchoolBlock/FrontWallLeft
+    bounds.size=(8.00, 3.00, 0.25) scale=(8.00, 3.00, 0.25)
+    slot 0: mat='FrontWallLeft_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[112] SampleSchoolBlock/FrontWallRight
+    bounds.size=(8.00, 3.00, 0.25) scale=(8.00, 3.00, 0.25)
+    slot 0: mat='FrontWallRight_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[113] SampleSchoolBlock/RightRoomDividerA
+    bounds.size=(0.20, 3.00, 7.00) scale=(0.20, 3.00, 7.00)
+    slot 0: mat='RightRoomDividerA_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[114] SampleSchoolBlock/LeftRoomDividerA
+    bounds.size=(0.20, 3.00, 7.00) scale=(0.20, 3.00, 7.00)
+    slot 0: mat='LeftRoomDividerA_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[115] SampleSchoolBlock/LeftRoomDividerB
+    bounds.size=(0.20, 3.00, 7.00) scale=(0.20, 3.00, 7.00)
+    slot 0: mat='LeftRoomDividerB_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[116] SampleSchoolBlock/RightRoomDividerB
+    bounds.size=(0.20, 3.00, 7.00) scale=(0.20, 3.00, 7.00)
+    slot 0: mat='RightRoomDividerB_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[117] COMPUTERdemoscene (2)/wall_003 (21)
+    bounds.size=(0.31, 7.02, 2.87) scale=(1.43, 3.51, 3.55)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[118] COMPUTERdemoscene (2)/wall_003(Clone) (47)
+    bounds.size=(0.07, 5.17, 5.50) scale=(2.75, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[119] COMPUTERdemoscene (2)/wall_003(Clone) (48)
+    bounds.size=(0.07, 5.17, 5.50) scale=(2.75, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[120] COMPUTERdemoscene (2)/wall_003(Clone) (46)
+    bounds.size=(5.50, 0.07, 5.17) scale=(2.75, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[121] CHEMISTRYlabdemoscene/CHEMISTRYlabdemoscene_1
+    bounds.size=(5.90, 1.04, 4.56) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='metalic mat' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[122] COMPUTERdemoscene (2)/demoscene_10 (3)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[123] COMPUTERdemoscene (2)/demoscene_10 (12)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[124] COMPUTERdemoscene (2)/demoscene_10 (17)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[125] COMPUTERdemoscene (2)/demoscene_10 (6)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[126] COMPUTERdemoscene (2)/demoscene_10 (4)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[127] COMPUTERdemoscene (2)/demoscene_10 (2)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[128] classroom_demoscene/demoscene_10
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[129] COMPUTERdemoscene (2)/demoscene_10
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[130] COMPUTERdemoscene (2)/demoscene_10 (16)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[131] COMPUTERdemoscene (2)/demoscene_10 (9)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[132] COMPUTERdemoscene (2)/demoscene_10 (5)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[133] classroom_demoscene (2)/demoscene_10
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[134] COMPUTERdemoscene (2)/demoscene_10 (11)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[135] COMPUTERdemoscene (2)/demoscene_10 (7)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[136] COMPUTERdemoscene (2)/demoscene_10 (15)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[137] COMPUTERdemoscene (2)/demoscene_10 (1)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[138] COMPUTERdemoscene (2)/demoscene_10 (13)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[139] classroom_demoscene (1)/demoscene_10
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[140] COMPUTERdemoscene (2)/demoscene_10 (10)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[141] COMPUTERdemoscene (2)/demoscene_10 (8)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[142] COMPUTERdemoscene (2)/demoscene_10 (18)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[143] COMPUTERdemoscene (2)/demoscene_10 (14)
+    bounds.size=(5.10, 0.33, 5.50) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+    slot 1: mat='emissionwhite' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='<none>'
+[144] COMPUTERdemoscene (2)/wall_003 (20)
+    bounds.size=(0.30, 7.02, 2.24) scale=(1.12, 3.51, 3.55)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[145] COMPUTERdemoscene (2)/wall_003
+    bounds.size=(1.46, 7.02, 1.47) scale=(1.00, 3.51, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[146] COMPUTERdemoscene (2)/wall_003 (6)
+    bounds.size=(1.46, 7.02, 1.47) scale=(1.00, 3.51, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[147] COMPUTERdemoscene (2)/wall_003 (5)
+    bounds.size=(2.00, 7.02, 0.07) scale=(1.00, 3.51, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[148] COMPUTERdemoscene (2)/demoscene_20
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[149] classroom_demoscene (2)/demoscene_20
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[150] COMPUTERdemoscene (2)/demoscene_20 (5)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[151] COMPUTERdemoscene (2)/demoscene_20 (2)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[152] classroom_demoscene (1)/demoscene_20
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[153] COMPUTERdemoscene (2)/demoscene_20 (9)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[154] COMPUTERdemoscene (2)/demoscene_20 (7)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[155] COMPUTERdemoscene (2)/demoscene_20 (8)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[156] COMPUTERdemoscene (2)/demoscene_20 (4)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[157] COMPUTERdemoscene (2)/demoscene_20 (3)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[158] COMPUTERdemoscene (2)/demoscene_20 (6)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[159] classroom_demoscene/demoscene_20
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[160] COMPUTERdemoscene (2)/demoscene_20 (1)
+    bounds.size=(5.48, 0.05, 4.69) scale=(1.00, 1.00, 1.00)
+    slot 0: mat='normal ' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='ImphenziaPalette01-256-Gradient'
+[161] COMPUTERdemoscene (2)/wall_003 (1)
+    bounds.size=(0.42, 7.02, 1.43) scale=(0.73, 3.51, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[162] COMPUTERdemoscene (2)/wall_003 (23)
+    bounds.size=(0.74, 7.02, 1.23) scale=(0.60, 3.51, 9.19)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[163] COMPUTERdemoscene (2)/wall_003 (27)
+    bounds.size=(0.74, 7.02, 1.23) scale=(0.60, 3.51, 9.19)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[164] COMPUTERdemoscene (2)/wall_003 (25)
+    bounds.size=(0.74, 7.02, 1.23) scale=(0.60, 3.51, 9.19)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[165] COMPUTERdemoscene (2)/wall_003 (9)
+    bounds.size=(0.74, 7.02, 1.23) scale=(0.60, 3.51, 9.19)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[166] COMPUTERdemoscene (2)/wall_003 (3)
+    bounds.size=(0.33, 7.02, 1.21) scale=(0.60, 3.51, 3.55)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[167] COMPUTERdemoscene (2)/wall_003 (13)
+    bounds.size=(0.33, 7.02, 1.21) scale=(0.60, 3.51, 3.55)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[168] COMPUTERdemoscene (2)/wall_003 (14)
+    bounds.size=(0.33, 7.02, 1.21) scale=(0.60, 3.51, 3.55)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[169] COMPUTERdemoscene (2)/wall_003 (11)
+    bounds.size=(0.28, 7.02, 1.20) scale=(0.60, 3.51, 3.55)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[170] COMPUTERdemoscene (2)/wall_003 (7)
+    bounds.size=(0.28, 7.02, 1.20) scale=(0.60, 3.51, 3.55)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[171] Cube (23)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[172] Cube (17)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[173] Cube (12)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[174] Cube (2)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[175] Cube (22)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[176] Cube (19)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[177] Cube (18)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[178] Cube (11)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[179] Cube (14)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[180] Cube (13)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[181] Cube (16)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[182] Cube (1)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[183] Cube (10)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[184] Cube (15)
+    bounds.size=(1.00, 5.53, 3.92) scale=(1.00, 5.53, 3.92)
+    slot 0: mat='OFL_Neutral_URP_Lit' shader='Standard' supported=True color=78828AFF tex='<none>'
+[185] SampleSchoolBlock/RightMiddleWall
+    bounds.size=(6.00, 3.00, 0.20) scale=(6.00, 3.00, 0.20)
+    slot 0: mat='RightMiddleWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[186] SampleSchoolBlock/LeftMiddleWall
+    bounds.size=(6.00, 3.00, 0.20) scale=(6.00, 3.00, 0.20)
+    slot 0: mat='LeftMiddleWall_Material' shader='Standard' supported=True color=B8BDADFF tex='<none>'
+[187] COMPUTERdemoscene (2)/wall_001 (55)
+    bounds.size=(3.57, 3.60, 2.13) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[188] COMPUTERdemoscene (2)/wall_003(Clone) (5)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[189] COMPUTERdemoscene (2)/wall_003(Clone) (33)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[190] COMPUTERdemoscene (2)/wall_003(Clone) (6)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[191] COMPUTERdemoscene (2)/wall_003(Clone) (34)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[192] COMPUTERdemoscene (2)/wall_003(Clone) (28)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[193] COMPUTERdemoscene (2)/wall_003(Clone) (4)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[194] COMPUTERdemoscene (2)/wall_003(Clone) (7)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[195] COMPUTERdemoscene (2)/wall_003(Clone) (27)
+    bounds.size=(1.07, 5.17, 1.36) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[196] COMPUTERdemoscene (2)/wall_003(Clone) (2)
+    bounds.size=(1.61, 5.17, 0.56) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[197] COMPUTERdemoscene (2)/wall_003(Clone) (3)
+    bounds.size=(1.61, 5.17, 0.56) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[198] COMPUTERdemoscene (2)/wall_003(Clone) (1)
+    bounds.size=(1.65, 5.17, 0.34) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[199] COMPUTERdemoscene (2)/wall_003(Clone)
+    bounds.size=(1.65, 5.17, 0.34) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[200] COMPUTERdemoscene (2)/wall_003(Clone) (12)
+    bounds.size=(1.66, 5.17, 0.11) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[201] COMPUTERdemoscene (2)/wall_003(Clone) (26)
+    bounds.size=(1.66, 5.17, 0.11) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[202] COMPUTERdemoscene (2)/wall_003(Clone) (19)
+    bounds.size=(1.66, 5.17, 0.11) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[203] COMPUTERdemoscene (2)/wall_003(Clone) (21)
+    bounds.size=(1.66, 5.17, 0.11) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[204] COMPUTERdemoscene (2)/wall_003(Clone) (20)
+    bounds.size=(1.66, 5.17, 0.11) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[205] COMPUTERdemoscene (2)/wall_003(Clone) (14)
+    bounds.size=(1.66, 5.17, 0.11) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[206] COMPUTERdemoscene (2)/wall_003(Clone) (31)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[207] COMPUTERdemoscene (2)/wall_003(Clone) (16)
+    bounds.size=(0.07, 5.17, 1.66) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[208] COMPUTERdemoscene (2)/wall_003(Clone) (42)
+    bounds.size=(0.07, 5.17, 1.66) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[209] COMPUTERdemoscene (2)/wall_003(Clone) (35)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[210] COMPUTERdemoscene (2)/wall_003(Clone) (18)
+    bounds.size=(0.07, 5.17, 1.66) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[211] COMPUTERdemoscene (2)/wall_003(Clone) (29)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[212] COMPUTERdemoscene (2)/wall_003(Clone) (25)
+    bounds.size=(0.07, 5.17, 1.66) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[213] COMPUTERdemoscene (2)/wall_003(Clone) (37)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[214] COMPUTERdemoscene (2)/wall_003(Clone) (24)
+    bounds.size=(0.07, 5.17, 1.66) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[215] COMPUTERdemoscene (2)/wall_003(Clone) (38)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[216] COMPUTERdemoscene (2)/wall_003(Clone) (23)
+    bounds.size=(0.07, 5.17, 1.66) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[217] COMPUTERdemoscene (2)/wall_003(Clone) (36)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[218] COMPUTERdemoscene (2)/wall_003(Clone) (30)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[219] COMPUTERdemoscene (2)/wall_003(Clone) (32)
+    bounds.size=(1.66, 5.17, 0.07) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[220] COMPUTERdemoscene (2)/wall_003(Clone) (22)
+    bounds.size=(0.07, 5.17, 1.66) scale=(0.83, 2.58, 1.00)
+    slot 0: mat='wall3t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='wall3t_color'
+[221] COMPUTERdemoscene (2)/wall_001 (127)
+    bounds.size=(0.28, 3.60, 4.04) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[222] COMPUTERdemoscene (2)/wall_001 (128)
+    bounds.size=(0.28, 3.60, 4.04) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[223] COMPUTERdemoscene (2)/wall_001 (126)
+    bounds.size=(0.28, 3.60, 4.04) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[224] COMPUTERdemoscene (2)/wall_001 (125)
+    bounds.size=(0.28, 3.60, 4.04) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[225] COMPUTERdemoscene (2)/wall_001 (61)
+    bounds.size=(0.28, 3.60, 4.04) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[226] COMPUTERdemoscene (2)/wall_001 (84)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[227] COMPUTERdemoscene (2)/wall_001 (80)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[228] COMPUTERdemoscene (2)/wall_001 (76)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[229] COMPUTERdemoscene (2)/wall_001 (74)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[230] COMPUTERdemoscene (2)/wall_001 (81)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[231] COMPUTERdemoscene (2)/wall_001 (73)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[232] COMPUTERdemoscene (2)/wall_001 (82)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[233] COMPUTERdemoscene (2)/wall_001 (78)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[234] COMPUTERdemoscene (2)/wall_001 (75)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[235] COMPUTERdemoscene (2)/wall_001 (26)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[236] COMPUTERdemoscene (2)/wall_001 (46)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[237] COMPUTERdemoscene (2)/wall_001 (25)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[238] COMPUTERdemoscene (2)/wall_001 (83)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[239] COMPUTERdemoscene (2)/wall_001 (42)
+    bounds.size=(0.21, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[240] COMPUTERdemoscene (2)/wall_001 (20)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[241] COMPUTERdemoscene (2)/wall_001 (119)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[242] COMPUTERdemoscene (2)/wall_001 (67)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[243] COMPUTERdemoscene (2)/wall_001 (88)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[244] COMPUTERdemoscene (2)/wall_001 (51)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[245] COMPUTERdemoscene (2)/wall_001 (108)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[246] COMPUTERdemoscene (2)/wall_001 (99)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[247] COMPUTERdemoscene (2)/wall_001 (66)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[248] COMPUTERdemoscene (2)/wall_001 (65)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'
+[249] COMPUTERdemoscene (2)/wall_001 (21)
+    bounds.size=(0.15, 3.60, 4.03) scale=(2.02, 1.80, 2.02)
+    slot 0: mat='wall1t' shader='glTF/PbrMetallicRoughness' supported=True color=000000FF tex='Wall1t_color'

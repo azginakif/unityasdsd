@@ -4,8 +4,28 @@ namespace MobilOfl.UI
 {
     public static class SchoolLocationUtility
     {
+        private const float ImportedOriginX = 920f;
+        private const float ImportedOriginZ = -585f;
+        private const float ImportedZToWorldX = 0.55f;
+        private const float ImportedXToWorldZ = 4f;
+
+        public static Vector3 NormalizeToPrototypeSpace(Vector3 position)
+        {
+            if (position.x > 850f && position.z < -450f)
+            {
+                return new Vector3(
+                    (position.z - ImportedOriginZ) / ImportedXToWorldZ,
+                    position.y,
+                    (position.x - ImportedOriginX) / ImportedZToWorldX);
+            }
+
+            return position;
+        }
+
         public static string GetZoneTitle(Vector3 position)
         {
+            position = NormalizeToPrototypeSpace(position);
+
             if (position.z > 18f)
             {
                 return "AVLU";
@@ -61,6 +81,8 @@ namespace MobilOfl.UI
 
         public static string GetZoneSubtitle(Vector3 position)
         {
+            position = NormalizeToPrototypeSpace(position);
+
             if (position.z > 18f)
             {
                 return "Acik alani tara, takimla gorus hatti daha genis.";

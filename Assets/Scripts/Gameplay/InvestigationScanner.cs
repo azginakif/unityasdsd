@@ -306,7 +306,7 @@ namespace MobilOfl.Gameplay
 
         private void TryAddLabel(List<string> labels, string candidate)
         {
-            if (labels.Count >= Mathf.Max(1, maxReportedSignals) || string.IsNullOrWhiteSpace(candidate))
+            if (labels.Count >= maxReportedSignals || string.IsNullOrWhiteSpace(candidate))
             {
                 return;
             }

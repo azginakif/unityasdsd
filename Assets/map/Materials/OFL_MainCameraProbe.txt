@@ -1,0 +1,70 @@
+OFL Main Camera Probe
+camera=Main Camera pixel=(2560, 1440) pos=(0.00, 1.67, -8.00) rot=(0.00, 0.00, 0.00)
+
+Sample Screen (1280.00, 1080.00)
+  raycast: <none>
+
+Sample Screen (512.00, 792.00)
+  raycast[0] dist=1,36 point=(-0.90, 1.75, -6.54): SampleSchoolBlock/InvestigationBoard_Board active=True layer=Default
+    transform pos=(-1.65, 1.65, -6.52) scale=(1.55, 0.88, 0.04)
+    renderer=MeshRenderer bounds.center=(-1.65, 1.65, -6.52) bounds.size=(1.55, 0.88, 0.04)
+    slot 0: mat='InvestigationBoard_Board_Material' shader='Universal Render Pipeline/Lit' supported=True color=A38747FF tex='<none>'
+  raycast[1] dist=1,36 point=(-0.90, 1.75, -6.54): SampleSchoolBlock/InvestigationBoard_Frame active=True layer=Default
+    transform pos=(-1.65, 1.65, -6.50) scale=(1.80, 1.10, 0.08)
+    renderer=MeshRenderer bounds.center=(-1.65, 1.65, -6.50) bounds.size=(1.80, 1.10, 0.08)
+    slot 0: mat='InvestigationBoard_Frame_Material' shader='Universal Render Pipeline/Lit' supported=True color=754C26FF tex='<none>'
+  raycast[2] dist=7,09 point=(-3.90, 2.04, -1.67): SampleSchoolBlock/LeftRoomDividerA active=True layer=Default
+    transform pos=(-4.00, 1.50, -4.00) scale=(0.20, 3.00, 7.00)
+    renderer=MeshRenderer bounds.center=(-4.00, 1.50, -4.00) bounds.size=(0.20, 3.00, 7.00)
+    slot 0: mat='LeftRoomDividerA_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+  raycast[3] dist=13,64 point=(-7.33, 2.36, 3.90): SampleSchoolBlock/LeftMiddleWall active=True layer=Default
+    transform pos=(-7.00, 1.50, 4.00) scale=(6.00, 3.00, 0.20)
+    renderer=MeshRenderer bounds.center=(-7.00, 1.50, 4.00) bounds.size=(6.00, 3.00, 0.20)
+    slot 0: mat='LeftMiddleWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+  raycast[4] dist=18,50 point=(-9.88, 2.60, 8.03): SampleSchoolBlock/LeftOuterWall active=True layer=Default
+    transform pos=(-10.00, 1.50, 4.00) scale=(0.25, 3.00, 24.00)
+    renderer=MeshRenderer bounds.center=(-10.00, 1.50, 4.00) bounds.size=(0.25, 3.00, 24.00)
+    slot 0: mat='LeftOuterWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+  raycast[5] dist=23,02 point=(-12.24, 2.82, 11.88): SampleSchoolBlock/LeftAnnexBackWall active=True layer=Default
+    transform pos=(-15.00, 1.50, 12.00) scale=(10.00, 3.00, 0.25)
+    renderer=MeshRenderer bounds.center=(-15.00, 1.50, 12.00) bounds.size=(10.00, 3.00, 0.25)
+    slot 0: mat='LeftAnnexBackWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+
+Sample Screen (2048.00, 792.00)
+  raycast[0] dist=7,09 point=(3.90, 2.04, -1.67): SampleSchoolBlock/RightRoomDividerA active=True layer=Default
+    transform pos=(4.00, 1.50, -4.00) scale=(0.20, 3.00, 7.00)
+    renderer=MeshRenderer bounds.center=(4.00, 1.50, -4.00) bounds.size=(0.20, 3.00, 7.00)
+    slot 0: mat='RightRoomDividerA_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+  raycast[1] dist=13,64 point=(7.33, 2.36, 3.90): SampleSchoolBlock/RightMiddleWall active=True layer=Default
+    transform pos=(7.00, 1.50, 4.00) scale=(6.00, 3.00, 0.20)
+    renderer=MeshRenderer bounds.center=(7.00, 1.50, 4.00) bounds.size=(6.00, 3.00, 0.20)
+    slot 0: mat='RightMiddleWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+  raycast[2] dist=18,50 point=(9.88, 2.60, 8.03): SampleSchoolBlock/RightOuterWall active=True layer=Default
+    transform pos=(10.00, 1.50, 4.00) scale=(0.25, 3.00, 24.00)
+    renderer=MeshRenderer bounds.center=(10.00, 1.50, 4.00) bounds.size=(0.25, 3.00, 24.00)
+    slot 0: mat='RightOuterWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+  raycast[3] dist=23,02 point=(12.24, 2.82, 11.88): SampleSchoolBlock/RightAnnexBackWall active=True layer=Default
+    transform pos=(15.00, 1.50, 12.00) scale=(10.00, 3.00, 0.25)
+    renderer=MeshRenderer bounds.center=(15.00, 1.50, 12.00) bounds.size=(10.00, 3.00, 0.25)
+    slot 0: mat='RightAnnexBackWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+
+Sample Screen (1280.00, 504.00)
+  raycast[0] dist=9,25 point=(0.00, 0.04, 1.41): SampleSchoolBlock/CorridorFloor active=True layer=Default
+    transform pos=(0.00, 0.00, 0.00) scale=(4.00, 0.08, 22.00)
+    renderer=MeshRenderer bounds.center=(0.00, 0.00, 0.00) bounds.size=(4.00, 0.08, 22.00)
+    slot 0: mat='CorridorFloor_Material' shader='Universal Render Pipeline/Lit' supported=True color=8C9485FF tex='<none>'
+  raycast[1] dist=9,48 point=(0.00, 0.00, 1.64): SampleSchoolBlock/MainFloor active=True layer=Default
+    transform pos=(0.00, -0.05, 4.00) scale=(20.00, 0.10, 24.00)
+    renderer=MeshRenderer bounds.center=(0.00, -0.05, 4.00) bounds.size=(20.00, 0.10, 24.00)
+    slot 0: mat='MainFloor_Material' shader='Universal Render Pipeline/Lit' supported=True color=737A75FF tex='<none>'
+
+Sample Screen (1280.00, 720.00)
+  raycast[0] dist=23,58 point=(0.00, 1.67, 15.88): SampleSchoolBlock/BackWall active=True layer=Default
+    transform pos=(0.00, 1.50, 16.00) scale=(20.00, 3.00, 0.25)
+    renderer=MeshRenderer bounds.center=(0.00, 1.50, 16.00) bounds.size=(20.00, 3.00, 0.25)
+    slot 0: mat='BackWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+  raycast[1] dist=35,58 point=(0.00, 1.67, 27.88): SampleSchoolBlock/CourtyardBackWall active=True layer=Default
+    transform pos=(0.00, 1.50, 28.00) scale=(18.00, 3.00, 0.25)
+    renderer=MeshRenderer bounds.center=(0.00, 1.50, 28.00) bounds.size=(18.00, 3.00, 0.25)
+    slot 0: mat='CourtyardBackWall_Material' shader='Universal Render Pipeline/Lit' supported=True color=B8BDADFF tex='<none>'
+

@@ -73,7 +73,7 @@ namespace MobilOfl.Online
                 var readyCount = 0;
                 foreach (var entry in _readyEntries)
                 {
-                    if (TryParseReadyPayload(entry.ToString(), out _, out var isReady, out _) && isReady)
+                if (TryParseReadyPayload(entry.ToString(), out _, out var isReady, out _) && isReady)
                     {
                         readyCount++;
                     }
@@ -222,6 +222,7 @@ namespace MobilOfl.Online
             return true;
         }
 
+        [System.Obsolete("Use RequestResolveSuspect(string suspectId, string motive, string timeline) for player-facing accusations.")]
         public bool RequestResolveSuspect(string suspectId)
         {
             if (CaseSessionManager.Instance == null || string.IsNullOrWhiteSpace(suspectId))
@@ -235,6 +236,22 @@ namespace MobilOfl.Online
             }
 
             RequestResolveSuspectServerRpc(suspectId);
+            return true;
+        }
+
+        public bool RequestResolveSuspect(string suspectId, string motive, string timeline)
+        {
+            if (CaseSessionManager.Instance == null || string.IsNullOrWhiteSpace(suspectId))
+            {
+                return false;
+            }
+
+            if (IsServer)
+            {
+                return CaseSessionManager.Instance.TryResolveCase(suspectId, motive, timeline, out _);
+            }
+
+            RequestResolveFinalAccusationServerRpc(suspectId, motive ?? string.Empty, timeline ?? string.Empty);
             return true;
         }
 
@@ -912,6 +929,17 @@ namespace MobilOfl.Online
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void RequestResolveFinalAccusationServerRpc(string suspectId, string motive, string timeline)
+        {
+            if (CaseSessionManager.Instance == null)
+            {
+                return;
+            }
+
+            CaseSessionManager.Instance.TryResolveCase(suspectId, motive, timeline, out _);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
         private void RequestAddTeamNoteServerRpc(string authorName, string noteText)
         {
             if (CaseSessionManager.Instance == null)
@@ -983,7 +1011,9 @@ namespace MobilOfl.Online
                 !string.IsNullOrWhiteSpace(witnessEvidenceId) &&
                 CaseSessionManager.Instance.HasEvidence(witnessEvidenceId);
 
-            var line = hasRequiredEvidence ? evidenceLine : defaultLine;
+            var line = hasRequiredEvidence
+                ? evidenceLine
+                : defaultLine;
             var revealsNewLead =
                 hasRequiredEvidence &&
                 !string.IsNullOrWhiteSpace(witnessEvidenceId) &&

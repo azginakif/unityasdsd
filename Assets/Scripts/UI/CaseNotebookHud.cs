@@ -37,6 +37,8 @@ namespace MobilOfl.UI
         private readonly List<string> _collectedEvidenceCache = new List<string>();
         private bool _isOpen;
         private string _selectedEvidenceId;
+        private string _selectedMotive;
+        private string _selectedTimeline;
         private string _noteDraft = string.Empty;
         private NotebookTab _selectedTab;
         private Vector2 _overviewScroll;
@@ -490,6 +492,12 @@ namespace MobilOfl.UI
 
             _suspectScroll = GUILayout.BeginScrollView(_suspectScroll);
 
+            if (session.HasAnyAccusableSuspect())
+            {
+                DrawFinalDecisionSelectors(session);
+                GUILayout.Space(8f);
+            }
+
             foreach (var suspect in session.ActiveCase.Suspects)
             {
                 if (suspect == null)
@@ -510,17 +518,17 @@ namespace MobilOfl.UI
                 GUILayout.Label(session.GetMissingEvidenceSummary(suspect), _bodyStyle);
                 GUILayout.Space(6f);
 
-                GUI.enabled = canAccuse && !session.IsCaseResolved;
-                if (GUILayout.Button(canAccuse ? "Bu supheliyi sucla" : "Daha fazla delil gerekiyor", _buttonStyle, GUILayout.Height(36f)))
+                GUI.enabled = canAccuse && !session.IsCaseResolved && HasFinalDecisionSelections();
+                if (GUILayout.Button(canAccuse ? "Secili zincirle sucla" : "Daha fazla delil gerekiyor", _buttonStyle, GUILayout.Height(36f)))
                 {
                     var networkCaseState = NetworkCaseState.Instance;
                     if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
                     {
-                        networkCaseState.RequestResolveSuspect(suspect.Id);
+                        networkCaseState.RequestResolveSuspect(suspect.Id, _selectedMotive, _selectedTimeline);
                     }
                     else
                     {
-                        session.TryResolveCase(suspect.Id, out _);
+                        session.TryResolveCase(suspect.Id, _selectedMotive, _selectedTimeline, out _);
                     }
                 }
 
@@ -529,6 +537,63 @@ namespace MobilOfl.UI
             }
 
             GUILayout.EndScrollView();
+        }
+
+        private void DrawFinalDecisionSelectors(CaseSessionManager session)
+        {
+            GUILayout.BeginVertical(_panelCardStyle);
+            GUILayout.Label("Final Karar Zinciri", _sectionStyle);
+            GUILayout.Label("Suclama icin supheliyi, motivasyonu ve olay siralamasini birlikte dogrula.", _bodyStyle);
+            GUILayout.Space(6f);
+
+            DrawChoiceButtons("Motivasyon", session.ActiveCase.MotiveOptions, session.ActiveCase.CulpritMotive, ref _selectedMotive);
+            GUILayout.Space(6f);
+            DrawChoiceButtons("Zaman Cizelgesi", session.ActiveCase.TimelineOptions, session.ActiveCase.CulpritTimeline, ref _selectedTimeline);
+
+            GUILayout.EndVertical();
+        }
+
+        private void DrawChoiceButtons(string label, IReadOnlyList<string> configuredOptions, string fallbackOption, ref string selectedValue)
+        {
+            GUILayout.Label(label, _sectionStyle);
+            var options = BuildChoiceOptions(configuredOptions, fallbackOption);
+            for (var i = 0; i < options.Count; i++)
+            {
+                var option = options[i];
+                var isSelected = option == selectedValue;
+                var buttonLabel = isSelected ? "[Secili] " + option : option;
+                if (GUILayout.Button(buttonLabel, _buttonStyle, GUILayout.Height(42f)))
+                {
+                    selectedValue = option;
+                }
+            }
+        }
+
+        private static List<string> BuildChoiceOptions(IReadOnlyList<string> configuredOptions, string fallbackOption)
+        {
+            var options = new List<string>();
+            if (configuredOptions != null)
+            {
+                foreach (var option in configuredOptions)
+                {
+                    if (!string.IsNullOrWhiteSpace(option))
+                    {
+                        options.Add(option);
+                    }
+                }
+            }
+
+            if (options.Count == 0 && !string.IsNullOrWhiteSpace(fallbackOption))
+            {
+                options.Add(fallbackOption);
+            }
+
+            return options;
+        }
+
+        private bool HasFinalDecisionSelections()
+        {
+            return !string.IsNullOrWhiteSpace(_selectedMotive) && !string.IsNullOrWhiteSpace(_selectedTimeline);
         }
 
         private void SubmitTeamNote()
