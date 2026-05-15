@@ -445,6 +445,7 @@ namespace MobilOfl.UI
                 return;
             }
 
+            worldPosition = SchoolLocationUtility.PrototypeToWorldPosition(worldPosition, playerInteraction.transform.position);
             var directionHint = GetDirectionHint(worldPosition);
             var distance = Vector3.Distance(playerInteraction.transform.position, worldPosition);
             _waypointTitleText.text = "SONRAKI HEDEF: " + title;

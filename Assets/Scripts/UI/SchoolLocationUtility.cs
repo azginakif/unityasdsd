@@ -5,13 +5,33 @@ namespace MobilOfl.UI
     public static class SchoolLocationUtility
     {
         private const float ImportedOriginX = 920f;
+        private const float ImportedOriginY = 5.08f;
         private const float ImportedOriginZ = -585f;
         private const float ImportedZToWorldX = 0.55f;
         private const float ImportedXToWorldZ = 4f;
+        private const float PrototypeGroundY = 0.05f;
+
+        public static bool IsImportedMapPosition(Vector3 position)
+        {
+            return position.x > 850f && position.z < -450f;
+        }
+
+        public static Vector3 PrototypeToWorldPosition(Vector3 prototypePosition, Vector3 contextPosition)
+        {
+            if (!IsImportedMapPosition(contextPosition) || IsImportedMapPosition(prototypePosition))
+            {
+                return prototypePosition;
+            }
+
+            return new Vector3(
+                ImportedOriginX + prototypePosition.z * ImportedZToWorldX,
+                ImportedOriginY + prototypePosition.y - PrototypeGroundY,
+                ImportedOriginZ + prototypePosition.x * ImportedXToWorldZ);
+        }
 
         public static Vector3 NormalizeToPrototypeSpace(Vector3 position)
         {
-            if (position.x > 850f && position.z < -450f)
+            if (IsImportedMapPosition(position))
             {
                 return new Vector3(
                     (position.z - ImportedOriginZ) / ImportedXToWorldZ,

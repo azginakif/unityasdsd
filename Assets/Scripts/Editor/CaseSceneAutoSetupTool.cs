@@ -146,6 +146,20 @@ namespace MobilOfl.EditorTools
             AutoSetupInvestigationScene(false);
         }
 
+        [MenuItem("Mobil OFL/Setup/Auto Setup Map Sample Scene")]
+        public static void AutoSetupMapSampleScene()
+        {
+            const string mapScenePath = "Assets/map/Scenes/SampleScene.unity";
+            var scene = EditorSceneManager.OpenScene(mapScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                Debug.LogError("[Mobil OFL] Map sample scene could not be opened: " + mapScenePath);
+                return;
+            }
+
+            AutoSetupInvestigationScene(false);
+        }
+
         private static void AutoSetupInvestigationScene(bool showDialog)
         {
             var activeScene = SceneManager.GetActiveScene();
@@ -2059,14 +2073,15 @@ namespace MobilOfl.EditorTools
 
             light.type = LightType.Directional;
             light.transform.rotation = Quaternion.Euler(42f, -138f, 0f);
-            light.intensity = 1.05f;
-            light.color = new Color(1f, 0.88f, 0.68f);
+            light.intensity = 0.035f;
+            light.color = new Color(0.86f, 0.9f, 0.95f);
             light.shadows = LightShadows.Soft;
-            light.shadowStrength = 0.72f;
+            light.shadowStrength = 0f;
             light.shadowBias = 0.035f;
             light.shadowNormalBias = 0.25f;
-            light.bounceIntensity = 1.25f;
-            RenderSettings.sun = light;
+            light.bounceIntensity = 0.18f;
+            light.shadows = LightShadows.None;
+            RenderSettings.sun = null;
         }
 
         private static void EnsureAtmosphereLights(SceneLayoutProfile layout)
@@ -2082,41 +2097,114 @@ namespace MobilOfl.EditorTools
                 Object.DestroyImmediate(root.transform.GetChild(i).gameObject);
             }
 
-            CreateFluorescentLight(root.transform, "CorridorLightA", layout.ToWorld(new Vector3(0f, 2.85f, -3f)), new Color(0.72f, 0.92f, 1f), 1.6f);
-            CreateFluorescentLight(root.transform, "CorridorLightB", layout.ToWorld(new Vector3(0f, 2.85f, 5f)), new Color(0.72f, 0.92f, 1f), 1.45f);
-            CreateFluorescentLight(root.transform, "CorridorLightC", layout.ToWorld(new Vector3(0f, 2.85f, 12f)), new Color(0.72f, 0.92f, 1f), 1.35f);
-            CreateFluorescentLight(root.transform, "CorridorLightD", layout.ToWorld(new Vector3(0f, 2.85f, 19f)), new Color(0.68f, 0.88f, 1f), 1.25f);
-            CreateRoomAccentLight(root.transform, "SecurityBlueGlow", layout.ToWorld(new Vector3(-7f, 2.1f, 10f)), new Color(0.14f, 0.42f, 1f), 1.6f);
-            CreateRoomAccentLight(root.transform, "LibraryWarmGlow", layout.ToWorld(new Vector3(7f, 2.1f, -2f)), new Color(1f, 0.68f, 0.34f), 1.35f);
-            CreateRoomAccentLight(root.transform, "TeachersRoomWarmFill", layout.ToWorld(new Vector3(3.8f, 2.15f, 8.5f)), new Color(1f, 0.73f, 0.45f), 1.15f);
-            CreateRoomAccentLight(root.transform, "ChemistryCoolFill", layout.ToWorld(new Vector3(-3.8f, 2.2f, -11f)), new Color(0.58f, 0.8f, 1f), 1.05f);
-            CreateWindowSunSpot(root.transform, "ClassroomWindowSun", layout.ToWorld(new Vector3(-8.5f, 2.65f, -11.25f)), new Vector3(56f, 32f, 0f), 3.2f, 12f, 58f);
-            CreateWindowSunSpot(root.transform, "LibraryWindowSun", layout.ToWorld(new Vector3(5.2f, 2.65f, -11.25f)), new Vector3(56f, -18f, 0f), 2.7f, 11f, 54f);
-            CreateWindowSunSpot(root.transform, "OfficeWindowSun", layout.ToWorld(new Vector3(7.5f, 2.55f, 10.8f)), new Vector3(56f, -148f, 0f), 2.35f, 10f, 50f);
-            CreateWindowSunSpot(root.transform, "CourtyardSunWash", layout.ToWorld(new Vector3(0f, 4.2f, 22f)), new Vector3(62f, -154f, 0f), 2.8f, 16f, 70f);
-            CreateSunPatch(root.transform, "ClassroomSunPatch", layout.ToWorld(new Vector3(-8.6f, 0.075f, -7.6f)), new Vector3(3.4f, 0.025f, 1.4f), 28f);
-            CreateSunPatch(root.transform, "LibrarySunPatch", layout.ToWorld(new Vector3(5.4f, 0.075f, -7.4f)), new Vector3(3.1f, 0.025f, 1.25f), -18f);
-            CreateSunPatch(root.transform, "OfficeSunPatch", layout.ToWorld(new Vector3(7.2f, 0.075f, 7.3f)), new Vector3(2.7f, 0.025f, 1.15f), -34f);
-            CreateReflectionProbe(root.transform, "CorridorReflectionProbe", layout.ToWorld(new Vector3(0f, 1.55f, 8.5f)), new Vector3(15f, 4.2f, 18f));
-            CreateReflectionProbe(root.transform, "CourtyardReflectionProbe", layout.ToWorld(new Vector3(0f, 1.8f, 22f)), new Vector3(20f, 5f, 14f));
+            if (layout.UsesImportedSchoolMap)
+            {
+                CreateImportedMapIndoorLighting(root.transform);
+            }
+            else
+            {
+                CreateFluorescentLight(root.transform, "CorridorLightEntrance", layout.ToWorld(new Vector3(0f, 2.72f, -6f)), new Color(0.88f, 0.95f, 1f), 1.05f, 4.6f, true);
+                CreateFluorescentLight(root.transform, "CorridorLightMainA", layout.ToWorld(new Vector3(0f, 2.72f, -1f)), new Color(0.88f, 0.95f, 1f), 1f, 4.6f, true);
+                CreateFluorescentLight(root.transform, "CorridorLightMainB", layout.ToWorld(new Vector3(0f, 2.72f, 4f)), new Color(0.88f, 0.95f, 1f), 0.96f, 4.6f, true);
+                CreateFluorescentLight(root.transform, "CorridorLightMainC", layout.ToWorld(new Vector3(0f, 2.72f, 9f)), new Color(0.86f, 0.94f, 1f), 0.92f, 4.6f, true);
+                CreateFluorescentLight(root.transform, "CorridorLightMainD", layout.ToWorld(new Vector3(0f, 2.72f, 14f)), new Color(0.86f, 0.94f, 1f), 0.88f, 4.6f, true);
+            }
 
-            RenderSettings.fog = true;
+            RenderSettings.fog = false;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogDensity = 0.011f;
-            RenderSettings.fogColor = new Color(0.13f, 0.16f, 0.18f);
+            RenderSettings.fogDensity = 0.0075f;
+            RenderSettings.fogColor = new Color(0.18f, 0.2f, 0.22f);
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.54f, 0.62f, 0.72f);
-            RenderSettings.ambientEquatorColor = new Color(0.28f, 0.31f, 0.34f);
-            RenderSettings.ambientGroundColor = new Color(0.12f, 0.105f, 0.085f);
-            RenderSettings.ambientIntensity = 0.9f;
-            RenderSettings.reflectionIntensity = 0.75f;
+            RenderSettings.ambientSkyColor = new Color(0.62f, 0.66f, 0.68f);
+            RenderSettings.ambientEquatorColor = new Color(0.52f, 0.53f, 0.52f);
+            RenderSettings.ambientGroundColor = new Color(0.38f, 0.34f, 0.28f);
+            RenderSettings.ambientIntensity = 1.35f;
+            RenderSettings.reflectionIntensity = 0.22f;
             EnsureCinematicPostProcess();
         }
 
-        private static void CreateFluorescentLight(Transform parent, string name, Vector3 position, Color color, float intensity)
+        private static void CreateImportedMapIndoorLighting(Transform parent)
         {
-            CreateBlock(parent, name + "_Fixture", position + Vector3.up * 0.07f, new Vector3(2.6f, 0.08f, 0.22f), new Color(0.8f, 0.9f, 0.95f));
+            var corridorColor = new Color(0.74f, 0.82f, 0.86f);
+            var corridorZ = new[] { -642f, -632f, -622f, -612f, -602f, -592f, -582f, -572f, -562f, -552f, -542f, -532f, -522f };
+            const float corridorCenterX = 922.15f;
 
+            for (var i = 0; i < corridorZ.Length; i++)
+            {
+                var edge = i == 0 || i == corridorZ.Length - 1;
+                var intensity = edge ? 0.105f : 0.15f;
+                var range = edge ? 7.2f : 8.6f;
+                CreateAreaFill(parent, $"CorridorCeilingFill_{i + 1:00}", new Vector3(corridorCenterX, 6.9f, corridorZ[i]), corridorColor, intensity, range);
+            }
+
+            CreateAreaFill(parent, "CorridorSoftBaseNorth", new Vector3(corridorCenterX, 5.75f, -622f), new Color(0.58f, 0.65f, 0.68f), 0.08f, 25f);
+            CreateAreaFill(parent, "CorridorSoftBaseCenter", new Vector3(corridorCenterX, 5.75f, -584f), new Color(0.58f, 0.65f, 0.68f), 0.095f, 28f);
+            CreateAreaFill(parent, "CorridorSoftBaseSouth", new Vector3(corridorCenterX, 5.75f, -546f), new Color(0.58f, 0.65f, 0.68f), 0.08f, 25f);
+
+            CreateRoomCeilingLight(parent, "SecurityRoomSoftWash", new Vector3(925.5f, 6.55f, -613f), new Color(0.68f, 0.78f, 0.9f), 0.13f, 4.6f, false);
+            CreateRoomCeilingLight(parent, "LibrarySoftWash", new Vector3(918.9f, 6.55f, -557f), new Color(0.9f, 0.82f, 0.68f), 0.12f, 4.8f, false);
+            CreateRoomCeilingLight(parent, "TeachersRoomSoftWash", new Vector3(925.5f, 6.55f, -557f), new Color(0.9f, 0.8f, 0.66f), 0.11f, 4.6f, false);
+        }
+
+        private static void CreateFluorescentLight(Transform parent, string name, Vector3 position, Color color, float intensity, float range, bool createFixture)
+        {
+            if (createFixture)
+            {
+                var fixture = CreateBlock(parent, name + "_Fixture", position + Vector3.up * 0.04f, new Vector3(2.1f, 0.045f, 0.18f), new Color(0.72f, 0.8f, 0.84f));
+                ApplyEmission(fixture, new Color(0.68f, 0.86f, 1f), 0.22f);
+            }
+
+            var lightObject = new GameObject(name);
+            lightObject.transform.SetParent(parent);
+            lightObject.transform.position = position;
+
+            var light = lightObject.AddComponent<Light>();
+            light.type = LightType.Spot;
+            lightObject.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+            light.color = color;
+            light.intensity = intensity;
+            light.range = range;
+            light.spotAngle = 104f;
+            light.innerSpotAngle = 72f;
+            light.shadows = LightShadows.None;
+            light.lightmapBakeType = LightmapBakeType.Realtime;
+
+            var flicker = lightObject.AddComponent<LightFlicker>();
+            var serializedObject = new SerializedObject(flicker);
+            serializedObject.FindProperty("targetLight").objectReferenceValue = light;
+            serializedObject.FindProperty("baseIntensity").floatValue = intensity;
+            serializedObject.FindProperty("flickerAmount").floatValue = 0.035f;
+            serializedObject.FindProperty("flickerSpeed").floatValue = 2.2f;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(flicker);
+        }
+
+        private static void CreateRoomCeilingLight(Transform parent, string name, Vector3 position, Color color, float intensity, float range, bool createFixture)
+        {
+            if (createFixture)
+            {
+                var fixture = CreateBlock(parent, name + "_Panel", position + Vector3.up * 0.04f, new Vector3(1.45f, 0.045f, 1.05f), new Color(0.78f, 0.78f, 0.72f));
+                ApplyEmission(fixture, color, 0.12f);
+            }
+
+            var lightObject = new GameObject(name);
+            lightObject.transform.SetParent(parent);
+            lightObject.transform.position = position;
+            lightObject.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
+
+            var light = lightObject.AddComponent<Light>();
+            light.type = LightType.Spot;
+            light.color = color;
+            light.intensity = intensity;
+            light.range = range;
+            light.spotAngle = 112f;
+            light.innerSpotAngle = 74f;
+            light.shadows = LightShadows.None;
+            light.lightmapBakeType = LightmapBakeType.Realtime;
+        }
+
+        private static void CreateAreaFill(Transform parent, string name, Vector3 position, Color color, float intensity, float range)
+        {
             var lightObject = new GameObject(name);
             lightObject.transform.SetParent(parent);
             lightObject.transform.position = position;
@@ -2125,17 +2213,9 @@ namespace MobilOfl.EditorTools
             light.type = LightType.Point;
             light.color = color;
             light.intensity = intensity;
-            light.range = 6f;
+            light.range = range;
             light.shadows = LightShadows.None;
-
-            var flicker = lightObject.AddComponent<LightFlicker>();
-            var serializedObject = new SerializedObject(flicker);
-            serializedObject.FindProperty("targetLight").objectReferenceValue = light;
-            serializedObject.FindProperty("baseIntensity").floatValue = intensity;
-            serializedObject.FindProperty("flickerAmount").floatValue = 0.18f;
-            serializedObject.FindProperty("flickerSpeed").floatValue = 5f;
-            serializedObject.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(flicker);
+            light.lightmapBakeType = LightmapBakeType.Realtime;
         }
 
         private static void CreateRoomAccentLight(Transform parent, string name, Vector3 position, Color color, float intensity)
@@ -2150,6 +2230,7 @@ namespace MobilOfl.EditorTools
             light.intensity = intensity;
             light.range = 5f;
             light.shadows = LightShadows.None;
+            light.lightmapBakeType = LightmapBakeType.Realtime;
         }
 
         private static void CreateWindowSunSpot(
@@ -2177,6 +2258,26 @@ namespace MobilOfl.EditorTools
             light.shadowStrength = 0.42f;
             light.shadowBias = 0.025f;
             light.shadowNormalBias = 0.18f;
+            light.lightmapBakeType = LightmapBakeType.Realtime;
+        }
+
+        private static void ApplyEmission(GameObject target, Color color, float intensity)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            var renderer = target.GetComponent<Renderer>();
+            var material = renderer == null ? null : renderer.sharedMaterial;
+            if (material == null || !material.HasProperty("_EmissionColor"))
+            {
+                return;
+            }
+
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", color * Mathf.Max(0f, intensity));
+            EditorUtility.SetDirty(material);
         }
 
         private static void CreateSunPatch(Transform parent, string name, Vector3 position, Vector3 scale, float yaw)
@@ -2244,28 +2345,38 @@ namespace MobilOfl.EditorTools
             tonemapping.mode.Override(TonemappingMode.Neutral);
 
             var bloom = EnsureVolumeComponent<Bloom>(profile);
-            bloom.threshold.Override(1.05f);
-            bloom.intensity.Override(0.34f);
-            bloom.scatter.Override(0.55f);
+            bloom.threshold.Override(2.4f);
+            bloom.intensity.Override(0f);
+            bloom.scatter.Override(0.2f);
             bloom.highQualityFiltering.Override(true);
 
             var colorAdjustments = EnsureVolumeComponent<ColorAdjustments>(profile);
-            colorAdjustments.postExposure.Override(0.08f);
-            colorAdjustments.contrast.Override(12f);
-            colorAdjustments.saturation.Override(5f);
-            colorAdjustments.colorFilter.Override(new Color(1f, 0.94f, 0.84f));
+            colorAdjustments.postExposure.Override(0.05f);
+            colorAdjustments.contrast.Override(-2f);
+            colorAdjustments.saturation.Override(-2f);
+            colorAdjustments.colorFilter.Override(Color.white);
+
+            var shadowsMidtonesHighlights = EnsureVolumeComponent<ShadowsMidtonesHighlights>(profile);
+            shadowsMidtonesHighlights.shadows.Override(new Vector4(1.03f, 1.05f, 1.07f, 0.08f));
+            shadowsMidtonesHighlights.midtones.Override(new Vector4(1f, 1f, 1f, 0f));
+            shadowsMidtonesHighlights.highlights.Override(new Vector4(0.98f, 0.99f, 1f, -0.02f));
+            shadowsMidtonesHighlights.shadowsStart.Override(0f);
+            shadowsMidtonesHighlights.shadowsEnd.Override(0.42f);
+            shadowsMidtonesHighlights.highlightsStart.Override(0.55f);
+            shadowsMidtonesHighlights.highlightsEnd.Override(1f);
 
             var whiteBalance = EnsureVolumeComponent<WhiteBalance>(profile);
             whiteBalance.temperature.Override(11f);
             whiteBalance.tint.Override(-4f);
 
             var vignette = EnsureVolumeComponent<Vignette>(profile);
-            vignette.intensity.Override(0.18f);
+            vignette.intensity.Override(0.04f);
             vignette.smoothness.Override(0.35f);
             vignette.color.Override(new Color(0.02f, 0.028f, 0.035f));
 
             EditorUtility.SetDirty(profile);
             EditorUtility.SetDirty(volume);
+            AssetDatabase.SaveAssets();
         }
 
         private static T EnsureVolumeComponent<T>(VolumeProfile profile)
@@ -2777,7 +2888,7 @@ namespace MobilOfl.EditorTools
                 caseDefinition,
                 "evidence.security-log",
                 "Etkilesim: Guvenlik Kaydi",
-                layout.ToWorld(new Vector3(-7f, 1.12f, 10f)),
+                layout.ToWorld(new Vector3(-7.2f, 1.12f, 11.2f)),
                 PrimitiveType.Cube,
                 new Vector3(1.45f, 0.72f, 1.1f));
 
@@ -2786,7 +2897,7 @@ namespace MobilOfl.EditorTools
                 caseDefinition,
                 "evidence.answer-key-note",
                 "Etkilesim: Not Kagidi",
-                layout.ToWorld(new Vector3(7f, 0.75f, -2f)),
+                layout.ToWorld(new Vector3(6.8f, 0.75f, -2.6f)),
                 PrimitiveType.Cube,
                 new Vector3(1.2f, 0.2f, 1.2f));
 
@@ -2797,7 +2908,7 @@ namespace MobilOfl.EditorTools
                 "Arsiv Gecis Karti",
                 "Etkilesim: Arsiv Gecis Karti",
                 "Arsiv gecis karti alindi. Artik kisitli raf alanina girebilirsin.",
-                layout.ToWorld(new Vector3(7.8f, 0.86f, 9.5f)),
+                layout.ToWorld(new Vector3(7.1f, 0.86f, 9.3f)),
                 PrimitiveType.Cylinder,
                 new Vector3(0.36f, 0.08f, 0.36f),
                 new Color(0.22f, 0.88f, 0.82f, 1f));
@@ -2809,7 +2920,7 @@ namespace MobilOfl.EditorTools
                 "Maymuncuk Seti",
                 "Etkilesim: Maymuncuk Seti",
                 "Maymuncuk seti alindi. Kilitli cekmece ve kutulari artik acabilirsin.",
-                layout.ToWorld(new Vector3(-8.1f, 0.82f, 9.8f)),
+                layout.ToWorld(new Vector3(-6.2f, 0.82f, 8.7f)),
                 PrimitiveType.Cylinder,
                 new Vector3(0.34f, 0.12f, 0.34f),
                 new Color(0.96f, 0.68f, 0.18f, 1f));
@@ -2823,7 +2934,7 @@ namespace MobilOfl.EditorTools
                 "tool.lockpick",
                 "Bu cekmece icin once maymuncuk seti bulman gerekiyor.",
                 "Ogretmenler odasindaki cekmecede yedek anahtar bulundu.",
-                layout.ToWorld(new Vector3(7.4f, 0.8f, 10.2f)),
+                layout.ToWorld(new Vector3(6.5f, 0.8f, 10.5f)),
                 new Vector3(1.35f, 0.42f, 1.08f),
                 new Color(0.74f, 0.62f, 0.28f, 1f));
 
@@ -2836,7 +2947,7 @@ namespace MobilOfl.EditorTools
                 "tool.archive-pass",
                 "Arsiv raf kutusu icin once gecis karti bulman gerekiyor.",
                 "Arsiv rafinda sakli defter bulundu.",
-                layout.ToWorld(new Vector3(-15f, 0.86f, 9.2f)),
+                layout.ToWorld(new Vector3(-14.5f, 0.86f, 9.6f)),
                 new Vector3(1.7f, 0.82f, 1.35f),
                 new Color(0.45f, 0.68f, 0.84f, 1f));
         }
@@ -2860,7 +2971,7 @@ namespace MobilOfl.EditorTools
                 "npc.guard",
                 "Guvenlik Gorevlisi",
                 "Etkilesim: Guvenlik Gorevlisi ile konus",
-                layout.ToActorWorld(new Vector3(-2f, 0.95f, 9f)),
+                layout.ToActorWorld(new Vector3(-6.2f, 0.95f, 9.8f)),
                 "Kayitlari gormeden kimseyi suclayamam.",
                 "Kamera kaydini bulduysan soyleyebilirim: gece 22:15'te bilisim kulubu ogrencisi laboratuvar koridorundaydi.",
                 "evidence.security-log",
@@ -2869,8 +2980,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(0f, 0f, 2.2f)),
-                    layout.ToPatrolOffset(new Vector3(1.1f, 0f, -1.8f))
+                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, 0.9f)),
+                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, -0.8f))
                 });
 
             CreateNpcObject(
@@ -2879,7 +2990,7 @@ namespace MobilOfl.EditorTools
                 "npc.library-student",
                 "Kutuphane Ogrencisi",
                 "Etkilesim: Ogrenci ile konus",
-                layout.ToActorWorld(new Vector3(5f, 0.95f, -2f)),
+                layout.ToActorWorld(new Vector3(6.2f, 0.95f, -2.4f)),
                 "O notun kime ait oldugunu bilmiyorum.",
                 "Cevap anahtari notunu gordum. Bilisim kulubu ogrencisinin defterinden dustu.",
                 "evidence.answer-key-note",
@@ -2888,8 +2999,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(1.4f, 0f, 0.6f)),
-                    layout.ToPatrolOffset(new Vector3(-1.2f, 0f, -0.8f))
+                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, 0.7f)),
+                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, -0.7f))
                 });
 
             CreateNpcObject(
@@ -2898,7 +3009,7 @@ namespace MobilOfl.EditorTools
                 "npc.teacher-assistant",
                 "Ogretmen Yardimcisi",
                 "Etkilesim: Ogretmen Yardimcisi ile konus",
-                layout.ToActorWorld(new Vector3(5f, 0.95f, 8f)),
+                layout.ToActorWorld(new Vector3(6.3f, 0.95f, 8.8f)),
                 "Dolap anahtari kayboldu ama bunu herkes biliyor olabilir.",
                 "Yedek anahtar bende degildi. Dolabin yanina en son bilisim kulubu ogrencisi geldi.",
                 "evidence.locker-key",
@@ -2907,8 +3018,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(-1.3f, 0f, 0.9f)),
-                    layout.ToPatrolOffset(new Vector3(1f, 0f, -0.9f))
+                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, 0.75f)),
+                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, -0.65f))
                 });
 
             CreateNpcObject(
@@ -2917,7 +3028,7 @@ namespace MobilOfl.EditorTools
                 "npc.archive-clerk",
                 "Arsiv Sorumlusu",
                 "Etkilesim: Arsiv Sorumlusu ile konus",
-                layout.ToActorWorld(new Vector3(-13.2f, 0.95f, 8.8f)),
+                layout.ToActorWorld(new Vector3(-13.8f, 0.95f, 8.2f)),
                 "Defter olmadan arsiv odasi hakkinda resmi bir sey soyleyemem.",
                 "Giris defterine gore bilisim kulubu ogrencisi sinavdan hemen once arsiv anahtarini sormustu.",
                 "evidence.archive-ledger",
@@ -2926,8 +3037,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(0.8f, 0f, 1.7f)),
-                    layout.ToPatrolOffset(new Vector3(-0.9f, 0f, -1.4f))
+                    layout.ToPatrolOffset(new Vector3(0.22f, 0f, 0.8f)),
+                    layout.ToPatrolOffset(new Vector3(-0.22f, 0f, -0.7f))
                 });
 
             CreateNpcObject(
@@ -2936,7 +3047,7 @@ namespace MobilOfl.EditorTools
                 "npc.canteen-worker",
                 "Kantin Calisani",
                 "Etkilesim: Kantin Calisani ile konus",
-                layout.ToActorWorld(new Vector3(13.2f, 0.95f, 8.8f)),
+                layout.ToActorWorld(new Vector3(13.5f, 0.95f, 8.4f)),
                 "Gec saatte kim geldigini hatirlamiyorum.",
                 "Simdi hatirladim; o nottan sonra ayni ogrenci gece enerji icecegi alip laboratuvar tarafina kostu.",
                 "evidence.answer-key-note",
@@ -2945,8 +3056,8 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(-1.6f, 0f, 0.6f)),
-                    layout.ToPatrolOffset(new Vector3(1.2f, 0f, -0.7f))
+                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, 0.65f)),
+                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, -0.65f))
                 });
         }
 
@@ -3622,8 +3733,8 @@ namespace MobilOfl.EditorTools
             var glowLight = glowLightObject.AddComponent<Light>();
             glowLight.type = LightType.Point;
             glowLight.color = new Color(0.2f, 0.9f, 1f);
-            glowLight.range = 3.5f;
-            glowLight.intensity = 0.8f;
+            glowLight.range = 2.2f;
+            glowLight.intensity = 0.28f;
 
             var pulse = evidenceObject.GetComponent<EvidenceVisualPulse>();
             if (pulse == null)

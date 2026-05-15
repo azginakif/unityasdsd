@@ -18,6 +18,7 @@ public static class OflMcpAutoStart
             EditorPrefs.SetBool("MCPForUnity.UseHttpTransport", true);
             EditorPrefs.SetString("MCPForUnity.HttpTransportScope", "local");
             EditorPrefs.SetString("MCPForUnity.HttpUrl", "http://127.0.0.1:8080");
+            EditorPrefs.SetString("MCPForUnity.UvxPath", @"C:\Users\OF FEN LİSESİ-10\AppData\Roaming\Python\Python312\Scripts\uvx.exe");
             EditorPrefs.SetBool("MCPForUnity.AutoStartOnLoad", true);
 
             var configCacheType = Type.GetType("MCPForUnity.Editor.Services.EditorConfigurationCache, MCPForUnity.Editor");

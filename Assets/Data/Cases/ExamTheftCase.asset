@@ -98,9 +98,9 @@ MonoBehaviour:
   - Arkadasini korumak icin sorulari sakladi.
   - Ogretmen yardimcisini suclu gostermek icin sahte iz birakti.
   timelineOptions:
-  - Gece laboratuvar koridoruna girdi, notlari aldi, arsivde onceki kayitlari
-    inceledi ve ogretmenler odasindaki dolabi acmak icin yedek anahtari kullandi.
-  - Once kantinden enerji icecegi aldi, sonra dogrudan kutuphaneye gidip notu
-    orada sakladi.
+  - Gece laboratuvar koridoruna girdi, notlari aldi, arsivde onceki kayitlari inceledi
+    ve ogretmenler odasindaki dolabi acmak icin yedek anahtari kullandi.
+  - Once kantinden enerji icecegi aldi, sonra dogrudan kutuphaneye gidip notu orada
+    sakladi.
   - Ogretmenler odasindaki dolabi acti, ardindan guvenlik odasinda kamera kaydini
     degistirdi.

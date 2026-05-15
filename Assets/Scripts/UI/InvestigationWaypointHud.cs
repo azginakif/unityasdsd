@@ -38,6 +38,7 @@ namespace MobilOfl.UI
                 return;
             }
 
+            worldPosition = SchoolLocationUtility.PrototypeToWorldPosition(worldPosition, playerTarget.position);
             EnsureStyles();
 
             var directionHint = GetDirectionHint(worldPosition);
