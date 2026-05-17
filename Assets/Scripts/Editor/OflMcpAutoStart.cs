@@ -15,6 +15,13 @@ public static class OflMcpAutoStart
     {
         try
         {
+            var ankleBreakerBridgeType = Type.GetType("UnityMCP.Editor.MCPBridgeServer, AnkleBreaker.UnityMCP.Editor");
+            if (ankleBreakerBridgeType != null)
+            {
+                UnityEngine.Debug.Log("[OFL MCP] AnkleBreaker Unity MCP detected; package auto-start is active.");
+                return;
+            }
+
             EditorPrefs.SetBool("MCPForUnity.UseHttpTransport", true);
             EditorPrefs.SetString("MCPForUnity.HttpTransportScope", "local");
             EditorPrefs.SetString("MCPForUnity.HttpUrl", "http://127.0.0.1:8080");

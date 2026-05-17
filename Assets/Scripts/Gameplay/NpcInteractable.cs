@@ -15,11 +15,27 @@ namespace MobilOfl.Gameplay
         [SerializeField] [TextArea] private string evidenceLine = "Bunu soylemem gerekiyordu.";
         [SerializeField] private string witnessEvidenceId;
         [SerializeField] private bool collectWitnessEvidenceOnce = true;
+        [SerializeField] private float interactionFocusDuration = 5.5f;
+
+        private Transform _focusedInteractor;
+        private float _focusUntil;
 
         public string NpcDisplayName => npcDisplayName;
         public string MarkerLabel => npcDisplayName;
         public Color MarkerColor => markerColor.a <= 0f ? new Color(1f, 0.78f, 0.3f, 1f) : markerColor;
         public bool IsMarkerVisible => isActiveAndEnabled && CaseSessionManager.Instance != null && !CaseSessionManager.Instance.IsCaseResolved;
+        public bool IsInteractionFocused => _focusedInteractor != null && Time.time < _focusUntil;
+        public Transform FocusedInteractor => IsInteractionFocused ? _focusedInteractor : null;
+
+        private void Update()
+        {
+            if (!IsInteractionFocused)
+            {
+                return;
+            }
+
+            FaceInteractor(_focusedInteractor.gameObject);
+        }
 
         public override bool TryInteract(GameObject interactor)
         {
@@ -56,7 +72,7 @@ namespace MobilOfl.Gameplay
                 !string.IsNullOrWhiteSpace(witnessEvidenceId) &&
                 (!collectWitnessEvidenceOnce || !witnessAlreadyCollected);
 
-            FaceInteractor(interactor);
+            BeginInteractionFocus(interactor);
 
             var networkCaseState = NetworkCaseState.Instance;
             if (networkCaseState != null && networkCaseState.IsOnlineSessionActive)
@@ -106,6 +122,18 @@ namespace MobilOfl.Gameplay
             }
 
             transform.rotation = Quaternion.LookRotation(lookDirection.normalized, Vector3.up);
+        }
+
+        private void BeginInteractionFocus(GameObject interactor)
+        {
+            if (interactor == null)
+            {
+                return;
+            }
+
+            _focusedInteractor = interactor.transform;
+            _focusUntil = Time.time + Mathf.Max(1.5f, interactionFocusDuration);
+            FaceInteractor(interactor);
         }
     }
 }

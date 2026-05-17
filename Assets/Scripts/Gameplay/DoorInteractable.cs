@@ -9,11 +9,13 @@ namespace MobilOfl.Gameplay
         [SerializeField] private string lockedMessage = "Bu kapi icin uygun erisim gerekiyor.";
         [SerializeField] private float openAngle = 88f;
         [SerializeField] private float turnSpeed = 8f;
+        [SerializeField] private bool openAwayFromInteractor = true;
         [SerializeField] private bool startsOpen;
 
         private Quaternion _closedRotation;
         private Quaternion _openRotation;
         private bool _isOpen;
+        private Vector3 _doorCenterLocalToHinge;
 
         private void Awake()
         {
@@ -24,6 +26,7 @@ namespace MobilOfl.Gameplay
 
             _closedRotation = doorTransform.localRotation;
             _openRotation = _closedRotation * Quaternion.Euler(0f, openAngle, 0f);
+            _doorCenterLocalToHinge = CalculateDoorCenterLocalToHinge();
             _isOpen = startsOpen;
             doorTransform.localRotation = _isOpen ? _openRotation : _closedRotation;
         }
@@ -56,6 +59,11 @@ namespace MobilOfl.Gameplay
                 return false;
             }
 
+            if (!_isOpen && openAwayFromInteractor)
+            {
+                _openRotation = CalculateOpenRotation(interactor);
+            }
+
             _isOpen = !_isOpen;
             return true;
         }
@@ -77,6 +85,57 @@ namespace MobilOfl.Gameplay
             return string.IsNullOrWhiteSpace(requiredToolId) ||
                    CaseSessionManager.Instance == null ||
                    CaseSessionManager.Instance.HasTool(requiredToolId);
+        }
+
+        private Quaternion CalculateOpenRotation(GameObject interactor)
+        {
+            if (doorTransform == null || interactor == null)
+            {
+                return _closedRotation * Quaternion.Euler(0f, openAngle, 0f);
+            }
+
+            var positiveRotation = _closedRotation * Quaternion.Euler(0f, Mathf.Abs(openAngle), 0f);
+            var negativeRotation = _closedRotation * Quaternion.Euler(0f, -Mathf.Abs(openAngle), 0f);
+            var positiveCenter = GetDoorCenterForRotation(positiveRotation);
+            var negativeCenter = GetDoorCenterForRotation(negativeRotation);
+            var interactorPosition = interactor.transform.position;
+            var positiveDistance = (positiveCenter - interactorPosition).sqrMagnitude;
+            var negativeDistance = (negativeCenter - interactorPosition).sqrMagnitude;
+
+            return positiveDistance >= negativeDistance ? positiveRotation : negativeRotation;
+        }
+
+        private Vector3 CalculateDoorCenterLocalToHinge()
+        {
+            if (doorTransform == null)
+            {
+                return Vector3.zero;
+            }
+
+            var renderers = doorTransform.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                return Vector3.forward * 0.5f;
+            }
+
+            var bounds = renderers[0].bounds;
+            for (var i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            return doorTransform.InverseTransformPoint(bounds.center);
+        }
+
+        private Vector3 GetDoorCenterForRotation(Quaternion localRotation)
+        {
+            var parent = doorTransform.parent;
+            if (parent == null)
+            {
+                return doorTransform.position + localRotation * _doorCenterLocalToHinge;
+            }
+
+            return parent.TransformPoint(doorTransform.localPosition + localRotation * _doorCenterLocalToHinge);
         }
     }
 }
