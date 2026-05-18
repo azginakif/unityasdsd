@@ -229,6 +229,8 @@ MonoBehaviour:
   speedParameter: Speed
   runSpeed: 5.8
   damping: 10
+  movingSpeedThreshold: 0.06
+  movingBlendFloor: 0.42
   proceduralFallback: 0
   idleBobAmount: 0.018
   moveBobAmount: 0.045

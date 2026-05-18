@@ -457,6 +457,8 @@ namespace MobilOfl.UI
                     bootstrap.ShutdownSession();
                     _status = bootstrap.CurrentStatus;
                 }
+
+                DrawLobbyActionButton();
             }
 
             GUILayout.FlexibleSpace();
@@ -467,6 +469,37 @@ namespace MobilOfl.UI
             }
 
             GUILayout.EndHorizontal();
+        }
+
+        private void DrawLobbyActionButton()
+        {
+            var networkCaseState = NetworkCaseState.Instance;
+            if (networkCaseState == null || !networkCaseState.IsLobbyPhase)
+            {
+                return;
+            }
+
+            GUILayout.Space(8f);
+
+            var isHost = bootstrap != null && bootstrap.CurrentMode == "Host";
+            if (isHost && networkCaseState.CanHostStartInvestigation)
+            {
+                if (GUILayout.Button("Operasyonu Baslat", _buttonStyle, GUILayout.Height(38f), GUILayout.Width(180f)))
+                {
+                    networkCaseState.RequestStartInvestigation();
+                    _status = "Operasyon baslatiliyor.";
+                }
+
+                return;
+            }
+
+            var isReady = networkCaseState.GetLocalReadyState();
+            var label = isReady ? "Beklemeye Al" : "Hazirim";
+            if (GUILayout.Button(label, _buttonStyle, GUILayout.Height(38f), GUILayout.Width(150f)))
+            {
+                networkCaseState.RequestSetReady(!isReady);
+                _status = isReady ? "Hazirlik geri alindi." : "Hazirlik verildi.";
+            }
         }
 
         private async Task RunOnlineAction(bool isHost)

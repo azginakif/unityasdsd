@@ -58,6 +58,7 @@ namespace MobilOfl.Online
         public bool IsLobbyPhase => CurrentPhase == SessionPhase.Lobby;
         public bool IsGameplayPhase => CurrentPhase == SessionPhase.Investigation;
         public bool IsResultsPhase => CurrentPhase == SessionPhase.Results;
+        public bool CanHostStartInvestigation => IsLobbyPhase && IsServer && (AreAllRegisteredPlayersReady || IsLocalOnlyHostSession);
         public bool HasActiveSharedPing => _sharedPingRevision.Value > 0 && Time.time <= _localPingVisibleUntil && !string.IsNullOrWhiteSpace(_sharedPingLabel.Value.ToString());
         public Vector3 SharedPingPosition => _sharedPingPosition.Value;
         public string SharedPingLabel => _sharedPingLabel.Value.ToString();
@@ -84,6 +85,7 @@ namespace MobilOfl.Online
         }
 
         public bool AreAllRegisteredPlayersReady => RegisteredPlayerCount > 0 && ReadyPlayerCount == RegisteredPlayerCount;
+        private bool IsLocalOnlyHostSession => IsOnlineSessionActive && NetworkManager != null && NetworkManager.IsHost && NetworkManager.ConnectedClientsIds.Count <= 1;
 
         private void Awake()
         {
@@ -284,6 +286,28 @@ namespace MobilOfl.Online
             }
 
             RequestStartInvestigationServerRpc();
+            return true;
+        }
+
+        public bool RequestStartImmediateInvestigationForHost(string message = "Operasyon basladi.")
+        {
+            if (!IsOnlineSessionActive || !IsServer)
+            {
+                return false;
+            }
+
+            if (IsGameplayPhase)
+            {
+                return true;
+            }
+
+            if (!IsLobbyPhase)
+            {
+                return false;
+            }
+
+            _sessionPhase.Value = (int)SessionPhase.Investigation;
+            CaseSessionManager.Instance?.PublishMessage(message);
             return true;
         }
 
@@ -764,7 +788,7 @@ namespace MobilOfl.Online
                 return false;
             }
 
-            if (!AreAllRegisteredPlayersReady)
+            if (!CanHostStartInvestigation)
             {
                 CaseSessionManager.Instance.PublishMessage("Tum oyuncular hazir olmadan operasyon baslatilamaz.");
                 return false;

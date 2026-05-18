@@ -11,6 +11,10 @@ namespace MobilOfl.Gameplay
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private float walkSpeed = 4.5f;
         [SerializeField] private float sprintSpeed = 6.5f;
+        [SerializeField] private float groundAcceleration = 18f;
+        [SerializeField] private float groundDeceleration = 24f;
+        [SerializeField] private float airControl = 7f;
+        [SerializeField] private float moveInputDeadZone = 0.08f;
         [SerializeField] private bool allowJump;
         [SerializeField] private bool allowCrouch;
         [SerializeField] private float jumpHeight = 1.1f;
@@ -47,6 +51,7 @@ namespace MobilOfl.Gameplay
         private Vector3 _cameraBaseLocalPosition;
         private Vector2 _smoothedLookDelta;
         private Vector2 _pendingLookDelta;
+        private Vector3 _horizontalVelocity;
         private float _sprintStamina = 1f;
         private bool _isSprinting;
         private bool _isCrouching;
@@ -195,6 +200,10 @@ namespace MobilOfl.Gameplay
             }
 
             planarInput = Vector2.ClampMagnitude(planarInput, 1f);
+            if (planarInput.magnitude < moveInputDeadZone)
+            {
+                planarInput = Vector2.zero;
+            }
 
             var moveInput = new Vector3(planarInput.x, 0f, planarInput.y);
             moveInput = Vector3.ClampMagnitude(moveInput, 1f);
@@ -213,7 +222,16 @@ namespace MobilOfl.Gameplay
             }
 
             var speed = _isCrouching ? crouchSpeed : (isSprinting ? sprintSpeed : walkSpeed);
-            var move = transform.TransformDirection(moveInput) * speed;
+            var targetHorizontalVelocity = transform.TransformDirection(moveInput) * speed;
+            var acceleration = _characterController.isGrounded
+                ? (moveInput.sqrMagnitude > 0.001f ? groundAcceleration : groundDeceleration)
+                : airControl;
+            _horizontalVelocity = Vector3.MoveTowards(
+                _horizontalVelocity,
+                targetHorizontalVelocity,
+                acceleration * Time.deltaTime);
+
+            var move = _horizontalVelocity;
             var jumpPressed =
                 allowJump &&
                 ((Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||

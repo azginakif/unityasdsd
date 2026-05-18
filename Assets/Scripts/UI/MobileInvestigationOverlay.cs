@@ -116,7 +116,8 @@ namespace MobilOfl.UI
             var currentInteractable = playerInteraction.CurrentInteractable;
             if (currentInteractable != null)
             {
-                UpdateContextVisuals(true, TrimForMobile(currentInteractable.PromptText, 56));
+                var actionHint = currentInteractable.RequiresHold ? "AL basili tut" : "AL dokun";
+                UpdateContextVisuals(true, $"{actionHint}: {TrimForMobile(currentInteractable.PromptText, 44)}");
                 return;
             }
 
@@ -134,7 +135,7 @@ namespace MobilOfl.UI
             _contextAlpha = hasTarget ? 1f : 0.7f;
             if (contextText != null)
             {
-                contextText.text = hasTarget ? "ETKILESIM HAZIR\n" + message : message;
+                contextText.text = hasTarget ? message : message;
             }
         }
 
@@ -150,7 +151,7 @@ namespace MobilOfl.UI
             SetChildActive("MobileObjectivePanel", false);
             SetChildActive("MoveHintPanel", false);
             SetChildActive("LookHintPanel", false);
-            SetChildActive("MobileContextPanel", false);
+            SetChildActive("MobileContextPanel", true);
 
             ConfigureControlRect("MoveJoystick", new Vector2(0f, 0f), new Vector2(128f, 130f), new Vector2(150f, 150f));
             ConfigureJoystickVisuals();
@@ -166,6 +167,7 @@ namespace MobilOfl.UI
 
             ConfigureControlRect("NotebookButton", new Vector2(1f, 0f), new Vector2(-100f, 272f), new Vector2(100f, 58f));
             ConfigureButtonVisuals("NotebookButton", new Color(0.11f, 0.1f, 0.12f, 0.44f), new Color(0.44f, 0.34f, 0.18f, 0.82f), 17);
+            ConfigureControlRect("MobileContextPanel", new Vector2(0.5f, 0f), new Vector2(0f, 74f), new Vector2(430f, 64f));
             ConfigureControlRect("LookArea", new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(960f, 1080f));
         }
 

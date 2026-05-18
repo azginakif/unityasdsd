@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -87,10 +88,16 @@ namespace MobilOfl.Online
             ResetUnexpectedStopGuard();
             ClearReconnectState();
             _intentionalShutdown = false;
+            ResetTransportToDirectConnection();
 
             if (networkManager.StartHost())
             {
                 SetOfflineScenePlayerActive(false);
+                if (!TryStartOfflineInvestigation())
+                {
+                    StartCoroutine(StartOfflineInvestigationWhenReady());
+                }
+
                 PublishStatus("Offline host oturumu basladi.");
             }
             else
@@ -335,6 +342,50 @@ namespace MobilOfl.Online
             {
                 offlineScenePlayerRoot.SetActive(isActive);
             }
+        }
+
+        private bool TryStartOfflineInvestigation()
+        {
+            EnsureReferences();
+            return networkCaseState != null &&
+                networkCaseState.RequestStartImmediateInvestigationForHost("Offline host operasyonu basladi.");
+        }
+
+        private IEnumerator StartOfflineInvestigationWhenReady()
+        {
+            for (var i = 0; i < 30; i++)
+            {
+                yield return null;
+
+                if (!IsOnlineSessionActive || !IsHost)
+                {
+                    yield break;
+                }
+
+                if (TryStartOfflineInvestigation())
+                {
+                    yield break;
+                }
+            }
+
+            PublishStatus("Offline host acildi, operasyon fazi bekleniyor. Menuden Operasyonu Baslat.");
+        }
+
+        private void ResetTransportToDirectConnection()
+        {
+            if (unityTransport == null)
+            {
+                return;
+            }
+
+            var connectionData = unityTransport.ConnectionData;
+            var address = string.IsNullOrWhiteSpace(connectionData.Address) ? "127.0.0.1" : connectionData.Address;
+            var port = connectionData.Port == 0 ? (ushort)7777 : connectionData.Port;
+            var listenAddress = string.IsNullOrWhiteSpace(connectionData.ServerListenAddress)
+                ? address
+                : connectionData.ServerListenAddress;
+
+            unityTransport.SetConnectionData(address, port, listenAddress);
         }
 
         private void SubscribeToNetworkEvents()

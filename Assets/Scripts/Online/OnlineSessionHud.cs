@@ -234,6 +234,17 @@ namespace MobilOfl.Online
 
             GUILayout.BeginHorizontal();
 
+            if (bootstrap.CurrentMode == "Host" && networkCaseState.CanHostStartInvestigation)
+            {
+                if (GUILayout.Button("Operasyonu Baslat", _buttonStyle, GUILayout.Height(34f)))
+                {
+                    networkCaseState.RequestStartInvestigation();
+                }
+
+                GUILayout.EndHorizontal();
+                return;
+            }
+
             GUI.enabled = !networkCaseState.GetLocalReadyState();
             if (GUILayout.Button("Hazirim", _buttonStyle, GUILayout.Height(34f)))
             {

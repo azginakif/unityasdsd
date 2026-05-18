@@ -51,6 +51,12 @@ namespace MobilOfl.UI
             EnsureExpandedHitArea();
         }
 
+        private void OnDisable()
+        {
+            _isPressed = false;
+            _wasPressedThisFrame = false;
+        }
+
         private void Update()
         {
             var targetColor = _isPressed ? pressedColor : idleColor;

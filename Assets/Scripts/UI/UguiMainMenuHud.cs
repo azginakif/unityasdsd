@@ -527,8 +527,7 @@ namespace MobilOfl.UI
 
             var canStart = bootstrap.IsOnlineSessionActive &&
                 bootstrap.CurrentMode == "Host" &&
-                networkCaseState.IsLobbyPhase &&
-                networkCaseState.AreAllRegisteredPlayersReady;
+                networkCaseState.CanHostStartInvestigation;
 
             _readyButton.interactable = networkCaseState.IsLobbyPhase;
             _readyButtonText.text = canStart
@@ -576,8 +575,7 @@ namespace MobilOfl.UI
             if (bootstrap != null &&
                 bootstrap.IsOnlineSessionActive &&
                 bootstrap.CurrentMode == "Host" &&
-                networkCaseState.IsLobbyPhase &&
-                networkCaseState.AreAllRegisteredPlayersReady)
+                networkCaseState.CanHostStartInvestigation)
             {
                 networkCaseState.RequestStartInvestigation();
                 RefreshImmediate();

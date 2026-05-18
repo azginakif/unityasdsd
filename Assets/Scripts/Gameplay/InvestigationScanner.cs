@@ -138,7 +138,7 @@ namespace MobilOfl.Gameplay
                     }
 
                     evidenceCount++;
-                    TryAddLabel(labels, evidence.MarkerLabel);
+                    TryAddLabel(labels, FormatSignalLabel(evidence, evidence.MarkerLabel));
                     continue;
                 }
 
@@ -150,7 +150,7 @@ namespace MobilOfl.Gameplay
                     }
 
                     evidenceCount++;
-                    TryAddLabel(labels, searchSpot.MarkerLabel);
+                    TryAddLabel(labels, FormatSignalLabel(searchSpot, searchSpot.MarkerLabel));
                     continue;
                 }
 
@@ -162,7 +162,7 @@ namespace MobilOfl.Gameplay
                     }
 
                     toolCount++;
-                    TryAddLabel(labels, toolPickup.MarkerLabel);
+                    TryAddLabel(labels, FormatSignalLabel(toolPickup, toolPickup.MarkerLabel));
                     continue;
                 }
 
@@ -174,13 +174,18 @@ namespace MobilOfl.Gameplay
                     }
 
                     npcCount++;
-                    TryAddLabel(labels, npc.MarkerLabel);
+                    TryAddLabel(labels, FormatSignalLabel(npc, npc.MarkerLabel));
                 }
             }
 
             if (evidenceCount == 0 && toolCount == 0 && npcCount == 0)
             {
-                return "Tarama temiz. Yakinda yeni delil veya ekipman sinyali alinmadi.";
+                var nextStep = CaseSessionManager.Instance != null
+                    ? CaseSessionManager.Instance.GetRecommendedNextStep()
+                    : string.Empty;
+                return string.IsNullOrWhiteSpace(nextStep)
+                    ? "Tarama temiz. Yakinda yeni delil veya ekipman sinyali alinmadi."
+                    : "Tarama temiz. Sonraki ipucu: " + nextStep;
             }
 
             var parts = new List<string>(3);
@@ -315,6 +320,18 @@ namespace MobilOfl.Gameplay
             {
                 labels.Add(candidate);
             }
+        }
+
+        private string FormatSignalLabel(InteractableBase interactable, string label)
+        {
+            if (interactable == null || string.IsNullOrWhiteSpace(label))
+            {
+                return label;
+            }
+
+            var origin = playerCamera != null ? playerCamera.transform.position : transform.position;
+            var distance = Vector3.Distance(origin, interactable.transform.position);
+            return $"{label} ({distance:0}m)";
         }
     }
 }

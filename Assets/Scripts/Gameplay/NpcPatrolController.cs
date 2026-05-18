@@ -16,8 +16,12 @@ namespace MobilOfl.Gameplay
             new Vector3(0f, 0f, -1.8f)
         };
         [SerializeField] private float moveSpeed = 1.25f;
+        [SerializeField] private float acceleration = 3.6f;
+        [SerializeField] private float deceleration = 5.2f;
+        [SerializeField] private float arrivalSlowdownDistance = 0.7f;
         [SerializeField] private float turnSpeed = 5.4f;
         [SerializeField] private float waitDuration = 1.15f;
+        [SerializeField] private float waitJitter = 0.45f;
         [SerializeField] private float arrivalDistance = 0.18f;
         [SerializeField] private float viewDistance = 6.8f;
         [SerializeField] private float viewAngle = 62f;
@@ -34,6 +38,7 @@ namespace MobilOfl.Gameplay
         private Vector3 _anchorPosition;
         private int _currentPatrolIndex;
         private float _waitUntil;
+        private float _currentMoveSpeed;
 
         private void Awake()
         {
@@ -71,17 +76,20 @@ namespace MobilOfl.Gameplay
             if (npcInteractable != null && npcInteractable.IsInteractionFocused)
             {
                 FaceFocusTarget();
-                _waitUntil = Time.time + waitDuration;
+                _currentMoveSpeed = Mathf.MoveTowards(_currentMoveSpeed, 0f, deceleration * Time.deltaTime);
+                _waitUntil = Time.time + GetWaitDuration();
                 return;
             }
 
             if (!patrolEnabled || patrolOffsets == null || patrolOffsets.Length <= 1)
             {
+                _currentMoveSpeed = Mathf.MoveTowards(_currentMoveSpeed, 0f, deceleration * Time.deltaTime);
                 return;
             }
 
             if (Time.time < _waitUntil)
             {
+                _currentMoveSpeed = Mathf.MoveTowards(_currentMoveSpeed, 0f, deceleration * Time.deltaTime);
                 return;
             }
 
@@ -92,16 +100,25 @@ namespace MobilOfl.Gameplay
             if (toTarget.magnitude <= arrivalDistance)
             {
                 _currentPatrolIndex = (_currentPatrolIndex + 1) % patrolOffsets.Length;
-                _waitUntil = Time.time + waitDuration;
+                _currentMoveSpeed = 0f;
+                _waitUntil = Time.time + GetWaitDuration();
                 return;
             }
 
-            var moveStep = Mathf.Min(moveSpeed * Time.deltaTime, toTarget.magnitude);
             var moveDirection = toTarget.normalized;
+            var desiredSpeed = moveSpeed * Mathf.Clamp01(toTarget.magnitude / Mathf.Max(arrivalDistance, arrivalSlowdownDistance));
+            if (toTarget.magnitude > arrivalDistance * 2f)
+            {
+                desiredSpeed = Mathf.Max(desiredSpeed, moveSpeed * 0.35f);
+            }
+
+            _currentMoveSpeed = Mathf.MoveTowards(_currentMoveSpeed, desiredSpeed, acceleration * Time.deltaTime);
+            var moveStep = Mathf.Min(_currentMoveSpeed * Time.deltaTime, toTarget.magnitude);
             if (!CanMove(moveDirection, moveStep + obstacleProbeDistance))
             {
                 _currentPatrolIndex = (_currentPatrolIndex + 1) % patrolOffsets.Length;
-                _waitUntil = Time.time + waitDuration;
+                _currentMoveSpeed = 0f;
+                _waitUntil = Time.time + GetWaitDuration();
                 return;
             }
 
@@ -112,6 +129,12 @@ namespace MobilOfl.Gameplay
                 var targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 1f - Mathf.Exp(-turnSpeed * Time.deltaTime));
             }
+        }
+
+        private float GetWaitDuration()
+        {
+            var jitter = Mathf.Max(0f, waitJitter);
+            return Mathf.Max(0f, waitDuration + Random.Range(-jitter, jitter));
         }
 
         private void UpdateSightPressure()
@@ -225,6 +248,18 @@ namespace MobilOfl.Gameplay
             }
 
             _footFixEnsured = true;
+        }
+
+        private void OnValidate()
+        {
+            moveSpeed = Mathf.Max(0f, moveSpeed);
+            acceleration = Mathf.Max(0.01f, acceleration);
+            deceleration = Mathf.Max(0.01f, deceleration);
+            arrivalSlowdownDistance = Mathf.Max(0.01f, arrivalSlowdownDistance);
+            turnSpeed = Mathf.Max(0f, turnSpeed);
+            waitDuration = Mathf.Max(0f, waitDuration);
+            waitJitter = Mathf.Max(0f, waitJitter);
+            arrivalDistance = Mathf.Max(0.01f, arrivalDistance);
         }
     }
 }

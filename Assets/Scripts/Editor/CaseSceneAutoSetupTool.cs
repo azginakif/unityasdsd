@@ -1802,7 +1802,7 @@ namespace MobilOfl.EditorTools
                 {
                     var meshFilter = doorObject.GetComponent<MeshFilter>();
                     collider = hasNegativeScale && meshFilter != null
-                        ? doorObject.AddComponent<MeshCollider>()
+                        ? (Collider)doorObject.AddComponent<MeshCollider>()
                         : doorObject.AddComponent<BoxCollider>();
                 }
 
@@ -3413,7 +3413,9 @@ namespace MobilOfl.EditorTools
             var serializedObject = new SerializedObject(movementAnimator);
             serializedObject.FindProperty("animator").objectReferenceValue = animator;
             serializedObject.FindProperty("proceduralFallback").boolValue = animator.runtimeAnimatorController == null;
-            serializedObject.FindProperty("runSpeed").floatValue = 3.25f;
+            serializedObject.FindProperty("runSpeed").floatValue = 1.85f;
+            serializedObject.FindProperty("movingSpeedThreshold").floatValue = 0.05f;
+            serializedObject.FindProperty("movingBlendFloor").floatValue = 0.48f;
             serializedObject.FindProperty("moveBobAmount").floatValue = 0.018f;
             serializedObject.FindProperty("swayDegrees").floatValue = 0.6f;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();

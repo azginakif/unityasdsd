@@ -13,6 +13,8 @@ namespace MobilOfl.UI
         [SerializeField] private Image handleImage;
         [SerializeField] private Image pulseRingImage;
         [SerializeField] private float handleRange = 72f;
+        [SerializeField] private float deadZone = 0.12f;
+        [SerializeField] private float responseCurve = 1.18f;
         [SerializeField] private float visualLerpSpeed = 10f;
 
         private Vector2 _value;
@@ -118,12 +120,26 @@ namespace MobilOfl.UI
                 eventData.pressEventCamera,
                 out var localPoint);
 
-            _value = Vector2.ClampMagnitude(localPoint / handleRange, 1f);
+            var rawValue = Vector2.ClampMagnitude(localPoint / handleRange, 1f);
+            _value = ApplyDeadZoneAndCurve(rawValue);
 
             if (handle != null)
             {
-                handle.anchoredPosition = _value * handleRange;
+                handle.anchoredPosition = rawValue * handleRange;
             }
+        }
+
+        private Vector2 ApplyDeadZoneAndCurve(Vector2 rawValue)
+        {
+            var magnitude = rawValue.magnitude;
+            if (magnitude <= deadZone)
+            {
+                return Vector2.zero;
+            }
+
+            var normalizedMagnitude = Mathf.InverseLerp(deadZone, 1f, magnitude);
+            var curvedMagnitude = Mathf.Pow(normalizedMagnitude, Mathf.Max(0.35f, responseCurve));
+            return rawValue.normalized * curvedMagnitude;
         }
     }
 }

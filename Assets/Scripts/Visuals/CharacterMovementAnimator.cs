@@ -8,6 +8,8 @@ namespace MobilOfl.Visuals
         [SerializeField] private string speedParameter = "Speed";
         [SerializeField] private float runSpeed = 5.8f;
         [SerializeField] private float damping = 10f;
+        [SerializeField] private float movingSpeedThreshold = 0.06f;
+        [SerializeField] private float movingBlendFloor = 0.42f;
         [SerializeField] private bool proceduralFallback = true;
         [SerializeField] private float idleBobAmount = 0.018f;
         [SerializeField] private float moveBobAmount = 0.045f;
@@ -48,6 +50,11 @@ namespace MobilOfl.Visuals
 
             var speed = Time.deltaTime > 0.0001f ? delta.magnitude / Time.deltaTime : 0f;
             var targetSpeed01 = Mathf.Clamp01(speed / Mathf.Max(0.1f, runSpeed));
+            if (speed > movingSpeedThreshold)
+            {
+                targetSpeed01 = Mathf.Max(targetSpeed01, Mathf.Clamp01(movingBlendFloor));
+            }
+
             _smoothedSpeed01 = Mathf.Lerp(_smoothedSpeed01, targetSpeed01, 1f - Mathf.Exp(-damping * Time.deltaTime));
 
             if (animator != null && animator.enabled && animator.runtimeAnimatorController != null)
@@ -75,6 +82,14 @@ namespace MobilOfl.Visuals
 
             _visualRoot.localPosition = _visualBaseLocalPosition + Vector3.up * bob;
             _visualRoot.localRotation = _visualBaseLocalRotation * Quaternion.Euler(0f, sway, -sway * 0.35f);
+        }
+
+        private void OnValidate()
+        {
+            runSpeed = Mathf.Max(0.1f, runSpeed);
+            damping = Mathf.Max(0f, damping);
+            movingSpeedThreshold = Mathf.Max(0f, movingSpeedThreshold);
+            movingBlendFloor = Mathf.Clamp01(movingBlendFloor);
         }
     }
 }

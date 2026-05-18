@@ -12,6 +12,9 @@ namespace MobilOfl.Gameplay
         [SerializeField] private float minimumInteractDistance = 5.25f;
         [SerializeField] private float aimAssistRadius = 0.46f;
         [SerializeField] private float nearbyButtonRadius = 2.35f;
+        [SerializeField] private float targetGraceTime = 0.18f;
+        [SerializeField] private float scanAssistDistanceBonus = 1.35f;
+        [SerializeField] private float scanAssistRadiusBonus = 0.22f;
         [SerializeField] private LayerMask interactMask = ~0;
         [SerializeField] private Key interactKey = Key.E;
         [SerializeField] private Key alternateInteractKey = Key.B;
@@ -125,6 +128,14 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
+            if (_lastInteractable != null &&
+                Time.time <= _lastTargetSeenAt + targetGraceTime &&
+                _lastInteractable.isActiveAndEnabled)
+            {
+                _currentInteractable = _lastInteractable;
+                return;
+            }
+
             if (interactHeld &&
                 _lastInteractable != null &&
                 _lastInteractable.RequiresHold &&
@@ -134,7 +145,8 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
-            if (interactPressed && TryFindNearbyInteractable(out var nearbyInteractable))
+            var allowNearbySoftTarget = MobileInvestigationOverlay.IsMobileHudVisible || InvestigationScanner.IsScanActive;
+            if ((interactPressed || allowNearbySoftTarget) && TryFindNearbyInteractable(out var nearbyInteractable))
             {
                 SetCurrentInteractable(nearbyInteractable);
                 return;
@@ -150,6 +162,10 @@ namespace MobilOfl.Gameplay
         {
             interactable = null;
             var distance = Mathf.Max(interactDistance, minimumInteractDistance);
+            if (InvestigationScanner.IsScanActive)
+            {
+                distance += Mathf.Max(0f, scanAssistDistanceBonus);
+            }
 
             if (Physics.Raycast(ray, out var exactHit, distance, interactMask, QueryTriggerInteraction.Collide))
             {
@@ -160,7 +176,7 @@ namespace MobilOfl.Gameplay
                 }
             }
 
-            var radius = Mathf.Max(0.05f, aimAssistRadius);
+            var radius = Mathf.Max(0.05f, aimAssistRadius + (InvestigationScanner.IsScanActive ? scanAssistRadiusBonus : 0f));
             var hits = Physics.SphereCastAll(ray, radius, distance, interactMask, QueryTriggerInteraction.Collide);
             var bestScore = float.PositiveInfinity;
 

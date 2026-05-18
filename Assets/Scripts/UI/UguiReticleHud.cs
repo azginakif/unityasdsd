@@ -102,8 +102,8 @@ namespace MobilOfl.UI
             fillRect.anchorMin = new Vector2(0f, 0f);
             fillRect.anchorMax = new Vector2(0f, 1f);
             fillRect.pivot = new Vector2(0f, 0.5f);
-            fillRect.offsetMin = new Vector2(2f, 2f);
-            fillRect.offsetMax = new Vector2(0f, -2f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
             _promptGroup = promptCard.gameObject.GetComponent<CanvasGroup>();
             if (_promptGroup == null)
             {
@@ -156,7 +156,8 @@ namespace MobilOfl.UI
             {
                 _holdFill.transform.parent.gameObject.SetActive(holdTarget);
                 var progress = holdTarget ? playerInteraction.HoldProgress01 : 0f;
-                _holdFill.rectTransform.sizeDelta = new Vector2(332f * progress, 0f);
+                _holdFill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(progress), 1f);
+                _holdFill.rectTransform.sizeDelta = Vector2.zero;
             }
 
             _promptText.text = hasTarget

@@ -78,7 +78,8 @@ namespace MobilOfl.EditorTools
             var stealth = root.AddComponent<PlayerStealthController>();
             var ping = root.AddComponent<TeamPingController>();
             root.AddComponent<NetworkObject>();
-            root.AddComponent<NetworkTransform>();
+            var networkTransform = root.AddComponent<NetworkTransform>();
+            networkTransform.AuthorityMode = NetworkTransform.AuthorityModes.Owner;
             var avatar = root.AddComponent<NetworkPlayerAvatar>();
 
             var localBodyRenderers = CreateNetworkPlayerVisual(root.transform);
