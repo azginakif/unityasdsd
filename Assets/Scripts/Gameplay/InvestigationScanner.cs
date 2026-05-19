@@ -100,6 +100,7 @@ namespace MobilOfl.Gameplay
             var summary = BuildScanSummary();
             _lastGlobalSummary = summary;
             session.PublishMessage(summary);
+            MobilOfl.UI.ScreenEffectsController.TriggerScanPulse();
             return true;
         }
 

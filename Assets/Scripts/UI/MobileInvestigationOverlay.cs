@@ -167,8 +167,39 @@ namespace MobilOfl.UI
 
             ConfigureControlRect("NotebookButton", new Vector2(1f, 0f), new Vector2(-100f, 272f), new Vector2(100f, 58f));
             ConfigureButtonVisuals("NotebookButton", new Color(0.11f, 0.1f, 0.12f, 0.44f), new Color(0.44f, 0.34f, 0.18f, 0.82f), 17);
+
+            ConfigureControlRect("FlashlightButton", new Vector2(1f, 0f), new Vector2(-214f, 328f), new Vector2(92f, 58f));
+            ConfigureButtonVisuals("FlashlightButton", new Color(0.14f, 0.13f, 0.08f, 0.42f), new Color(0.96f, 0.92f, 0.72f, 0.82f), 17);
+
             ConfigureControlRect("MobileContextPanel", new Vector2(0.5f, 0f), new Vector2(0f, 74f), new Vector2(430f, 64f));
             ConfigureControlRect("LookArea", new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(960f, 1080f));
+
+            // Connect flashlight button to controller
+            ConnectFlashlightButton();
+        }
+
+        private void ConnectFlashlightButton()
+        {
+            var flashlight = Object.FindAnyObjectByType<MobilOfl.Gameplay.FlashlightController>();
+            if (flashlight == null)
+            {
+                return;
+            }
+
+            var flashBtn = FindControlByName("FlashlightButton");
+            if (flashBtn != null)
+            {
+                var mobileButton = flashBtn.GetComponent<MobileButton>();
+                if (mobileButton != null)
+                {
+                    flashlight.SetMobileButton(mobileButton);
+                }
+            }
+        }
+
+        private Transform FindControlByName(string controlName)
+        {
+            return transform.Find(controlName);
         }
 
         private void SetChildActive(string childName, bool active)

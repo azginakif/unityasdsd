@@ -291,7 +291,7 @@ namespace MobilOfl.EditorTools
                 EnsurePlayerCharacterVisual(player.transform, Camera.main);
             }
 
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
             for (var i = 0; i < npcs.Length; i++)
             {
                 var npc = npcs[i];
@@ -362,7 +362,7 @@ namespace MobilOfl.EditorTools
                 hasBrokenVisual |= player.GetComponentInChildren<CharacterMovementAnimator>(true) == null;
             }
 
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
             for (var i = 0; i < npcs.Length; i++)
             {
                 if (npcs[i] == null)
@@ -1774,7 +1774,7 @@ namespace MobilOfl.EditorTools
 
             RemoveInvalidImportedMapDoorInteractables();
 
-            var transforms = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var transforms = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include);
             for (var i = 0; i < transforms.Length; i++)
             {
                 var doorTransform = transforms[i];
@@ -1831,7 +1831,7 @@ namespace MobilOfl.EditorTools
 
         private static void RemoveInvalidImportedMapDoorInteractables()
         {
-            var interactables = Object.FindObjectsByType<DoorInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var interactables = Object.FindObjectsByType<DoorInteractable>(FindObjectsInactive.Include);
             for (var i = 0; i < interactables.Length; i++)
             {
                 var interactable = interactables[i];
@@ -1937,7 +1937,7 @@ namespace MobilOfl.EditorTools
                 return;
             }
 
-            var boxColliders = Object.FindObjectsByType<BoxCollider>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var boxColliders = Object.FindObjectsByType<BoxCollider>(FindObjectsInactive.Include);
             for (var i = 0; i < boxColliders.Length; i++)
             {
                 var boxCollider = boxColliders[i];
@@ -1977,7 +1977,7 @@ namespace MobilOfl.EditorTools
 
         private static void DisableExtraAudioListeners(Camera primaryCamera)
         {
-            var listeners = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var listeners = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
             for (var i = 0; i < listeners.Length; i++)
             {
                 var listener = listeners[i];

@@ -39,6 +39,70 @@ namespace MobilOfl.Gameplay
                 new Vector3(-8.1f, 0.82f, 9.8f),
                 new Vector3(0.34f, 0.12f, 0.34f),
                 new Color(0.96f, 0.68f, 0.18f, 1f));
+
+            EnsureNewGameplaySystems();
+            EnhanceSceneLighting();
+        }
+
+        private static void EnsureNewGameplaySystems()
+        {
+            var player = GameObject.Find(PlayerRootName);
+            if (player == null)
+            {
+                return;
+            }
+
+            // Flashlight
+            if (player.GetComponent<FlashlightController>() == null)
+            {
+                player.AddComponent<FlashlightController>();
+                Debug.Log("[Mobil OFL] FlashlightController added to Player.");
+            }
+
+            // Footstep Audio
+            if (player.GetComponent<FootstepAudioSystem>() == null)
+            {
+                player.AddComponent<FootstepAudioSystem>();
+                Debug.Log("[Mobil OFL] FootstepAudioSystem added to Player.");
+            }
+
+            // Dynamic Atmosphere
+            if (Object.FindAnyObjectByType<DynamicAtmosphereController>() == null)
+            {
+                var atmosphereObj = new GameObject("DynamicAtmosphere");
+                atmosphereObj.AddComponent<DynamicAtmosphereController>();
+                Debug.Log("[Mobil OFL] DynamicAtmosphereController created.");
+            }
+
+            // Screen Effects
+            if (Object.FindAnyObjectByType<MobilOfl.UI.ScreenEffectsController>() == null)
+            {
+                var effectsObj = new GameObject("ScreenEffects");
+                effectsObj.AddComponent<MobilOfl.UI.ScreenEffectsController>();
+                Debug.Log("[Mobil OFL] ScreenEffectsController created.");
+            }
+        }
+
+        private static void EnhanceSceneLighting()
+        {
+            // Enhance existing lights for more atmosphere
+            var lights = Object.FindObjectsByType<Light>(FindObjectsInactive.Include);
+            foreach (var light in lights)
+            {
+                if (light == null || light.name == "Flashlight")
+                {
+                    continue;
+                }
+
+                // Add subtle flicker to corridor/room lights
+                if (light.type == LightType.Point || light.type == LightType.Spot)
+                {
+                    if (light.GetComponent<MobilOfl.Visuals.LightFlicker>() == null)
+                    {
+                        light.gameObject.AddComponent<MobilOfl.Visuals.LightFlicker>();
+                    }
+                }
+            }
         }
 
         private static bool LooksLikeInvestigationScene()
@@ -48,8 +112,8 @@ namespace MobilOfl.Gameplay
                 return true;
             }
 
-            return Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length > 0 ||
-                   Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length > 0;
+            return Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include).Length > 0 ||
+                   Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include).Length > 0;
         }
 
         private static void EnsurePlayerCharacterVisual()
@@ -88,7 +152,7 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
             for (var i = 0; i < npcs.Length; i++)
             {
                 var npc = npcs[i];
@@ -144,7 +208,7 @@ namespace MobilOfl.Gameplay
 
         private static void EnsureKnownSearchSpotGates()
         {
-            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include);
             foreach (var searchSpot in searchSpots)
             {
                 if (searchSpot == null)
@@ -215,7 +279,7 @@ namespace MobilOfl.Gameplay
 
         private static bool HasToolPickup(string toolId)
         {
-            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include);
             foreach (var tool in tools)
             {
                 if (tool != null && tool.ToolId == toolId)

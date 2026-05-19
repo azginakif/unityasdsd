@@ -140,7 +140,7 @@ public sealed class FirstPersonTestController : MonoBehaviour
 
     private Transform TryReuseSceneCamera()
     {
-        Camera[] sceneCameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Camera[] sceneCameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include);
 
         foreach (Camera sceneCamera in sceneCameras)
         {

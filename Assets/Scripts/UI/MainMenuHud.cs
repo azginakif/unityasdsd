@@ -17,6 +17,7 @@ namespace MobilOfl.UI
 
         private const string MasterVolumeKey = "MobilOfl.MasterVolume";
         private const string LookSensitivityKey = "MobilOfl.LookSensitivity";
+        private const string GraphicsQualityKey = "MobilOfl.GraphicsQuality";
 
         [SerializeField] private RelayNetworkBootstrap bootstrap;
         [SerializeField] private bool startOpen = true;
@@ -31,6 +32,7 @@ namespace MobilOfl.UI
         public bool HasStartedGameplay => _hasStartedGameplay;
         public float MasterVolume => _masterVolume;
         public float CameraSensitivity => _cameraSensitivity;
+        public int GraphicsQuality => _graphicsQuality;
 
         public string PlayerName
         {
@@ -66,6 +68,7 @@ namespace MobilOfl.UI
         private string _status = "Hazir.";
         private float _masterVolume = 0.82f;
         private float _cameraSensitivity = 2f;
+        private int _graphicsQuality = 2;
         private float _nextRuntimeSettingsApplyAt;
         private GUIStyle _windowStyle;
         private GUIStyle _titleStyle;
@@ -77,9 +80,18 @@ namespace MobilOfl.UI
         private GUIStyle _cardStyle;
         private GUIStyle _metricStyle;
 
+        private bool _pendingSoloStart;
+
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+
             _playerName = PlayerProfileSettings.LoadPlayerName();
             _isOpen = startOpen;
             _menuMode = RuntimeMenuMode.Opening;
@@ -91,6 +103,7 @@ namespace MobilOfl.UI
         private void OnEnable()
         {
             EnsureBootstrap();
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
 
             if (bootstrap != null)
             {
@@ -102,6 +115,7 @@ namespace MobilOfl.UI
 
         private void OnDisable()
         {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
             if (bootstrap != null)
             {
                 bootstrap.StatusChanged -= HandleStatusChanged;
@@ -114,6 +128,46 @@ namespace MobilOfl.UI
             }
 
             IsBlockingGameplay = false;
+        }
+
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            if (scene.name == "SampleScene")
+            {
+                EnsureBootstrap();
+                if (bootstrap != null)
+                {
+                    bootstrap.StatusChanged -= HandleStatusChanged;
+                    bootstrap.StatusChanged += HandleStatusChanged;
+                    bootstrap.JoinCodeChanged -= HandleJoinCodeChanged;
+                    bootstrap.JoinCodeChanged += HandleJoinCodeChanged;
+                }
+
+                if (_pendingSoloStart)
+                {
+                    _pendingSoloStart = false;
+                    ExecuteSoloStartOnLoaded();
+                }
+                else
+                {
+                    var networkCaseState = NetworkCaseState.Instance;
+                    if (bootstrap != null && bootstrap.IsOnlineSessionActive && networkCaseState != null)
+                    {
+                        if (networkCaseState.IsGameplayPhase)
+                        {
+                            _hasStartedGameplay = true;
+                            _menuMode = RuntimeMenuMode.Pause;
+                            CloseMenu();
+                        }
+                        else
+                        {
+                            _hasStartedGameplay = false;
+                            _menuMode = RuntimeMenuMode.Lobby;
+                            OpenMenu();
+                        }
+                    }
+                }
+            }
         }
 
         private void Update()
@@ -235,6 +289,14 @@ namespace MobilOfl.UI
         {
             _cameraSensitivity = Mathf.Clamp(value, 0.6f, 4.5f);
             PlayerPrefs.SetFloat(LookSensitivityKey, _cameraSensitivity);
+            PlayerPrefs.Save();
+            ApplyRuntimeSettings();
+        }
+
+        public void SetGraphicsQuality(int value)
+        {
+            _graphicsQuality = Mathf.Clamp(value, 0, 2);
+            PlayerPrefs.SetInt(GraphicsQualityKey, _graphicsQuality);
             PlayerPrefs.Save();
             ApplyRuntimeSettings();
         }
@@ -522,10 +584,14 @@ namespace MobilOfl.UI
                 return;
             }
 
-            if (restartCaseOnStart && CaseSessionManager.Instance != null)
+            if (isHost)
             {
-                CaseSessionManager.Instance.RestartCurrentCase();
+                if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsServer)
+                {
+                    Unity.Netcode.NetworkManager.Singleton.SceneManager.LoadScene("SampleScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+                }
             }
+
             _hasStartedGameplay = false;
             _menuMode = RuntimeMenuMode.Lobby;
             OpenMenu(bootstrap.IsHost
@@ -568,6 +634,12 @@ namespace MobilOfl.UI
                 _status = bootstrap.CurrentStatus;
             }
 
+            _pendingSoloStart = true;
+            LoadGameplayScene();
+        }
+
+        private void ExecuteSoloStartOnLoaded()
+        {
             if (restartCaseOnStart && CaseSessionManager.Instance != null)
             {
                 CaseSessionManager.Instance.RestartCurrentCase();
@@ -576,6 +648,18 @@ namespace MobilOfl.UI
             _hasStartedGameplay = true;
             _menuMode = RuntimeMenuMode.Pause;
             CloseMenu();
+        }
+
+        private void LoadGameplayScene()
+        {
+            if (Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening)
+            {
+                Unity.Netcode.NetworkManager.Singleton.SceneManager.LoadScene("SampleScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            }
+            else
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene");
+            }
         }
 
         private void SaveProfile()
@@ -587,7 +671,7 @@ namespace MobilOfl.UI
 
         private void SubmitLocalProfileToNetworkAvatar()
         {
-            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
             for (var i = 0; i < avatars.Length; i++)
             {
                 if (avatars[i] != null && avatars[i].IsOwner)
@@ -666,13 +750,15 @@ namespace MobilOfl.UI
         {
             _masterVolume = PlayerPrefs.GetFloat(MasterVolumeKey, _masterVolume);
             _cameraSensitivity = PlayerPrefs.GetFloat(LookSensitivityKey, _cameraSensitivity);
+            _graphicsQuality = PlayerPrefs.GetInt(GraphicsQualityKey, QualitySettings.GetQualityLevel());
         }
 
         private void ApplyRuntimeSettings()
         {
             AudioListener.volume = Mathf.Clamp01(_masterVolume);
+            QualitySettings.SetQualityLevel(_graphicsQuality, true);
 
-            var controllers = Object.FindObjectsByType<PrototypeFirstPersonController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var controllers = Object.FindObjectsByType<PrototypeFirstPersonController>(FindObjectsInactive.Exclude);
             for (var i = 0; i < controllers.Length; i++)
             {
                 if (controllers[i] != null)

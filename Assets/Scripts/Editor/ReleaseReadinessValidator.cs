@@ -297,10 +297,10 @@ namespace MobilOfl.EditorTools
 
         private static void ValidateInvestigationFlow(List<string> errors, List<string> warnings)
         {
-            var evidence = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var evidence = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Include);
+            var searchSpots = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Include);
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
+            var tools = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Include);
 
             RequireTool("tool.archive-pass", tools, errors);
             RequireTool("tool.lockpick", tools, errors);

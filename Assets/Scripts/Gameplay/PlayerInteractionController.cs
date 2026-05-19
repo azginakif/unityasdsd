@@ -8,17 +8,17 @@ namespace MobilOfl.Gameplay
     public class PlayerInteractionController : MonoBehaviour
     {
         [SerializeField] private Camera playerCamera;
-        [SerializeField] private float interactDistance = 3f;
+        [SerializeField] private float interactDistance = 4.5f;
         [SerializeField] private float minimumInteractDistance = 5.25f;
-        [SerializeField] private float aimAssistRadius = 0.46f;
-        [SerializeField] private float nearbyButtonRadius = 2.35f;
-        [SerializeField] private float targetGraceTime = 0.18f;
+        [SerializeField] private float aimAssistRadius = 0.56f;
+        [SerializeField] private float nearbyButtonRadius = 3.2f;
+        [SerializeField] private float targetGraceTime = 0.25f;
         [SerializeField] private float scanAssistDistanceBonus = 1.35f;
         [SerializeField] private float scanAssistRadiusBonus = 0.22f;
         [SerializeField] private LayerMask interactMask = ~0;
         [SerializeField] private Key interactKey = Key.E;
         [SerializeField] private Key alternateInteractKey = Key.B;
-        [SerializeField] private Key secondAlternateInteractKey = Key.F;
+        [SerializeField] private Key secondAlternateInteractKey = Key.None;
         [SerializeField] private MobileButton mobileInteractButton;
 
         private InteractableBase _currentInteractable;
@@ -33,6 +33,7 @@ namespace MobilOfl.Gameplay
 
         private void Update()
         {
+            ResolveCamera();
             if (MainMenuHud.IsBlockingGameplay || (CaseSessionManager.Instance != null && CaseSessionManager.Instance.IsCaseResolved))
             {
                 _currentInteractable = null;
@@ -277,6 +278,36 @@ namespace MobilOfl.Gameplay
         private static bool IsKeyHeld(Key key)
         {
             return Keyboard.current != null && key != Key.None && Keyboard.current[key].isPressed;
+        }
+
+        private void ResolveCamera()
+        {
+            if (playerCamera != null && playerCamera.isActiveAndEnabled)
+            {
+                return;
+            }
+
+            playerCamera = GetComponentInChildren<Camera>();
+            if (playerCamera != null)
+            {
+                return;
+            }
+
+            playerCamera = Camera.main;
+            if (playerCamera != null)
+            {
+                return;
+            }
+
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
+            for (var i = 0; i < cameras.Length; i++)
+            {
+                if (cameras[i] != null && cameras[i].isActiveAndEnabled)
+                {
+                    playerCamera = cameras[i];
+                    return;
+                }
+            }
         }
     }
 }

@@ -15,8 +15,10 @@ namespace MobilOfl.UI
         private RectTransform _mapRect;
         private Text _zoneText;
         private RectTransform _markerRoot;
+        private RectTransform _gridRoot;
         private bool _built;
         private float _nextRefreshAt;
+        private float _pulseTimer;
 
         private void Awake()
         {
@@ -96,11 +98,41 @@ namespace MobilOfl.UI
             RuntimeUiFactory.EnsureLayoutElement(_mapRect, preferredHeight: 124f);
             RuntimeUiFactory.AddImage(_mapRect.gameObject, new Color(0.06f, 0.09f, 0.12f, 0.96f));
             RuntimeUiFactory.AddOutline(_mapRect.gameObject, new Color(0f, 0f, 0f, 0.45f), new Vector2(1f, -1f));
+            BuildGrid(_mapRect);
             BuildStaticMap(_mapRect);
 
             _markerRoot = RuntimeUiFactory.CreateUiRoot("Markers", _mapRect);
             RuntimeUiFactory.Stretch(_markerRoot);
             _built = true;
+        }
+
+        private void BuildGrid(RectTransform parent)
+        {
+            _gridRoot = RuntimeUiFactory.CreateUiRoot("Grid", parent);
+            RuntimeUiFactory.Stretch(_gridRoot);
+            const int gridLines = 5;
+            for (var i = 1; i < gridLines; i++)
+            {
+                var t = i / (float)gridLines;
+
+                // Horizontal
+                var hLine = RuntimeUiFactory.CreateUiRoot($"HLine{i}", _gridRoot);
+                hLine.anchorMin = new Vector2(0f, t);
+                hLine.anchorMax = new Vector2(1f, t);
+                hLine.pivot = new Vector2(0.5f, 0.5f);
+                hLine.anchoredPosition = Vector2.zero;
+                hLine.sizeDelta = new Vector2(0f, 1f);
+                RuntimeUiFactory.AddImage(hLine.gameObject, new Color(1f, 1f, 1f, 0.04f)).raycastTarget = false;
+
+                // Vertical
+                var vLine = RuntimeUiFactory.CreateUiRoot($"VLine{i}", _gridRoot);
+                vLine.anchorMin = new Vector2(t, 0f);
+                vLine.anchorMax = new Vector2(t, 1f);
+                vLine.pivot = new Vector2(0.5f, 0.5f);
+                vLine.anchoredPosition = Vector2.zero;
+                vLine.sizeDelta = new Vector2(1f, 0f);
+                RuntimeUiFactory.AddImage(vLine.gameObject, new Color(1f, 1f, 1f, 0.04f)).raycastTarget = false;
+            }
         }
 
         private void BuildStaticMap(RectTransform parent)
@@ -148,7 +180,7 @@ namespace MobilOfl.UI
 
         private void DrawMarkers()
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -160,7 +192,7 @@ namespace MobilOfl.UI
                 DrawPoint(evidence.transform.position, evidence.MarkerColor, 8f);
             }
 
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -175,13 +207,32 @@ namespace MobilOfl.UI
 
         private void DrawPlayer()
         {
-            DrawPoint(playerTarget.position, ModernGuiTheme.AccentWarmColor, 11f);
+            _pulseTimer += Time.deltaTime;
+            var pulse = 1f + Mathf.Sin(_pulseTimer * 3.5f) * 0.25f;
+            DrawPoint(playerTarget.position, ModernGuiTheme.AccentWarmColor, 11f * pulse);
             var forward = playerTarget.forward;
             var direction = new Vector2(forward.x, forward.z).normalized;
             for (var i = 1; i <= 3; i++)
             {
                 var sampleWorld = playerTarget.position + new Vector3(direction.x, 0f, direction.y) * (1.2f * i);
                 DrawPoint(sampleWorld, new Color(1f, 0.85f, 0.35f, 0.92f - i * 0.18f), 4f);
+            }
+
+            // Draw teammates in online
+            DrawTeammates();
+        }
+
+        private void DrawTeammates()
+        {
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
+            for (var i = 0; i < avatars.Length; i++)
+            {
+                if (avatars[i] == null || avatars[i].IsOwner)
+                {
+                    continue;
+                }
+
+                DrawPoint(avatars[i].transform.position, ModernGuiTheme.AccentColor, 8f);
             }
         }
 
@@ -218,7 +269,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var avatars = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
             for (var i = 0; i < avatars.Length; i++)
             {
                 if (avatars[i] != null && avatars[i].IsOwner)

@@ -12,6 +12,28 @@ namespace MobilOfl.UI
         public static readonly Color TextColor = new Color(0.96f, 0.98f, 1f, 1f);
         public static readonly Color MutedTextColor = new Color(0.66f, 0.74f, 0.82f, 1f);
 
+        // Stamina & Health
+        public static readonly Color StaminaColor = new Color(0.22f, 0.82f, 0.55f, 1f);
+        public static readonly Color StaminaLowColor = new Color(0.92f, 0.36f, 0.22f, 1f);
+        public static readonly Color StaminaTrackColor = new Color(0.06f, 0.09f, 0.12f, 0.85f);
+
+        // Scanner
+        public static readonly Color ScanReadyColor = new Color(0.28f, 0.86f, 0.92f, 1f);
+        public static readonly Color ScanCooldownColor = new Color(0.38f, 0.32f, 0.56f, 0.78f);
+        public static readonly Color ScanActiveColor = new Color(0.44f, 0.92f, 1f, 1f);
+
+        // Alert / Danger
+        public static readonly Color DangerColor = new Color(0.96f, 0.28f, 0.2f, 1f);
+        public static readonly Color WarningColor = new Color(0.96f, 0.72f, 0.16f, 1f);
+        public static readonly Color SuccessColor = new Color(0.22f, 0.86f, 0.48f, 1f);
+
+        // Evidence / Collect
+        public static readonly Color EvidenceGlowColor = new Color(0.32f, 0.78f, 1f, 0.7f);
+        public static readonly Color CriticalEvidenceColor = new Color(1f, 0.72f, 0.18f, 0.9f);
+
+        // Flashlight
+        public static readonly Color FlashlightUIColor = new Color(0.96f, 0.92f, 0.72f, 1f);
+
         private static Texture2D _whiteTexture;
         private static Texture2D _panelTexture;
         private static Texture2D _panelSoftTexture;

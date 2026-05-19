@@ -163,7 +163,7 @@ namespace MobilOfl.UI
 
         private void DrawEvidenceMarkers()
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -175,7 +175,7 @@ namespace MobilOfl.UI
                 AddMarkerTarget(evidence.transform, Vector3.up * 1.1f, evidence.MarkerLabel, evidence.MarkerColor, 0f);
             }
 
-            var searchSpotList = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var searchSpotList = Object.FindObjectsByType<SearchSpotInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < searchSpotList.Length; i++)
             {
                 var searchSpot = searchSpotList[i];
@@ -190,7 +190,7 @@ namespace MobilOfl.UI
 
         private void DrawNpcMarkers()
         {
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -205,7 +205,7 @@ namespace MobilOfl.UI
 
         private void DrawToolMarkers()
         {
-            var toolPickups = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var toolPickups = Object.FindObjectsByType<ToolPickupInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < toolPickups.Length; i++)
             {
                 var toolPickup = toolPickups[i];
@@ -220,7 +220,7 @@ namespace MobilOfl.UI
 
         private void DrawPlayerMarkers()
         {
-            var players = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var players = Object.FindObjectsByType<NetworkPlayerAvatar>(FindObjectsInactive.Exclude);
             for (var i = 0; i < players.Length; i++)
             {
                 var player = players[i];
@@ -393,7 +393,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
             for (var i = 0; i < cameras.Length; i++)
             {
                 if (cameras[i] != null && cameras[i].isActiveAndEnabled)

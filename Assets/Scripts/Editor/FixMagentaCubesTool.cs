@@ -123,7 +123,7 @@ namespace Project.EditorTools
                 return;
             }
 
-            var renderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var renderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include);
             System.Array.Sort(renderers, (a, b) => b.bounds.size.sqrMagnitude.CompareTo(a.bounds.size.sqrMagnitude));
 
             var sb = new StringBuilder();

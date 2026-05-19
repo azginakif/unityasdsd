@@ -31,7 +31,7 @@ namespace MobilOfl.UI
 
         private void DrawEvidenceMarkers()
         {
-            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var evidenceList = Object.FindObjectsByType<EvidenceInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < evidenceList.Length; i++)
             {
                 var evidence = evidenceList[i];
@@ -46,7 +46,7 @@ namespace MobilOfl.UI
 
         private void DrawNpcMarkers()
         {
-            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var npcList = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Exclude);
             for (var i = 0; i < npcList.Length; i++)
             {
                 var npc = npcList[i];
@@ -110,7 +110,7 @@ namespace MobilOfl.UI
                 return;
             }
 
-            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
             for (var i = 0; i < cameras.Length; i++)
             {
                 if (cameras[i] != null && cameras[i].isActiveAndEnabled)

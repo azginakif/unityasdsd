@@ -45,6 +45,14 @@ namespace MobilOfl.UI
         private Text _dialogueBodyText;
         private Text _dialogueMetaText;
         private Image _dialogueSignalFill;
+        private Image _staminaFill;
+        private Text _staminaText;
+        private Image _scanFill;
+        private Text _scanText;
+        private RectTransform _scanCard;
+        private Image _flashlightFill;
+        private Text _flashlightText;
+        private RectTransform _flashlightCard;
         private string _dialogueSpeaker = string.Empty;
         private string _dialogueLine = string.Empty;
         private bool _dialogueRevealedLead;
@@ -151,6 +159,9 @@ namespace MobilOfl.UI
             _root = canvasTransform;
             BuildStatusCard();
             BuildObjectiveCard();
+            BuildStaminaBar();
+            BuildScanCooldownCard();
+            BuildFlashlightCard();
             BuildMessageBanner();
             BuildLocationBanner();
             BuildWaypointCard();
@@ -184,6 +195,85 @@ namespace MobilOfl.UI
             RuntimeUiFactory.AddVerticalLayout(card, 5f, new RectOffset(14, 14, 15, 10));
             RuntimeUiFactory.CreateText("ObjectiveLabel", card, "HEDEF", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _objectiveText = RuntimeUiFactory.CreateText("ObjectiveBody", card, string.Empty, 13, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+        }
+
+        private void BuildStaminaBar()
+        {
+            var track = RuntimeUiFactory.CreateUiRoot("StaminaTrack", _root);
+            track.anchorMin = new Vector2(0.25f, 1f);
+            track.anchorMax = new Vector2(0.75f, 1f);
+            track.pivot = new Vector2(0.5f, 1f);
+            track.anchoredPosition = new Vector2(0f, -8f);
+            track.sizeDelta = new Vector2(0f, 6f);
+            RuntimeUiFactory.AddImage(track.gameObject, ModernGuiTheme.StaminaTrackColor);
+            RuntimeUiFactory.ApplyOneUiRounding(track.gameObject, 3f);
+
+            _staminaFill = RuntimeUiFactory.CreateUiRoot("StaminaFill", track).gameObject.AddComponent<Image>();
+            _staminaFill.color = ModernGuiTheme.StaminaColor;
+            var fillRect = _staminaFill.rectTransform;
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(1f, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            RuntimeUiFactory.ApplyOneUiRounding(_staminaFill.gameObject, 3f);
+
+            _staminaText = RuntimeUiFactory.CreateText("StaminaLabel", track, string.Empty, 9, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            RuntimeUiFactory.Stretch(_staminaText.rectTransform);
+            _staminaText.rectTransform.anchoredPosition = new Vector2(0f, -10f);
+        }
+
+        private void BuildScanCooldownCard()
+        {
+            _scanCard = RuntimeUiFactory.CreateCard("ScanCard", _root, new Color(0.06f, 0.08f, 0.12f, 0.82f), ModernGuiTheme.ScanReadyColor);
+            _scanCard.anchorMin = new Vector2(0.5f, 1f);
+            _scanCard.anchorMax = new Vector2(0.5f, 1f);
+            _scanCard.pivot = new Vector2(0.5f, 1f);
+            _scanCard.anchoredPosition = new Vector2(280f, -18f);
+            _scanCard.sizeDelta = new Vector2(120f, 44f);
+
+            var scanLayout = RuntimeUiFactory.AddVerticalLayout(_scanCard, 1f, new RectOffset(8, 8, 6, 4));
+            _scanText = RuntimeUiFactory.CreateText("ScanLabel", _scanCard, "TARA", 11, ModernGuiTheme.ScanReadyColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+
+            var scanTrack = RuntimeUiFactory.CreateUiRoot("ScanTrack", _scanCard);
+            RuntimeUiFactory.EnsureLayoutElement(scanTrack, preferredHeight: 5f);
+            RuntimeUiFactory.AddImage(scanTrack.gameObject, new Color(0.04f, 0.06f, 0.08f, 0.9f));
+            RuntimeUiFactory.ApplyOneUiRounding(scanTrack.gameObject, 2f);
+
+            _scanFill = RuntimeUiFactory.CreateUiRoot("ScanFill", scanTrack).gameObject.AddComponent<Image>();
+            _scanFill.color = ModernGuiTheme.ScanReadyColor;
+            var scanFillRect = _scanFill.rectTransform;
+            scanFillRect.anchorMin = new Vector2(0f, 0f);
+            scanFillRect.anchorMax = new Vector2(1f, 1f);
+            scanFillRect.offsetMin = Vector2.zero;
+            scanFillRect.offsetMax = Vector2.zero;
+            RuntimeUiFactory.ApplyOneUiRounding(_scanFill.gameObject, 2f);
+        }
+
+        private void BuildFlashlightCard()
+        {
+            _flashlightCard = RuntimeUiFactory.CreateCard("FlashlightCard", _root, new Color(0.06f, 0.08f, 0.1f, 0.78f), ModernGuiTheme.FlashlightUIColor);
+            _flashlightCard.anchorMin = new Vector2(0.5f, 1f);
+            _flashlightCard.anchorMax = new Vector2(0.5f, 1f);
+            _flashlightCard.pivot = new Vector2(0.5f, 1f);
+            _flashlightCard.anchoredPosition = new Vector2(-280f, -18f);
+            _flashlightCard.sizeDelta = new Vector2(120f, 44f);
+
+            RuntimeUiFactory.AddVerticalLayout(_flashlightCard, 1f, new RectOffset(8, 8, 6, 4));
+            _flashlightText = RuntimeUiFactory.CreateText("FlashlightLabel", _flashlightCard, "FENER", 11, ModernGuiTheme.FlashlightUIColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+
+            var flashTrack = RuntimeUiFactory.CreateUiRoot("FlashTrack", _flashlightCard);
+            RuntimeUiFactory.EnsureLayoutElement(flashTrack, preferredHeight: 5f);
+            RuntimeUiFactory.AddImage(flashTrack.gameObject, new Color(0.04f, 0.06f, 0.08f, 0.9f));
+            RuntimeUiFactory.ApplyOneUiRounding(flashTrack.gameObject, 2f);
+
+            _flashlightFill = RuntimeUiFactory.CreateUiRoot("FlashFill", flashTrack).gameObject.AddComponent<Image>();
+            _flashlightFill.color = ModernGuiTheme.FlashlightUIColor;
+            var flashFillRect = _flashlightFill.rectTransform;
+            flashFillRect.anchorMin = new Vector2(0f, 0f);
+            flashFillRect.anchorMax = new Vector2(1f, 1f);
+            flashFillRect.offsetMin = Vector2.zero;
+            flashFillRect.offsetMax = Vector2.zero;
+            RuntimeUiFactory.ApplyOneUiRounding(_flashlightFill.gameObject, 2f);
         }
 
         private void BuildMessageBanner()
@@ -388,6 +478,9 @@ namespace MobilOfl.UI
             RefreshTension();
             RefreshMessageBanner();
             RefreshLocationVisuals();
+            RefreshStaminaBar();
+            RefreshScanCooldown();
+            RefreshFlashlight();
         }
 
         private void RefreshStatus(CaseSessionManager session)
@@ -631,6 +724,120 @@ namespace MobilOfl.UI
             _locationSubtitleText.text = _currentLocationSubtitle;
         }
 
+        private void RefreshStaminaBar()
+        {
+            if (_staminaFill == null)
+            {
+                return;
+            }
+
+            var controller = Object.FindAnyObjectByType<PrototypeFirstPersonController>();
+            var stamina = controller != null ? controller.SprintStamina01 : 1f;
+            var fillRect = _staminaFill.rectTransform;
+            fillRect.anchorMax = new Vector2(Mathf.Clamp01(stamina), 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            _staminaFill.color = Color.Lerp(ModernGuiTheme.StaminaLowColor, ModernGuiTheme.StaminaColor, stamina);
+
+            if (_staminaText != null)
+            {
+                if (stamina < 0.99f)
+                {
+                    _staminaText.text = $"ENERJI %{Mathf.RoundToInt(stamina * 100f)}";
+                    _staminaText.color = stamina < 0.25f ? ModernGuiTheme.StaminaLowColor : ModernGuiTheme.TextColor;
+                }
+                else
+                {
+                    _staminaText.text = string.Empty;
+                }
+            }
+        }
+
+        private void RefreshScanCooldown()
+        {
+            if (_scanFill == null || _scanCard == null)
+            {
+                return;
+            }
+
+            var scanner = Object.FindAnyObjectByType<InvestigationScanner>();
+            if (scanner == null)
+            {
+                _scanCard.gameObject.SetActive(false);
+                return;
+            }
+
+            _scanCard.gameObject.SetActive(true);
+            var ready = scanner.IsReady;
+            var cooldownNorm = scanner.CooldownNormalized;
+            var isActive = InvestigationScanner.IsScanActive;
+
+            var fillRect = _scanFill.rectTransform;
+            fillRect.anchorMax = new Vector2(ready ? 1f : (1f - cooldownNorm), 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            if (isActive)
+            {
+                var pulse = Mathf.PingPong(Time.unscaledTime * 4f, 1f);
+                _scanFill.color = Color.Lerp(ModernGuiTheme.ScanActiveColor, ModernGuiTheme.AccentColor, pulse);
+                _scanText.text = "TARAMA AKTIF";
+                _scanText.color = ModernGuiTheme.ScanActiveColor;
+            }
+            else if (ready)
+            {
+                _scanFill.color = ModernGuiTheme.ScanReadyColor;
+                _scanText.text = "TARA [Q]";
+                _scanText.color = ModernGuiTheme.ScanReadyColor;
+            }
+            else
+            {
+                _scanFill.color = ModernGuiTheme.ScanCooldownColor;
+                _scanText.text = $"SOGUMA {Mathf.CeilToInt(scanner.CooldownRemaining)}s";
+                _scanText.color = ModernGuiTheme.MutedTextColor;
+            }
+        }
+
+        private void RefreshFlashlight()
+        {
+            if (_flashlightFill == null || _flashlightCard == null)
+            {
+                return;
+            }
+
+            var flashlight = Object.FindAnyObjectByType<FlashlightController>();
+            if (flashlight == null)
+            {
+                _flashlightCard.gameObject.SetActive(false);
+                return;
+            }
+
+            _flashlightCard.gameObject.SetActive(true);
+            var battery = flashlight.Battery01;
+
+            var fillRect = _flashlightFill.rectTransform;
+            fillRect.anchorMax = new Vector2(Mathf.Clamp01(battery), 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+
+            if (flashlight.IsOn)
+            {
+                var flickerPulse = flashlight.IsFlickering
+                    ? Mathf.PingPong(Time.unscaledTime * 8f, 1f)
+                    : 1f;
+                _flashlightFill.color = Color.Lerp(ModernGuiTheme.WarningColor, ModernGuiTheme.FlashlightUIColor, battery) * flickerPulse;
+                _flashlightText.text = $"FENER %{Mathf.RoundToInt(battery * 100f)}";
+                _flashlightText.color = battery < 0.2f ? ModernGuiTheme.DangerColor : ModernGuiTheme.FlashlightUIColor;
+            }
+            else
+            {
+                _flashlightFill.color = new Color(0.4f, 0.38f, 0.32f, 0.5f);
+                _flashlightText.text = battery < 1f ? $"FENER [F] %{Mathf.RoundToInt(battery * 100f)}" : "FENER [F]";
+                _flashlightText.color = ModernGuiTheme.MutedTextColor;
+            }
+        }
+
         private void UpdateLocationBanner()
         {
             if (playerInteraction == null)
@@ -712,7 +919,7 @@ namespace MobilOfl.UI
         {
             if (playerInteraction == null || !playerInteraction.isActiveAndEnabled)
             {
-                var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                var candidates = Object.FindObjectsByType<PlayerInteractionController>(FindObjectsInactive.Exclude);
                 for (var i = 0; i < candidates.Length; i++)
                 {
                     if (candidates[i] != null && candidates[i].isActiveAndEnabled)
