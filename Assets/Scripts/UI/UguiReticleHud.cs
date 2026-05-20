@@ -149,7 +149,7 @@ namespace MobilOfl.UI
                 _reticleLines[i].color = color;
             }
 
-            var showPrompt = hasTarget || InvestigationScanner.IsScanActive;
+            var showPrompt = hasTarget;
             _promptGroup.alpha = showPrompt ? 1f : 0f;
             var holdTarget = hasTarget && playerInteraction.CurrentInteractable.RequiresHold;
             if (_holdFill != null)
@@ -164,7 +164,7 @@ namespace MobilOfl.UI
                 ? (holdTarget
                     ? $"Basili tut: {playerInteraction.CurrentInteractable.PromptText}"
                     : playerInteraction.CurrentInteractable.PromptText)
-                : (InvestigationScanner.IsScanActive ? InvestigationScanner.LastScanSummary : string.Empty);
+                : string.Empty;
         }
 
         private void ResolveInteraction()

@@ -9,9 +9,10 @@ namespace MobilOfl.UI
     public class UguiWorldMarkerHud : MonoBehaviour
     {
         [SerializeField] private Camera targetCamera;
-        [SerializeField] private float maxDistance = 18f;
+        [SerializeField] private float maxDistance = 8f;
         [SerializeField] private float scanBonusDistance = 14f;
-        [SerializeField] private int maxVisibleMarkers = 5;
+        [SerializeField] private int maxVisibleMarkers = 3;
+        [SerializeField] private float normalViewCenterRadius = 0.18f;
         [SerializeField] private float targetRefreshInterval = 0.25f;
 
         private RectTransform _root;
@@ -291,7 +292,8 @@ namespace MobilOfl.UI
                 ? marker.SourceTransform.position + marker.WorldOffset
                 : marker.WorldPosition;
             var cameraPosition = targetCamera.transform.position;
-            var effectiveMaxDistance = InvestigationScanner.IsScanActive ? maxDistance + scanBonusDistance : maxDistance;
+            var scanActive = InvestigationScanner.IsScanActive;
+            var effectiveMaxDistance = scanActive ? maxDistance + scanBonusDistance : maxDistance;
             var distance = Vector3.Distance(cameraPosition, worldPosition);
             if (distance > effectiveMaxDistance)
             {
@@ -304,8 +306,17 @@ namespace MobilOfl.UI
                 return false;
             }
 
+            if (!scanActive)
+            {
+                var centerDistance = Vector2.Distance(new Vector2(viewport.x, viewport.y), new Vector2(0.5f, 0.5f));
+                if (centerDistance > Mathf.Max(0.02f, normalViewCenterRadius))
+                {
+                    return false;
+                }
+            }
+
             anchor = new Vector2(Mathf.Clamp(viewport.x, 0.1f, 0.9f), Mathf.Clamp(viewport.y, 0.14f, 0.88f));
-            var scanBoost = InvestigationScanner.IsScanActive ? 1f : 0f;
+            var scanBoost = scanActive ? 1f : 0f;
             markerText = BuildMarkerText(marker.Label, distance);
             var markerWidth = Mathf.Clamp(markerText.Length * 7.6f + 20f, 128f, 270f);
             var slotOffset = ((slotIndex % 3) - 1) * 14f;

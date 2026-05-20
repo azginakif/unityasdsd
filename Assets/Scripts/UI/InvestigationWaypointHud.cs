@@ -134,9 +134,9 @@ namespace MobilOfl.UI
 
             if (session.HasAnyAccusableSuspect())
             {
-                title = "Vaka Masasi";
-                worldPosition = new Vector3(0f, 1f, -5.6f);
-                subtitle = "Dosyayi acip supheliyi secmek icin artik yeterli delil var.";
+                title = "Vaka Dosyasi";
+                worldPosition = playerTarget != null ? playerTarget.position : new Vector3(0f, 1f, -5.6f);
+                subtitle = "Notebook'u acip supheliyi secmek icin artik yeterli delil var.";
                 return true;
             }
 

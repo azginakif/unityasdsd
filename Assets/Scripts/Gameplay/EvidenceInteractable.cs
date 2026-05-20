@@ -22,8 +22,14 @@ namespace MobilOfl.Gameplay
         public Color MarkerColor => markerColor.a <= 0f ? new Color(0.24f, 0.86f, 1f, 1f) : markerColor;
         public bool IsMarkerVisible =>
             isActiveAndEnabled &&
+            !string.IsNullOrWhiteSpace(evidenceId) &&
             CaseSessionManager.Instance != null &&
             !CaseSessionManager.Instance.HasEvidence(evidenceId);
+
+        public override bool CanShowInteractionPrompt(GameObject interactor)
+        {
+            return IsMarkerVisible;
+        }
 
         private void OnEnable()
         {
@@ -53,7 +59,10 @@ namespace MobilOfl.Gameplay
 
         public override bool TryInteract(GameObject interactor)
         {
-            if (caseDefinition == null || string.IsNullOrWhiteSpace(evidenceId))
+            var sourceCase = caseDefinition != null
+                ? caseDefinition
+                : (CaseSessionManager.Instance != null ? CaseSessionManager.Instance.ActiveCase : null);
+            if (sourceCase == null || string.IsNullOrWhiteSpace(evidenceId))
             {
                 return false;
             }
@@ -75,7 +84,7 @@ namespace MobilOfl.Gameplay
                 return networkCaseState.RequestCollectEvidence(evidenceId);
             }
 
-            if (!CaseSessionManager.Instance.TryCollectEvidence(caseDefinition, evidenceId))
+            if (!CaseSessionManager.Instance.TryCollectEvidence(sourceCase, evidenceId))
             {
                 return false;
             }

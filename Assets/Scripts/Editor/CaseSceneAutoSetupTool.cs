@@ -34,7 +34,7 @@ namespace MobilOfl.EditorTools
         private const float ActorRadius = 0.35f;
         private const float NpcActorHeight = 2.08f;
         private const float NpcActorRadius = 0.43f;
-        private const float NpcPatrolMoveSpeed = 1.45f;
+        private const float NpcPatrolMoveSpeed = 1.2f;
         private const string MobileControlsCanvasName = "MobileControlsCanvas";
         private const string SchoolBlockRootName = "SampleSchoolBlock";
         private const string AtmosphereRootName = "SampleAtmosphere";
@@ -205,7 +205,6 @@ namespace MobilOfl.EditorTools
             EnsureDirectionalLight();
             EnsureSampleSchoolBlock(layout);
             EnsureHideSpots(layout);
-            EnsureInvestigationDeskInteractable(layout);
             EnsureAtmosphereLights(layout);
             EnsureImportedMapDoorInteractables(layout);
             RepairNegativeScaleBoxColliders(layout);
@@ -1674,66 +1673,6 @@ namespace MobilOfl.EditorTools
             }
         }
 
-        private static void EnsureInvestigationDeskInteractable(SceneLayoutProfile layout)
-        {
-            var deskObject = GameObject.Find("InvestigationDesk");
-            if (deskObject == null)
-            {
-                var root = GameObject.Find("SampleInvestigationRoot");
-                if (root == null)
-                {
-                    root = new GameObject("SampleInvestigationRoot");
-                }
-
-                deskObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                deskObject.name = "InvestigationDesk";
-                deskObject.transform.SetParent(root.transform);
-            }
-
-            if (layout.UsesImportedSchoolMap)
-            {
-                deskObject.transform.position = layout.ToWorld(new Vector3(0.15f, 0.45f, -5.6f));
-                deskObject.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
-                deskObject.transform.localScale = new Vector3(1.8f, 0.3f, 0.9f);
-
-                var renderer = deskObject.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.sharedMaterial = CreatePreviewMaterial("InvestigationDesk_Material", new Color(0.45f, 0.28f, 0.14f, 1f));
-                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-                    renderer.receiveShadows = true;
-                }
-
-                EnsureInvestigationBoard(layout);
-                EditorUtility.SetDirty(deskObject);
-            }
-
-            var interactable = deskObject.GetComponent<InvestigationDeskInteractable>();
-            if (interactable == null)
-            {
-                interactable = deskObject.AddComponent<InvestigationDeskInteractable>();
-            }
-
-            var collider = deskObject.GetComponent<BoxCollider>();
-            if (collider == null)
-            {
-                collider = deskObject.AddComponent<BoxCollider>();
-            }
-
-            collider.isTrigger = false;
-            collider.center = Vector3.zero;
-            collider.size = Vector3.one;
-
-            var serializedObject = new SerializedObject(interactable);
-            var promptProperty = serializedObject.FindProperty("promptText");
-            if (promptProperty != null)
-            {
-                promptProperty.stringValue = "Vaka masasini incele";
-            }
-            serializedObject.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(interactable);
-        }
-
         private static void EnsureInvestigationBoard(SceneLayoutProfile layout)
         {
             var root = GameObject.Find("SampleInvestigationRoot");
@@ -2633,9 +2572,8 @@ namespace MobilOfl.EditorTools
 
         private static void CreateInvestigationCorner(Transform parent)
         {
-            CreateRoomLabel(parent, "VAKA MASASI", new Vector3(0f, 0.08f, -6.2f));
+            CreateRoomLabel(parent, "VAKA DOSYASI", new Vector3(0f, 0.08f, -6.2f));
             CreateNoticeBoard(parent, "InvestigationBoard", new Vector3(-1.65f, 1.65f, -6.5f));
-            CreateDesk(parent, "InvestigationDesk", new Vector3(0.15f, 0.45f, -5.6f));
             CreateBench(parent, "InvestigationBench", new Vector3(0.15f, 0.32f, -4.65f));
             CreateBlock(parent, "InvestigationLampBase", new Vector3(1.15f, 0.8f, -5.75f), new Vector3(0.14f, 0.7f, 0.14f), new Color(0.18f, 0.18f, 0.22f));
             CreateBlock(parent, "InvestigationLampHead", new Vector3(1.15f, 1.2f, -5.48f), new Vector3(0.42f, 0.12f, 0.24f), new Color(0.88f, 0.82f, 0.48f));
@@ -2888,7 +2826,7 @@ namespace MobilOfl.EditorTools
                 caseDefinition,
                 "evidence.security-log",
                 "Etkilesim: Guvenlik Kaydi",
-                layout.ToWorld(new Vector3(-7.2f, 1.12f, 11.2f)),
+                layout.ToWorld(new Vector3(-7.4f, 1.12f, 10.8f)),
                 PrimitiveType.Cube,
                 new Vector3(1.45f, 0.72f, 1.1f));
 
@@ -2897,7 +2835,7 @@ namespace MobilOfl.EditorTools
                 caseDefinition,
                 "evidence.answer-key-note",
                 "Etkilesim: Not Kagidi",
-                layout.ToWorld(new Vector3(6.8f, 0.75f, -2.6f)),
+                layout.ToWorld(new Vector3(6.5f, 0.75f, -3.1f)),
                 PrimitiveType.Cube,
                 new Vector3(1.2f, 0.2f, 1.2f));
 
@@ -2908,7 +2846,7 @@ namespace MobilOfl.EditorTools
                 "Arsiv Gecis Karti",
                 "Etkilesim: Arsiv Gecis Karti",
                 "Arsiv gecis karti alindi. Artik kisitli raf alanina girebilirsin.",
-                layout.ToWorld(new Vector3(7.1f, 0.86f, 9.3f)),
+                layout.ToWorld(new Vector3(5.9f, 0.86f, 8.6f)),
                 PrimitiveType.Cylinder,
                 new Vector3(0.36f, 0.08f, 0.36f),
                 new Color(0.22f, 0.88f, 0.82f, 1f));
@@ -2920,7 +2858,7 @@ namespace MobilOfl.EditorTools
                 "Maymuncuk Seti",
                 "Etkilesim: Maymuncuk Seti",
                 "Maymuncuk seti alindi. Kilitli cekmece ve kutulari artik acabilirsin.",
-                layout.ToWorld(new Vector3(-6.2f, 0.82f, 8.7f)),
+                layout.ToWorld(new Vector3(-7.4f, 0.82f, 8.5f)),
                 PrimitiveType.Cylinder,
                 new Vector3(0.34f, 0.12f, 0.34f),
                 new Color(0.96f, 0.68f, 0.18f, 1f));
@@ -2934,7 +2872,7 @@ namespace MobilOfl.EditorTools
                 "tool.lockpick",
                 "Bu cekmece icin once maymuncuk seti bulman gerekiyor.",
                 "Ogretmenler odasindaki cekmecede yedek anahtar bulundu.",
-                layout.ToWorld(new Vector3(6.5f, 0.8f, 10.5f)),
+                layout.ToWorld(new Vector3(6.25f, 0.8f, 10.8f)),
                 new Vector3(1.35f, 0.42f, 1.08f),
                 new Color(0.74f, 0.62f, 0.28f, 1f));
 
@@ -2947,7 +2885,7 @@ namespace MobilOfl.EditorTools
                 "tool.archive-pass",
                 "Arsiv raf kutusu icin once gecis karti bulman gerekiyor.",
                 "Arsiv rafinda sakli defter bulundu.",
-                layout.ToWorld(new Vector3(-14.5f, 0.86f, 9.6f)),
+                layout.ToWorld(new Vector3(-14.2f, 0.86f, 9.1f)),
                 new Vector3(1.7f, 0.82f, 1.35f),
                 new Color(0.45f, 0.68f, 0.84f, 1f));
         }
@@ -2971,7 +2909,7 @@ namespace MobilOfl.EditorTools
                 "npc.guard",
                 "Guvenlik Gorevlisi",
                 "Etkilesim: Guvenlik Gorevlisi ile konus",
-                layout.ToActorWorld(new Vector3(-6.2f, 0.95f, 9.8f)),
+                layout.ToActorWorld(new Vector3(-6.8f, 0.95f, 9.2f)),
                 "Kayitlari gormeden kimseyi suclayamam.",
                 "Kamera kaydini bulduysan soyleyebilirim: gece 22:15'te bilisim kulubu ogrencisi laboratuvar koridorundaydi.",
                 "evidence.security-log",
@@ -2980,8 +2918,10 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, 0.9f)),
-                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, -0.8f))
+                    layout.ToPatrolOffset(new Vector3(0.75f, 0f, 0.05f)),
+                    layout.ToPatrolOffset(new Vector3(0.75f, 0f, -1.35f)),
+                    layout.ToPatrolOffset(new Vector3(-0.35f, 0f, -1.35f)),
+                    layout.ToPatrolOffset(new Vector3(-0.35f, 0f, 0.55f))
                 });
 
             CreateNpcObject(
@@ -2990,7 +2930,7 @@ namespace MobilOfl.EditorTools
                 "npc.library-student",
                 "Kutuphane Ogrencisi",
                 "Etkilesim: Ogrenci ile konus",
-                layout.ToActorWorld(new Vector3(6.2f, 0.95f, -2.4f)),
+                layout.ToActorWorld(new Vector3(6.35f, 0.95f, -3.3f)),
                 "O notun kime ait oldugunu bilmiyorum.",
                 "Cevap anahtari notunu gordum. Bilisim kulubu ogrencisinin defterinden dustu.",
                 "evidence.answer-key-note",
@@ -2999,8 +2939,10 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, 0.7f)),
-                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, -0.7f))
+                    layout.ToPatrolOffset(new Vector3(0.15f, 0f, 1.25f)),
+                    layout.ToPatrolOffset(new Vector3(-0.55f, 0f, 1.25f)),
+                    layout.ToPatrolOffset(new Vector3(-0.55f, 0f, -0.85f)),
+                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, -0.85f))
                 });
 
             CreateNpcObject(
@@ -3009,7 +2951,7 @@ namespace MobilOfl.EditorTools
                 "npc.teacher-assistant",
                 "Ogretmen Yardimcisi",
                 "Etkilesim: Ogretmen Yardimcisi ile konus",
-                layout.ToActorWorld(new Vector3(6.3f, 0.95f, 8.8f)),
+                layout.ToActorWorld(new Vector3(6.2f, 0.95f, 9.4f)),
                 "Dolap anahtari kayboldu ama bunu herkes biliyor olabilir.",
                 "Yedek anahtar bende degildi. Dolabin yanina en son bilisim kulubu ogrencisi geldi.",
                 "evidence.locker-key",
@@ -3018,8 +2960,10 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, 0.75f)),
-                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, -0.65f))
+                    layout.ToPatrolOffset(new Vector3(-0.35f, 0f, 0.65f)),
+                    layout.ToPatrolOffset(new Vector3(0.45f, 0f, 0.65f)),
+                    layout.ToPatrolOffset(new Vector3(0.45f, 0f, -0.85f)),
+                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, -0.85f))
                 });
 
             CreateNpcObject(
@@ -3028,7 +2972,7 @@ namespace MobilOfl.EditorTools
                 "npc.archive-clerk",
                 "Arsiv Sorumlusu",
                 "Etkilesim: Arsiv Sorumlusu ile konus",
-                layout.ToActorWorld(new Vector3(-13.8f, 0.95f, 8.2f)),
+                layout.ToActorWorld(new Vector3(-14.0f, 0.95f, 8.6f)),
                 "Defter olmadan arsiv odasi hakkinda resmi bir sey soyleyemem.",
                 "Giris defterine gore bilisim kulubu ogrencisi sinavdan hemen once arsiv anahtarini sormustu.",
                 "evidence.archive-ledger",
@@ -3037,8 +2981,10 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(0.22f, 0f, 0.8f)),
-                    layout.ToPatrolOffset(new Vector3(-0.22f, 0f, -0.7f))
+                    layout.ToPatrolOffset(new Vector3(0.5f, 0f, 0.85f)),
+                    layout.ToPatrolOffset(new Vector3(-0.45f, 0f, 0.85f)),
+                    layout.ToPatrolOffset(new Vector3(-0.45f, 0f, -0.75f)),
+                    layout.ToPatrolOffset(new Vector3(0.45f, 0f, -0.75f))
                 });
 
             CreateNpcObject(
@@ -3047,7 +2993,7 @@ namespace MobilOfl.EditorTools
                 "npc.canteen-worker",
                 "Kantin Calisani",
                 "Etkilesim: Kantin Calisani ile konus",
-                layout.ToActorWorld(new Vector3(13.5f, 0.95f, 8.4f)),
+                layout.ToActorWorld(new Vector3(13.4f, 0.95f, 8.2f)),
                 "Gec saatte kim geldigini hatirlamiyorum.",
                 "Simdi hatirladim; o nottan sonra ayni ogrenci gece enerji icecegi alip laboratuvar tarafina kostu.",
                 "evidence.answer-key-note",
@@ -3056,8 +3002,10 @@ namespace MobilOfl.EditorTools
                 new[]
                 {
                     Vector3.zero,
-                    layout.ToPatrolOffset(new Vector3(-0.25f, 0f, 0.65f)),
-                    layout.ToPatrolOffset(new Vector3(0.25f, 0f, -0.65f))
+                    layout.ToPatrolOffset(new Vector3(-0.65f, 0f, 0.55f)),
+                    layout.ToPatrolOffset(new Vector3(0.45f, 0f, 0.55f)),
+                    layout.ToPatrolOffset(new Vector3(0.45f, 0f, -0.65f)),
+                    layout.ToPatrolOffset(new Vector3(-0.55f, 0f, -0.65f))
                 });
         }
 
@@ -3128,10 +3076,10 @@ namespace MobilOfl.EditorTools
             patrolSerializedObject.FindProperty("patrolEnabled").boolValue = patrolOffsets != null && patrolOffsets.Length > 1;
             patrolSerializedObject.FindProperty("moveSpeed").floatValue = NpcPatrolMoveSpeed;
             patrolSerializedObject.FindProperty("turnSpeed").floatValue = 5.8f;
-            patrolSerializedObject.FindProperty("waitDuration").floatValue = 0.85f;
-            patrolSerializedObject.FindProperty("viewDistance").floatValue = 6.6f;
-            patrolSerializedObject.FindProperty("viewAngle").floatValue = 62f;
-            patrolSerializedObject.FindProperty("sightPressurePerSecond").floatValue = 0.58f;
+            patrolSerializedObject.FindProperty("waitDuration").floatValue = 1.2f;
+            patrolSerializedObject.FindProperty("viewDistance").floatValue = 6.2f;
+            patrolSerializedObject.FindProperty("viewAngle").floatValue = 58f;
+            patrolSerializedObject.FindProperty("sightPressurePerSecond").floatValue = 0.5f;
             patrolSerializedObject.FindProperty("eyeHeight").floatValue = NpcActorHeight * 0.78f;
             var offsetsProperty = patrolSerializedObject.FindProperty("patrolOffsets");
             offsetsProperty.arraySize = patrolOffsets == null ? 0 : patrolOffsets.Length;

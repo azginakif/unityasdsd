@@ -90,6 +90,7 @@ namespace MobilOfl.Online
         private void Awake()
         {
             Instance = this;
+            ResolveCaseDefinition();
         }
 
         public override void OnDestroy()
@@ -105,6 +106,7 @@ namespace MobilOfl.Online
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
+            ResolveCaseDefinition();
 
             if (CaseSessionManager.Instance != null && caseDefinition != null && CaseSessionManager.Instance.ActiveCase != caseDefinition)
             {
@@ -133,6 +135,14 @@ namespace MobilOfl.Online
             }
 
             TryRegisterLocalReadyState(false);
+        }
+
+        private void ResolveCaseDefinition()
+        {
+            if (caseDefinition == null && CaseSessionManager.Instance != null)
+            {
+                caseDefinition = CaseSessionManager.Instance.ActiveCase;
+            }
         }
 
         public override void OnNetworkDespawn()

@@ -68,6 +68,38 @@ namespace MobilOfl.Gameplay
             return true;
         }
 
+        public override bool CanShowInteractionPrompt(GameObject interactor)
+        {
+            if (!isActiveAndEnabled)
+            {
+                return false;
+            }
+
+            if (interactor == null)
+            {
+                return true;
+            }
+
+            var interactorPosition = interactor.transform.position + Vector3.up * 1.05f;
+            var colliders = GetComponentsInChildren<Collider>(false);
+            for (var i = 0; i < colliders.Length; i++)
+            {
+                var collider = colliders[i];
+                if (collider == null || !collider.enabled)
+                {
+                    continue;
+                }
+
+                var closestPoint = collider.ClosestPoint(interactorPosition);
+                if (Vector3.Distance(interactorPosition, closestPoint) <= 1.8f)
+                {
+                    return true;
+                }
+            }
+
+            return Vector3.Distance(interactor.transform.position, transform.position) <= 2.2f;
+        }
+
         public void ConfigureAccess(string toolId, string message, bool openAtStart)
         {
             requiredToolId = string.IsNullOrWhiteSpace(toolId) ? string.Empty : toolId.Trim();

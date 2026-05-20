@@ -88,14 +88,14 @@ namespace MobilOfl.UI
             card.anchorMin = new Vector2(1f, 1f);
             card.anchorMax = new Vector2(1f, 1f);
             card.pivot = new Vector2(1f, 1f);
-            card.anchoredPosition = new Vector2(-18f, -124f);
-            card.sizeDelta = new Vector2(214f, 188f);
-            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(10, 10, 11, 8));
-            RuntimeUiFactory.CreateText("Title", card, "HARITA", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _zoneText = RuntimeUiFactory.CreateText("Zone", card, string.Empty, 11, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            card.anchoredPosition = new Vector2(-14f, -104f);
+            card.sizeDelta = new Vector2(174f, 148f);
+            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(9, 9, 9, 7));
+            RuntimeUiFactory.CreateText("Title", card, "HARITA", 12, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _zoneText = RuntimeUiFactory.CreateText("Zone", card, string.Empty, 10, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
 
             _mapRect = RuntimeUiFactory.CreateUiRoot("Map", card);
-            RuntimeUiFactory.EnsureLayoutElement(_mapRect, preferredHeight: 124f);
+            RuntimeUiFactory.EnsureLayoutElement(_mapRect, preferredHeight: 96f);
             RuntimeUiFactory.AddImage(_mapRect.gameObject, new Color(0.06f, 0.09f, 0.12f, 0.96f));
             RuntimeUiFactory.AddOutline(_mapRect.gameObject, new Color(0f, 0f, 0f, 0.45f), new Vector2(1f, -1f));
             BuildGrid(_mapRect);

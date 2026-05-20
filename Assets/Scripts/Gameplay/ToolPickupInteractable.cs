@@ -25,8 +25,14 @@ namespace MobilOfl.Gameplay
         public Color MarkerColor => markerColor.a <= 0f ? new Color(0.98f, 0.7f, 0.24f, 1f) : markerColor;
         public bool IsMarkerVisible =>
             isActiveAndEnabled &&
+            !string.IsNullOrWhiteSpace(toolId) &&
             CaseSessionManager.Instance != null &&
             !CaseSessionManager.Instance.HasTool(toolId);
+
+        public override bool CanShowInteractionPrompt(GameObject interactor)
+        {
+            return IsMarkerVisible;
+        }
 
         public void Configure(
             string id,

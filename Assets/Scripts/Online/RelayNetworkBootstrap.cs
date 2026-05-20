@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -25,6 +27,8 @@ namespace MobilOfl.Online
         [SerializeField] private int maxPlayers = 4;
         [SerializeField] private string relayConnectionType = "dtls";
         [SerializeField] private bool autoInitializeUnityServices = true;
+        [SerializeField] private string directListenAddress = "0.0.0.0";
+        [SerializeField] private ushort directPort = 7777;
 
         public event Action<string> StatusChanged;
         public event Action<string> JoinCodeChanged;
@@ -45,10 +49,11 @@ namespace MobilOfl.Online
             _lastSessionWasRelayClient &&
             !string.IsNullOrWhiteSpace(_lastRelayJoinCode);
         public string LastDisconnectReason { get; private set; } = string.Empty;
+        public bool IsDirectLanSession => CurrentJoinCode.StartsWith("LAN:", StringComparison.OrdinalIgnoreCase);
         public string CurrentMode =>
             networkManager == null ? "Offline" :
-            networkManager.IsHost ? "Host" :
-            networkManager.IsClient ? "Client" :
+            networkManager.IsHost ? (IsDirectLanSession ? "LAN Host" : "Host") :
+            networkManager.IsClient ? (IsDirectLanSession ? "LAN Client" : "Client") :
             "Offline";
 
         private NetworkManager _subscribedNetworkManager;
@@ -165,13 +170,11 @@ namespace MobilOfl.Online
             }
             catch (RelayServiceException ex)
             {
-                PublishStatus($"Relay hatasi: {ex.Message}");
-                return false;
+                return StartDirectHostFallback($"Relay hatasi: {ex.Message}");
             }
             catch (Exception ex)
             {
-                PublishStatus($"Host baslatma hatasi: {ex.Message}");
-                return false;
+                return StartDirectHostFallback($"Host baslatma hatasi: {ex.Message}");
             }
             finally
             {
@@ -199,6 +202,11 @@ namespace MobilOfl.Online
             {
                 PublishStatus("Join code girilmedi.");
                 return false;
+            }
+
+            if (TryParseDirectJoinCode(joinCode, out var directAddress, out var parsedDirectPort))
+            {
+                return StartDirectClient(directAddress, parsedDirectPort);
             }
 
             try
@@ -380,12 +388,161 @@ namespace MobilOfl.Online
 
             var connectionData = unityTransport.ConnectionData;
             var address = string.IsNullOrWhiteSpace(connectionData.Address) ? "127.0.0.1" : connectionData.Address;
-            var port = connectionData.Port == 0 ? (ushort)7777 : connectionData.Port;
+            var port = connectionData.Port == 0 ? directPort : connectionData.Port;
             var listenAddress = string.IsNullOrWhiteSpace(connectionData.ServerListenAddress)
                 ? address
                 : connectionData.ServerListenAddress;
 
             unityTransport.SetConnectionData(address, port, listenAddress);
+        }
+
+        private bool StartDirectHostFallback(string relayFailure)
+        {
+            if (networkManager == null || unityTransport == null)
+            {
+                PublishStatus(relayFailure);
+                return false;
+            }
+
+            var advertisedAddress = ResolveLanAddress();
+            unityTransport.SetConnectionData(advertisedAddress, directPort, directListenAddress);
+            CurrentJoinCode = BuildDirectJoinCode(advertisedAddress, directPort);
+            _lastRelayJoinCode = CurrentJoinCode;
+            _lastSessionWasRelayClient = false;
+            JoinCodeChanged?.Invoke(CurrentJoinCode);
+
+            if (!networkManager.StartHost())
+            {
+                CurrentJoinCode = string.Empty;
+                JoinCodeChanged?.Invoke(CurrentJoinCode);
+                SetOfflineScenePlayerActive(true);
+                PublishStatus($"{relayFailure} LAN host da baslatilamadi.");
+                return false;
+            }
+
+            SetOfflineScenePlayerActive(false);
+
+            if (networkCaseState != null)
+            {
+                networkCaseState.SetRelayJoinCode(CurrentJoinCode);
+            }
+
+            PublishStatus($"{relayFailure} Relay yerine LAN host acildi. Kod: {CurrentJoinCode}");
+            return true;
+        }
+
+        private bool StartDirectClient(string address, ushort port)
+        {
+            EnsureReferences();
+
+            if (networkManager == null || unityTransport == null)
+            {
+                PublishStatus("NetworkManager veya UnityTransport eksik.");
+                return false;
+            }
+
+            if (networkManager.IsListening || IsBusy)
+            {
+                PublishStatus("Oturum zaten aktif veya islem devam ediyor.");
+                return false;
+            }
+
+            try
+            {
+                IsBusy = true;
+                ResetUnexpectedStopGuard();
+                _intentionalShutdown = false;
+                _lastSessionWasRelayClient = true;
+                LastDisconnectReason = string.Empty;
+                unityTransport.SetConnectionData(address, port);
+
+                CurrentJoinCode = BuildDirectJoinCode(address, port);
+                _lastRelayJoinCode = CurrentJoinCode;
+                JoinCodeChanged?.Invoke(CurrentJoinCode);
+
+                if (!networkManager.StartClient())
+                {
+                    SetOfflineScenePlayerActive(true);
+                    PublishStatus("LAN client baglantisi baslatilamadi.");
+                    return false;
+                }
+
+                SetOfflineScenePlayerActive(false);
+                PublishStatus($"LAN oturumuna baglaniliyor: {address}:{port}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                PublishStatus($"LAN join hatasi: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private static bool TryParseDirectJoinCode(string input, out string address, out ushort port)
+        {
+            address = string.Empty;
+            port = 7777;
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return false;
+            }
+
+            var value = input.Trim();
+            if (value.StartsWith("LAN:", StringComparison.OrdinalIgnoreCase))
+            {
+                value = value.Substring(4);
+            }
+            else if (!value.Contains(".") && !value.Contains(":") && !value.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var separatorIndex = value.LastIndexOf(':');
+            if (separatorIndex > 0 && ushort.TryParse(value.Substring(separatorIndex + 1), out var parsedPort))
+            {
+                port = parsedPort;
+                value = value.Substring(0, separatorIndex);
+            }
+
+            address = value.Trim();
+            return !string.IsNullOrWhiteSpace(address);
+        }
+
+        private static string BuildDirectJoinCode(string address, ushort port)
+        {
+            return $"LAN:{address}:{port}";
+        }
+
+        private static string ResolveLanAddress()
+        {
+            try
+            {
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var address in host.AddressList)
+                {
+                    if (address.AddressFamily != AddressFamily.InterNetwork)
+                    {
+                        continue;
+                    }
+
+                    var text = address.ToString();
+                    if (!text.StartsWith("127.", StringComparison.Ordinal))
+                    {
+                        return text;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[RelayNetworkBootstrap] LAN adresi okunamadi: {ex.Message}");
+            }
+
+            return "127.0.0.1";
         }
 
         private void SubscribeToNetworkEvents()

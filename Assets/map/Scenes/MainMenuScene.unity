@@ -335,13 +335,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e088a1f4412469c43998a5b79f3461e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Online.RelayNetworkBootstrap
-  networkManager: {fileID: 0}
-  unityTransport: {fileID: 0}
+  networkManager: {fileID: 8261246506550512633}
+  unityTransport: {fileID: 6272977231054237246}
   networkCaseState: {fileID: 0}
   offlineScenePlayerRoot: {fileID: 0}
   maxPlayers: 4
   relayConnectionType: dtls
   autoInitializeUnityServices: 1
+  directListenAddress: 0.0.0.0
+  directPort: 7777
 --- !u!114 &4715614428496812517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -354,7 +356,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c15aaad046945e2498f8506f048fbbeb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.UI.UguiMainMenuHud
-  logic: {fileID: 0}
+  logic: {fileID: 5993532955570881312}
 --- !u!4 &4775012277957090507
 Transform:
   m_ObjectHideFlags: 0
@@ -400,10 +402,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2cbf67ab4b599df409552db4f5e86d85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.UI.MainMenuHud
-  bootstrap: {fileID: 0}
+  bootstrap: {fileID: 4474039577252106988}
   startOpen: 1
   restartCaseOnStart: 1
-  renderWithOnGui: 1
+  renderWithOnGui: 0
 --- !u!114 &6272977231054237246
 MonoBehaviour:
   m_ObjectHideFlags: 0

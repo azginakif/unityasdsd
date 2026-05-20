@@ -18,6 +18,7 @@ namespace MobilOfl.Gameplay
         private AudioClip _successClip;
         private AudioClip _warningClip;
         private AudioClip _scanClip;
+        private float _nextHeartbeat;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstance()
@@ -47,6 +48,12 @@ namespace MobilOfl.Gameplay
             _successClip = CreateTone("Success", 520f, 1040f, 0.32f, 0.25f);
             _warningClip = CreateTone("Warning", 180f, 120f, 0.22f, 0.26f);
             _scanClip = CreateTone("Scan", 260f, 680f, 0.28f, 0.14f);
+            if (AudioListener.volume <= 0.001f)
+            {
+                AudioListener.volume = 0.75f;
+            }
+
+            Play(_noteClip, 0.28f);
         }
 
         private void OnDestroy()
@@ -58,6 +65,7 @@ namespace MobilOfl.Gameplay
         {
             if (_session == CaseSessionManager.Instance)
             {
+                PlayLowTensionPulse();
                 return;
             }
 
@@ -75,6 +83,23 @@ namespace MobilOfl.Gameplay
             _session.CaseResolved += HandleCaseResolved;
             _session.InferenceUnlocked += HandleInferenceUnlocked;
             _session.SessionMessagePublished += HandleSessionMessagePublished;
+        }
+
+        private void PlayLowTensionPulse()
+        {
+            if (Time.time < _nextHeartbeat || DynamicAtmosphereController.Instance == null)
+            {
+                return;
+            }
+
+            var tension = DynamicAtmosphereController.Instance.TensionBlend;
+            if (tension < 0.35f)
+            {
+                return;
+            }
+
+            _nextHeartbeat = Time.time + Mathf.Lerp(2.6f, 1.25f, tension);
+            Play(_warningClip, Mathf.Lerp(0.08f, 0.22f, tension));
         }
 
         private void Unsubscribe()

@@ -9,6 +9,10 @@ namespace MobilOfl.Gameplay
         public string PromptText => promptText;
         public virtual bool RequiresHold => false;
         public virtual float HoldDuration => 0f;
+        public virtual bool CanShowInteractionPrompt(GameObject interactor)
+        {
+            return isActiveAndEnabled;
+        }
 
         public virtual float GetHoldDuration(GameObject interactor)
         {

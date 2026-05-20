@@ -11,7 +11,6 @@ namespace MobilOfl.Gameplay
         [SerializeField] private float interactDistance = 4.5f;
         [SerializeField] private float minimumInteractDistance = 5.25f;
         [SerializeField] private float aimAssistRadius = 0.56f;
-        [SerializeField] private float nearbyButtonRadius = 3.2f;
         [SerializeField] private float targetGraceTime = 0.25f;
         [SerializeField] private float scanAssistDistanceBonus = 1.35f;
         [SerializeField] private float scanAssistRadiusBonus = 0.22f;
@@ -146,13 +145,6 @@ namespace MobilOfl.Gameplay
                 return;
             }
 
-            var allowNearbySoftTarget = MobileInvestigationOverlay.IsMobileHudVisible || InvestigationScanner.IsScanActive;
-            if ((interactPressed || allowNearbySoftTarget) && TryFindNearbyInteractable(out var nearbyInteractable))
-            {
-                SetCurrentInteractable(nearbyInteractable);
-                return;
-            }
-
             if (_lastInteractable != null)
             {
                 ResetHoldState();
@@ -171,7 +163,9 @@ namespace MobilOfl.Gameplay
             if (Physics.Raycast(ray, out var exactHit, distance, interactMask, QueryTriggerInteraction.Collide))
             {
                 interactable = exactHit.collider.GetComponentInParent<InteractableBase>();
-                if (interactable != null && interactable.isActiveAndEnabled)
+                if (interactable != null &&
+                    interactable.isActiveAndEnabled &&
+                    interactable.CanShowInteractionPrompt(gameObject))
                 {
                     return true;
                 }
@@ -190,7 +184,9 @@ namespace MobilOfl.Gameplay
                 }
 
                 var candidate = hit.collider.GetComponentInParent<InteractableBase>();
-                if (candidate == null || !candidate.isActiveAndEnabled)
+                if (candidate == null ||
+                    !candidate.isActiveAndEnabled ||
+                    !candidate.CanShowInteractionPrompt(gameObject))
                 {
                     continue;
                 }
@@ -200,47 +196,6 @@ namespace MobilOfl.Gameplay
                     ? Vector3.Dot(ray.direction, toHit.normalized)
                     : 1f;
                 var score = hit.distance + (1f - Mathf.Clamp01(alignment)) * 1.35f;
-                if (score >= bestScore)
-                {
-                    continue;
-                }
-
-                bestScore = score;
-                interactable = candidate;
-            }
-
-            return interactable != null;
-        }
-
-        private bool TryFindNearbyInteractable(out InteractableBase interactable)
-        {
-            interactable = null;
-            var center = transform.position + Vector3.up * 1.05f;
-            var colliders = Physics.OverlapSphere(center, Mathf.Max(0.25f, nearbyButtonRadius), interactMask, QueryTriggerInteraction.Collide);
-            var bestScore = float.PositiveInfinity;
-            var cameraForward = playerCamera != null ? playerCamera.transform.forward : transform.forward;
-
-            for (var i = 0; i < colliders.Length; i++)
-            {
-                var collider = colliders[i];
-                if (collider == null)
-                {
-                    continue;
-                }
-
-                var candidate = collider.GetComponentInParent<InteractableBase>();
-                if (candidate == null || !candidate.isActiveAndEnabled)
-                {
-                    continue;
-                }
-
-                var closestPoint = collider.ClosestPoint(center);
-                var offset = closestPoint - center;
-                var distance = offset.magnitude;
-                var facing = offset.sqrMagnitude > 0.001f
-                    ? Vector3.Dot(cameraForward, offset.normalized)
-                    : 1f;
-                var score = distance + (1f - Mathf.Clamp01((facing + 1f) * 0.5f)) * 0.8f;
                 if (score >= bestScore)
                 {
                     continue;

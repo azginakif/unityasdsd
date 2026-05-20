@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using MobilOfl.Case;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace MobilOfl.Gameplay
 {
@@ -97,11 +100,21 @@ namespace MobilOfl.Gameplay
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            if (activeCase == null)
+            {
+                activeCase = ResolveDefaultCaseDefinition();
+            }
+
             SetActiveCase(activeCase);
         }
 
         public void SetActiveCase(CaseDefinition caseDefinition)
         {
+            if (caseDefinition == null)
+            {
+                caseDefinition = ResolveDefaultCaseDefinition();
+            }
+
             activeCase = caseDefinition;
             _collectedEvidenceIds.Clear();
             _unlockedToolIds.Clear();
@@ -667,7 +680,7 @@ namespace MobilOfl.Gameplay
             var readySuspect = activeCase.Suspects.FirstOrDefault(item => item != null && CanAccuse(item.Id));
             if (readySuspect != null)
             {
-                return $"{readySuspect.DisplayName} icin yeterli delil var. Vaka masasindan suclama yapabilirsin.";
+                return $"{readySuspect.DisplayName} icin yeterli delil var. Notebook'ta Supheliler sekmesinden suclama yapabilirsin.";
             }
 
             return "Suphelilerin eksik delillerini dosyada karsilastir ve son ipuclarini topla.";
@@ -966,6 +979,21 @@ namespace MobilOfl.Gameplay
             {
                 history.RemoveAt(0);
             }
+        }
+
+        private static CaseDefinition ResolveDefaultCaseDefinition()
+        {
+            var resourceCase = Resources.Load<CaseDefinition>("Cases/ExamTheftCase");
+            if (resourceCase != null)
+            {
+                return resourceCase;
+            }
+
+#if UNITY_EDITOR
+            return AssetDatabase.LoadAssetAtPath<CaseDefinition>("Assets/Data/Cases/ExamTheftCase.asset");
+#else
+            return null;
+#endif
         }
     }
 }

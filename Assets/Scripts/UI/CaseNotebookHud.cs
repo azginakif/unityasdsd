@@ -74,9 +74,8 @@ namespace MobilOfl.UI
             if (Instance == this)
             {
                 Instance = null;
+                IsAnyNotebookOpen = false;
             }
-
-            IsAnyNotebookOpen = false;
         }
 
         private void Update()

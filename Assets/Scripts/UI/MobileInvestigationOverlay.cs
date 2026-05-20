@@ -116,26 +116,19 @@ namespace MobilOfl.UI
             var currentInteractable = playerInteraction.CurrentInteractable;
             if (currentInteractable != null)
             {
-                var actionHint = currentInteractable.RequiresHold ? "AL basili tut" : "AL dokun";
-                UpdateContextVisuals(true, $"{actionHint}: {TrimForMobile(currentInteractable.PromptText, 44)}");
+                UpdateContextVisuals(false, string.Empty);
                 return;
             }
 
-            if (InvestigationScanner.IsScanActive)
-            {
-                UpdateContextVisuals(true, TrimForMobile(InvestigationScanner.LastScanSummary, 72));
-                return;
-            }
-
-            UpdateContextVisuals(false, "Delil veya NPC hedefine yaklas.");
+            UpdateContextVisuals(false, string.Empty);
         }
 
         private void UpdateContextVisuals(bool hasTarget, string message)
         {
-            _contextAlpha = hasTarget ? 1f : 0.7f;
+            _contextAlpha = hasTarget ? 1f : 0f;
             if (contextText != null)
             {
-                contextText.text = hasTarget ? message : message;
+                contextText.text = hasTarget ? message : string.Empty;
             }
         }
 
@@ -364,6 +357,26 @@ namespace MobilOfl.UI
             if (rootGroup == null)
             {
                 rootGroup = GetComponent<CanvasGroup>();
+            }
+
+            if (headerSubtitleText == null)
+            {
+                headerSubtitleText = transform.Find("MobileHudHeader/HeaderSubtitle")?.GetComponent<Text>();
+            }
+
+            if (zoneText == null)
+            {
+                zoneText = transform.Find("MobileHudHeader/ZoneText")?.GetComponent<Text>();
+            }
+
+            if (objectiveText == null)
+            {
+                objectiveText = transform.Find("MobileObjectivePanel/ObjectiveText")?.GetComponent<Text>();
+            }
+
+            if (contextText == null)
+            {
+                contextText = transform.Find("MobileContextPanel/ContextText")?.GetComponent<Text>();
             }
 
             if (contextGroup == null)

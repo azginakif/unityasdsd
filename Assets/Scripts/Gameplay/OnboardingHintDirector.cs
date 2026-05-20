@@ -102,7 +102,7 @@ namespace MobilOfl.Gameplay
 
             if (!_publishedAccuseHint && _session.HasAnyAccusableSuspect())
             {
-                Publish("Final hazir: Vaka Masasi'na git, dosyada Supheliler sekmesini ac ve son suclamayi yap.");
+                Publish("Final hazir: Notebook'ta Supheliler sekmesini ac ve son suclamayi yap.");
                 _publishedAccuseHint = true;
             }
         }

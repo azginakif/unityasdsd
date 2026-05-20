@@ -6,7 +6,8 @@ namespace MobilOfl.UI
     public class WorldMarkerHud : MonoBehaviour
     {
         [SerializeField] private Camera targetCamera;
-        [SerializeField] private float maxDistance = 28f;
+        [SerializeField] private float maxDistance = 8f;
+        [SerializeField] private float normalViewCenterRadius = 0.18f;
 
         private GUIStyle _markerStyle;
 
@@ -70,6 +71,12 @@ namespace MobilOfl.UI
 
             var viewport = targetCamera.WorldToViewportPoint(worldPosition);
             if (viewport.z <= 0f || viewport.x < 0f || viewport.x > 1f || viewport.y < 0f || viewport.y > 1f)
+            {
+                return;
+            }
+
+            var centerDistance = Vector2.Distance(new Vector2(viewport.x, viewport.y), new Vector2(0.5f, 0.5f));
+            if (!InvestigationScanner.IsScanActive && centerDistance > Mathf.Max(0.02f, normalViewCenterRadius))
             {
                 return;
             }

@@ -125,15 +125,15 @@ namespace MobilOfl.UI
             if (Instance == this)
             {
                 Instance = null;
+                IsBlockingGameplay = false;
             }
-
-            IsBlockingGameplay = false;
         }
 
         private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
             if (scene.name == "SampleScene")
             {
+                DestroyInactiveDuplicateNetworkManagers();
                 EnsureBootstrap();
                 if (bootstrap != null)
                 {
@@ -543,7 +543,7 @@ namespace MobilOfl.UI
 
             GUILayout.Space(8f);
 
-            var isHost = bootstrap != null && bootstrap.CurrentMode == "Host";
+            var isHost = bootstrap != null && bootstrap.IsHost;
             if (isHost && networkCaseState.CanHostStartInvestigation)
             {
                 if (GUILayout.Button("Operasyonu Baslat", _buttonStyle, GUILayout.Height(38f), GUILayout.Width(180f)))
@@ -636,6 +636,58 @@ namespace MobilOfl.UI
 
             _pendingSoloStart = true;
             LoadGameplayScene();
+        }
+
+        private static void DestroyInactiveDuplicateNetworkManagers()
+        {
+            var managers = Object.FindObjectsByType<Unity.Netcode.NetworkManager>(FindObjectsInactive.Include);
+            if (managers.Length <= 1)
+            {
+                return;
+            }
+
+            var singleton = Unity.Netcode.NetworkManager.Singleton;
+            Unity.Netcode.NetworkManager canonicalManager = null;
+            if (singleton != null && singleton.IsListening)
+            {
+                for (var i = 0; i < managers.Length; i++)
+                {
+                    if (managers[i] != null && managers[i] == singleton)
+                    {
+                        canonicalManager = managers[i];
+                        break;
+                    }
+                }
+            }
+
+            if (canonicalManager == null)
+            {
+                var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+                for (var i = 0; i < managers.Length; i++)
+                {
+                    if (managers[i] != null && managers[i].gameObject.scene == activeScene)
+                    {
+                        canonicalManager = managers[i];
+                        break;
+                    }
+                }
+            }
+
+            if (canonicalManager == null)
+            {
+                canonicalManager = managers[0];
+            }
+
+            for (var i = 0; i < managers.Length; i++)
+            {
+                var manager = managers[i];
+                if (manager == null || manager == canonicalManager)
+                {
+                    continue;
+                }
+
+                Destroy(manager.gameObject);
+            }
         }
 
         private void ExecuteSoloStartOnLoaded()

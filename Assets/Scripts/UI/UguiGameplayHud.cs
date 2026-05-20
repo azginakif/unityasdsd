@@ -17,6 +17,9 @@ namespace MobilOfl.UI
 
         private Canvas _canvas;
         private RectTransform _root;
+        private RectTransform _statusCard;
+        private RectTransform _objectiveCard;
+        private RectTransform _waypointCard;
         private Text _statusTitleText;
         private Text _statusBodyText;
         private Text _objectiveText;
@@ -174,27 +177,32 @@ namespace MobilOfl.UI
         private void BuildStatusCard()
         {
             var card = RuntimeUiFactory.CreateCard("StatusCard", _root, ModernGuiTheme.PanelColor, ModernGuiTheme.AccentColor);
+            _statusCard = card;
             card.anchorMin = new Vector2(0f, 1f);
             card.anchorMax = new Vector2(0f, 1f);
             card.pivot = new Vector2(0f, 1f);
-            card.anchoredPosition = new Vector2(18f, -18f);
-            card.sizeDelta = new Vector2(310f, 112f);
-            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(14, 14, 15, 10));
-            _statusTitleText = RuntimeUiFactory.CreateText("StatusTitle", card, "Vaka", 18, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _statusBodyText = RuntimeUiFactory.CreateText("StatusBody", card, string.Empty, 12, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            card.anchoredPosition = new Vector2(14f, -14f);
+            card.sizeDelta = new Vector2(308f, 82f);
+            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(13, 13, 12, 9));
+            _statusTitleText = RuntimeUiFactory.CreateText("StatusTitle", card, "Vaka", 16, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _statusBodyText = RuntimeUiFactory.CreateText("StatusBody", card, string.Empty, 11, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
         }
 
         private void BuildObjectiveCard()
         {
             var card = RuntimeUiFactory.CreateCard("ObjectiveCard", _root, ModernGuiTheme.PanelColor, ModernGuiTheme.AccentWarmColor);
+            _objectiveCard = card;
             card.anchorMin = new Vector2(1f, 1f);
             card.anchorMax = new Vector2(1f, 1f);
             card.pivot = new Vector2(1f, 1f);
-            card.anchoredPosition = new Vector2(-18f, -18f);
-            card.sizeDelta = new Vector2(360f, 96f);
-            RuntimeUiFactory.AddVerticalLayout(card, 5f, new RectOffset(14, 14, 15, 10));
-            RuntimeUiFactory.CreateText("ObjectiveLabel", card, "HEDEF", 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _objectiveText = RuntimeUiFactory.CreateText("ObjectiveBody", card, string.Empty, 13, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            card.anchoredPosition = new Vector2(-14f, -14f);
+            card.sizeDelta = new Vector2(348f, 82f);
+            RuntimeUiFactory.AddVerticalLayout(card, 3f, new RectOffset(13, 13, 12, 9));
+            RuntimeUiFactory.CreateText("ObjectiveLabel", card, "HEDEF", 12, ModernGuiTheme.MutedTextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _objectiveText = RuntimeUiFactory.CreateText("ObjectiveBody", card, string.Empty, 12, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _objectiveText.resizeTextForBestFit = true;
+            _objectiveText.resizeTextMinSize = 10;
+            _objectiveText.resizeTextMaxSize = 12;
         }
 
         private void BuildStaminaBar()
@@ -228,11 +236,11 @@ namespace MobilOfl.UI
             _scanCard.anchorMin = new Vector2(0.5f, 1f);
             _scanCard.anchorMax = new Vector2(0.5f, 1f);
             _scanCard.pivot = new Vector2(0.5f, 1f);
-            _scanCard.anchoredPosition = new Vector2(280f, -18f);
-            _scanCard.sizeDelta = new Vector2(120f, 44f);
+            _scanCard.anchoredPosition = new Vector2(208f, -14f);
+            _scanCard.sizeDelta = new Vector2(104f, 36f);
 
-            var scanLayout = RuntimeUiFactory.AddVerticalLayout(_scanCard, 1f, new RectOffset(8, 8, 6, 4));
-            _scanText = RuntimeUiFactory.CreateText("ScanLabel", _scanCard, "TARA", 11, ModernGuiTheme.ScanReadyColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            RuntimeUiFactory.AddVerticalLayout(_scanCard, 1f, new RectOffset(8, 8, 5, 4));
+            _scanText = RuntimeUiFactory.CreateText("ScanLabel", _scanCard, "TARA", 10, ModernGuiTheme.ScanReadyColor, FontStyle.Bold, TextAnchor.MiddleCenter);
 
             var scanTrack = RuntimeUiFactory.CreateUiRoot("ScanTrack", _scanCard);
             RuntimeUiFactory.EnsureLayoutElement(scanTrack, preferredHeight: 5f);
@@ -255,11 +263,11 @@ namespace MobilOfl.UI
             _flashlightCard.anchorMin = new Vector2(0.5f, 1f);
             _flashlightCard.anchorMax = new Vector2(0.5f, 1f);
             _flashlightCard.pivot = new Vector2(0.5f, 1f);
-            _flashlightCard.anchoredPosition = new Vector2(-280f, -18f);
-            _flashlightCard.sizeDelta = new Vector2(120f, 44f);
+            _flashlightCard.anchoredPosition = new Vector2(-208f, -14f);
+            _flashlightCard.sizeDelta = new Vector2(104f, 36f);
 
-            RuntimeUiFactory.AddVerticalLayout(_flashlightCard, 1f, new RectOffset(8, 8, 6, 4));
-            _flashlightText = RuntimeUiFactory.CreateText("FlashlightLabel", _flashlightCard, "FENER", 11, ModernGuiTheme.FlashlightUIColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            RuntimeUiFactory.AddVerticalLayout(_flashlightCard, 1f, new RectOffset(8, 8, 5, 4));
+            _flashlightText = RuntimeUiFactory.CreateText("FlashlightLabel", _flashlightCard, "FENER", 10, ModernGuiTheme.FlashlightUIColor, FontStyle.Bold, TextAnchor.MiddleCenter);
 
             var flashTrack = RuntimeUiFactory.CreateUiRoot("FlashTrack", _flashlightCard);
             RuntimeUiFactory.EnsureLayoutElement(flashTrack, preferredHeight: 5f);
@@ -282,15 +290,19 @@ namespace MobilOfl.UI
             card.anchorMin = new Vector2(0.5f, 1f);
             card.anchorMax = new Vector2(0.5f, 1f);
             card.pivot = new Vector2(0.5f, 1f);
-            card.anchoredPosition = new Vector2(0f, -26f);
-            card.sizeDelta = new Vector2(600f, 52f);
-            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(16, 16, 11, 8));
-            _messageText = RuntimeUiFactory.CreateText("MessageText", card, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
+            card.anchoredPosition = new Vector2(0f, -38f);
+            card.sizeDelta = new Vector2(540f, 44f);
+            RuntimeUiFactory.AddVerticalLayout(card, 0f, new RectOffset(16, 16, 9, 7));
+            _messageText = RuntimeUiFactory.CreateText("MessageText", card, string.Empty, 13, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.MiddleCenter);
             _messageGroup = card.gameObject.GetComponent<CanvasGroup>();
             if (_messageGroup == null)
             {
                 _messageGroup = card.gameObject.AddComponent<CanvasGroup>();
             }
+
+            _messageGroup.alpha = 0f;
+            _messageGroup.blocksRaycasts = false;
+            _messageGroup.interactable = false;
         }
 
         private void BuildLocationBanner()
@@ -309,19 +321,24 @@ namespace MobilOfl.UI
             {
                 _locationGroup = card.gameObject.AddComponent<CanvasGroup>();
             }
+
+            _locationGroup.alpha = 0f;
+            _locationGroup.blocksRaycasts = false;
+            _locationGroup.interactable = false;
         }
 
         private void BuildWaypointCard()
         {
             var card = RuntimeUiFactory.CreateCard("WaypointCard", _root, ModernGuiTheme.PanelColor, ModernGuiTheme.AccentWarmColor);
+            _waypointCard = card;
             card.anchorMin = new Vector2(0.5f, 0f);
             card.anchorMax = new Vector2(0.5f, 0f);
             card.pivot = new Vector2(0.5f, 0f);
-            card.anchoredPosition = new Vector2(0f, 20f);
-            card.sizeDelta = new Vector2(430f, 76f);
-            RuntimeUiFactory.AddVerticalLayout(card, 2f, new RectOffset(16, 16, 14, 10));
-            _waypointTitleText = RuntimeUiFactory.CreateText("WaypointTitle", card, string.Empty, 14, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
-            _waypointBodyText = RuntimeUiFactory.CreateText("WaypointBody", card, string.Empty, 12, ModernGuiTheme.TextColor, FontStyle.Normal, TextAnchor.UpperLeft);
+            card.anchoredPosition = new Vector2(0f, 16f);
+            card.sizeDelta = new Vector2(390f, 62f);
+            RuntimeUiFactory.AddVerticalLayout(card, 1f, new RectOffset(14, 14, 11, 8));
+            _waypointTitleText = RuntimeUiFactory.CreateText("WaypointTitle", card, string.Empty, 12, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
+            _waypointBodyText = RuntimeUiFactory.CreateText("WaypointBody", card, string.Empty, 11, ModernGuiTheme.TextColor, FontStyle.Bold, TextAnchor.UpperLeft);
             _waypointMetaText = RuntimeUiFactory.CreateText("WaypointMeta", card, string.Empty, 10, ModernGuiTheme.MutedTextColor, FontStyle.Normal, TextAnchor.UpperLeft);
         }
 
@@ -452,6 +469,11 @@ namespace MobilOfl.UI
         private void UpdateMobileControlLayout()
         {
             var showDesktopBottomCards = !MobileInvestigationOverlay.IsMobileHudVisible;
+            if (_waypointCard != null)
+            {
+                _waypointCard.gameObject.SetActive(showDesktopBottomCards);
+            }
+
             if (_checklistCard != null)
             {
                 _checklistCard.gameObject.SetActive(showDesktopBottomCards);
@@ -465,9 +487,30 @@ namespace MobilOfl.UI
 
         private void RefreshImmediate()
         {
+            RefreshMessageBanner();
+            RefreshLocationVisuals();
+            RefreshStaminaBar();
+            RefreshScanCooldown();
+            RefreshFlashlight();
+
             var session = CaseSessionManager.Instance;
             if (session == null || session.ActiveCase == null)
             {
+                if (_statusTitleText != null)
+                {
+                    _statusTitleText.text = "Vaka";
+                }
+
+                if (_statusBodyText != null)
+                {
+                    _statusBodyText.text = "Vaka bilgisi yukleniyor.";
+                }
+
+                if (_objectiveText != null)
+                {
+                    _objectiveText.text = "Ilk delili bulmak icin koridoru tara.";
+                }
+
                 return;
             }
 
@@ -476,11 +519,6 @@ namespace MobilOfl.UI
             RefreshWaypoint(session);
             RefreshChecklist(session);
             RefreshTension();
-            RefreshMessageBanner();
-            RefreshLocationVisuals();
-            RefreshStaminaBar();
-            RefreshScanCooldown();
-            RefreshFlashlight();
         }
 
         private void RefreshStatus(CaseSessionManager session)
@@ -489,23 +527,18 @@ namespace MobilOfl.UI
             var zone = playerInteraction != null
                 ? SchoolLocationUtility.GetZoneTitle(playerInteraction.transform.position)
                 : "Bolge yok";
-            var target = playerInteraction != null && playerInteraction.CurrentInteractable != null
-                ? playerInteraction.CurrentInteractable.PromptText
-                : "Serbest kesif";
             var networkLine = string.Empty;
             var bootstrap = Object.FindAnyObjectByType<RelayNetworkBootstrap>();
             if (bootstrap != null && !string.IsNullOrWhiteSpace(bootstrap.CurrentStatus))
             {
                 networkLine = string.IsNullOrWhiteSpace(bootstrap.CurrentJoinCode)
-                    ? $"\n{bootstrap.CurrentStatus}"
-                    : $"\n{bootstrap.CurrentStatus} [{bootstrap.CurrentJoinCode}]";
+                    ? $" | {bootstrap.CurrentStatus}"
+                    : $" | {bootstrap.CurrentStatus} [{bootstrap.CurrentJoinCode}]";
             }
 
             _statusBodyText.text =
-                $"Operatif: {PlayerProfileSettings.LoadPlayerName()}   Sure: {FormatElapsedTime(session.ElapsedCaseTimeSeconds)}\n" +
-                $"Delil {session.CollectedEvidenceIds.Count}/{session.ActiveCase.EvidenceItems.Count}   Kritik {session.CollectedCriticalEvidenceCount}/{session.TotalCriticalEvidenceCount}\n" +
-                $"{zone}   |   {target}" +
-                networkLine;
+                $"{zone.ToUpperInvariant()} | {FormatElapsedTime(session.ElapsedCaseTimeSeconds)}\n" +
+                $"Delil {session.CollectedEvidenceIds.Count}/{session.ActiveCase.EvidenceItems.Count}  Kritik {session.CollectedCriticalEvidenceCount}/{session.TotalCriticalEvidenceCount}{networkLine}";
         }
 
         private void RefreshObjective(CaseSessionManager session)
@@ -513,11 +546,11 @@ namespace MobilOfl.UI
             var stealth = Object.FindAnyObjectByType<PlayerStealthController>();
             if (stealth != null && stealth.IsHighAlert)
             {
-                _objectiveText.text = "Dikkat seviyesi yuksek. En yakin sakinlesme noktasina cekilip NPC baskisini dusur.";
+                _objectiveText.text = "Dikkat yuksek. Sakinlesme noktasina cekil.";
                 return;
             }
 
-            _objectiveText.text = session.GetRecommendedNextStep();
+            _objectiveText.text = TrimHudLine(session.GetRecommendedNextStep(), 82);
         }
 
         private void RefreshWaypoint(CaseSessionManager session)
@@ -541,8 +574,8 @@ namespace MobilOfl.UI
             worldPosition = SchoolLocationUtility.PrototypeToWorldPosition(worldPosition, playerInteraction.transform.position);
             var directionHint = GetDirectionHint(worldPosition);
             var distance = Vector3.Distance(playerInteraction.transform.position, worldPosition);
-            _waypointTitleText.text = "SONRAKI HEDEF: " + title;
-            _waypointBodyText.text = subtitle;
+            _waypointTitleText.text = "SONRAKI HEDEF";
+            _waypointBodyText.text = title + " - " + TrimHudLine(subtitle, 74);
             _waypointMetaText.text = $"Yon: {directionHint}   Uzaklik: {distance:0}m";
         }
 
@@ -1050,9 +1083,9 @@ namespace MobilOfl.UI
 
             if (session.HasAnyAccusableSuspect())
             {
-                title = "Vaka Masasi";
-                worldPosition = new Vector3(0f, 1f, -5.6f);
-                subtitle = "Dosyayi acip supheliyi secmek icin artik yeterli delil var.";
+                title = "Vaka Dosyasi";
+                worldPosition = new Vector3(0f, 1f, 4f);
+                subtitle = "Notebook'u acip supheliyi secmek icin artik yeterli delil var.";
                 return true;
             }
 
@@ -1111,6 +1144,16 @@ namespace MobilOfl.UI
             }
 
             return compact.Length <= 180 ? compact : compact.Substring(0, 177) + "...";
+        }
+
+        private static string TrimHudLine(string value, int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            return value.Substring(0, Mathf.Max(0, maxLength - 3)).TrimEnd() + "...";
         }
 
         private static string FormatElapsedTime(float timeSeconds)

@@ -31,11 +31,17 @@ namespace MobilOfl.Gameplay
         public Color MarkerColor => markerColor.a <= 0f ? new Color(0.92f, 0.74f, 0.3f, 1f) : markerColor;
         public bool IsMarkerVisible =>
             isActiveAndEnabled &&
+            !string.IsNullOrWhiteSpace(hiddenEvidenceId) &&
             CaseSessionManager.Instance != null &&
             !CaseSessionManager.Instance.HasEvidence(hiddenEvidenceId);
 
         public override bool RequiresHold => true;
         public override float HoldDuration => Mathf.Clamp(searchDuration, 0.35f, 1.1f);
+
+        public override bool CanShowInteractionPrompt(GameObject interactor)
+        {
+            return IsMarkerVisible;
+        }
 
         public void ConfigureToolGate(string toolId, string message)
         {
@@ -99,7 +105,10 @@ namespace MobilOfl.Gameplay
 
         public override bool TryInteract(GameObject interactor)
         {
-            if (caseDefinition == null || string.IsNullOrWhiteSpace(hiddenEvidenceId) || CaseSessionManager.Instance == null)
+            var sourceCase = caseDefinition != null
+                ? caseDefinition
+                : (CaseSessionManager.Instance != null ? CaseSessionManager.Instance.ActiveCase : null);
+            if (sourceCase == null || string.IsNullOrWhiteSpace(hiddenEvidenceId) || CaseSessionManager.Instance == null)
             {
                 return false;
             }
@@ -119,7 +128,7 @@ namespace MobilOfl.Gameplay
             var networkCaseState = NetworkCaseState.Instance;
             var collected = networkCaseState != null && networkCaseState.IsOnlineSessionActive
                 ? networkCaseState.RequestCollectEvidence(hiddenEvidenceId)
-                : CaseSessionManager.Instance.TryCollectEvidence(caseDefinition, hiddenEvidenceId);
+                : CaseSessionManager.Instance.TryCollectEvidence(sourceCase, hiddenEvidenceId);
 
             if (!collected)
             {

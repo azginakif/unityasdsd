@@ -14,6 +14,11 @@ namespace MobilOfl.Gameplay
         public override bool RequiresHold => true;
         public override float HoldDuration => Mathf.Clamp(holdDuration, 0.35f, 0.95f);
 
+        public override bool CanShowInteractionPrompt(GameObject interactor)
+        {
+            return isActiveAndEnabled && interactor != null && GetDistanceToInteractor(interactor) <= Mathf.Max(1f, useDistance, 4.6f);
+        }
+
         public override bool CanMaintainHold(GameObject interactor)
         {
             if (interactor == null)

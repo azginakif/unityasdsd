@@ -170,10 +170,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 916f4ab39e7b58e4fb75ae5c7a50b5e7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.PrototypeFirstPersonController
   cameraPivot: {fileID: 8045666057178384635}
   walkSpeed: 4.5
   sprintSpeed: 6.5
+  groundAcceleration: 18
+  groundDeceleration: 24
+  airControl: 7
+  moveInputDeadZone: 0.08
   allowJump: 0
   allowCrouch: 0
   jumpHeight: 1.1
@@ -209,18 +213,20 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 529d26772a1c3b74e85a023619b49ac1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.PlayerInteractionController
   playerCamera: {fileID: 291103391134749725}
   interactDistance: 4
   minimumInteractDistance: 5.25
-  aimAssistRadius: 0.46
-  nearbyButtonRadius: 2.35
+  aimAssistRadius: 0.56
+  targetGraceTime: 0.25
+  scanAssistDistanceBonus: 1.35
+  scanAssistRadiusBonus: 0.22
   interactMask:
     serializedVersion: 2
     m_Bits: 4294967295
   interactKey: 19
   alternateInteractKey: 16
-  secondAlternateInteractKey: 20
+  secondAlternateInteractKey: 0
   mobileInteractButton: {fileID: 0}
 --- !u!114 &2177019396565199461
 MonoBehaviour:
@@ -233,7 +239,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c07e2e1249404825b5c6ec6a85f7a2fd, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.InvestigationScanner
   playerCamera: {fileID: 291103391134749725}
   playerInteraction: {fileID: 814082020620784088}
   scanKey: 31
@@ -253,7 +259,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1f0aa38f93ce44dcbeaa95211b8d8814, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.PlayerStealthController
   movementController: {fileID: 2075874614360215883}
   scanner: {fileID: 2177019396565199461}
   walkNoise: 0.34
@@ -277,7 +283,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f830cc7af3874e8fbb2f6d793f7c7bbf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Gameplay.TeamPingController
   playerCamera: {fileID: 291103391134749725}
   playerInteraction: {fileID: 814082020620784088}
   pingKey: 32
@@ -293,8 +299,8 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2616102937
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2335098690
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -318,7 +324,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
   AutoOwnerAuthorityTickOffset: 1
@@ -364,7 +370,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e05f528fb679f24d97063a3fa464452, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::MobilOfl.Online.NetworkPlayerAvatar
   ShowTopMostFoldoutHeaderGroup: 1
   movementController: {fileID: 2075874614360215883}
   interactionController: {fileID: 814082020620784088}

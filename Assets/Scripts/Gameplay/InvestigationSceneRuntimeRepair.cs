@@ -20,6 +20,7 @@ namespace MobilOfl.Gameplay
 
             EnsurePlayerCharacterVisual();
             EnsureNpcCharacterVisuals();
+            EnsureNpcDialogueData();
             EnsureKnownSearchSpotGates();
             EnsureToolPickup(
                 "tool.archive-pass",
@@ -173,6 +174,129 @@ namespace MobilOfl.Gameplay
                 visual.transform.localPosition = Vector3.zero;
                 visual.transform.localRotation = Quaternion.identity;
                 visual.transform.localScale = Vector3.one;
+            }
+        }
+
+        private static void EnsureNpcDialogueData()
+        {
+            var activeCase = CaseSessionManager.Instance != null ? CaseSessionManager.Instance.ActiveCase : null;
+            var npcs = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include);
+            if (npcs == null || npcs.Length == 0)
+            {
+                return;
+            }
+
+            System.Array.Sort(npcs, (left, right) =>
+            {
+                var leftKey = left == null ? float.MaxValue : left.transform.position.x * 1000f + left.transform.position.z;
+                var rightKey = right == null ? float.MaxValue : right.transform.position.x * 1000f + right.transform.position.z;
+                return leftKey.CompareTo(rightKey);
+            });
+
+            var profiles = new[]
+            {
+                new NpcDialogueProfile(
+                    "npc.security-guard",
+                    "Guvenlik Gorevlisi",
+                    "Kamera kaydini gormeden net konusamam. Once guvenlik odasindaki terminale bak.",
+                    "22:15'te bilisim kulubu ogrencisini laboratuvar koridorunda gordum. Aceleciydi ve elinde not defteri vardi.",
+                    "evidence.security-log",
+                    "evidence.guard-testimony",
+                    new Color(0.96f, 0.68f, 0.24f, 1f)),
+                new NpcDialogueProfile(
+                    "npc.library-student",
+                    "Kutuphane Ogrencisi",
+                    "Kutuphanede bir not dustu ama kime ait oldugundan emin degilim.",
+                    "Not, bilisim kulubu ogrencisinin defterinden dustu. Panikleyip hemen koridora cikti.",
+                    "evidence.answer-key-note",
+                    "evidence.student-testimony",
+                    new Color(0.25f, 0.82f, 1f, 1f)),
+                new NpcDialogueProfile(
+                    "npc.canteen-worker",
+                    "Kantin Calisani",
+                    "Gece vardiyasinda cok kisi gormedim. Elindeki notu biraz daha netlestir.",
+                    "Ogrenci gece enerji icecegi aldi, sonra laboratuvar koridoruna dogru kostu.",
+                    "evidence.student-testimony",
+                    "evidence.canteen-testimony",
+                    new Color(0.32f, 0.9f, 0.58f, 1f)),
+                new NpcDialogueProfile(
+                    "npc.teacher-assistant",
+                    "Ogretmen Yardimcisi",
+                    "Dolap anahtari ve arsiv kaydi olmadan kimseyi suclayamam.",
+                    "Arsiv girislerinde ayni ogrencinin adi var. Soru dolabina ulasmak icin yedek anahtari aramis olabilir.",
+                    "evidence.archive-ledger",
+                    string.Empty,
+                    new Color(0.78f, 0.64f, 1f, 1f)),
+                new NpcDialogueProfile(
+                    "npc.hall-monitor",
+                    "Nobetci Ogrenci",
+                    "Koridorda hareket vardi ama once diger delilleri toplayin.",
+                    "Gece aceleyle gecen kisinin cantasinda mavi bir defter gordum. Bu ifade not zincirini destekliyor.",
+                    "evidence.guard-testimony",
+                    string.Empty,
+                    new Color(1f, 0.78f, 0.3f, 1f))
+            };
+
+            for (var i = 0; i < npcs.Length; i++)
+            {
+                var npc = npcs[i];
+                if (npc == null || !LooksLikePlaceholderNpc(npc))
+                {
+                    continue;
+                }
+
+                var profile = profiles[Mathf.Min(i, profiles.Length - 1)];
+                npc.ConfigureDialogue(
+                    activeCase,
+                    profile.Id,
+                    profile.DisplayName,
+                    profile.DefaultLine,
+                    profile.EvidenceLine,
+                    profile.RequiredEvidenceId,
+                    profile.WitnessEvidenceId,
+                    profile.MarkerColor);
+            }
+        }
+
+        private static bool LooksLikePlaceholderNpc(NpcInteractable npc)
+        {
+            if (npc == null)
+            {
+                return false;
+            }
+
+            return string.IsNullOrWhiteSpace(npc.NpcId) ||
+                   npc.NpcId == "npc.default" ||
+                   npc.NpcDisplayName == "NPC" ||
+                   string.IsNullOrWhiteSpace(npc.RequiredEvidenceId);
+        }
+
+        private struct NpcDialogueProfile
+        {
+            public readonly string Id;
+            public readonly string DisplayName;
+            public readonly string DefaultLine;
+            public readonly string EvidenceLine;
+            public readonly string RequiredEvidenceId;
+            public readonly string WitnessEvidenceId;
+            public readonly Color MarkerColor;
+
+            public NpcDialogueProfile(
+                string id,
+                string displayName,
+                string defaultLine,
+                string evidenceLine,
+                string requiredEvidenceId,
+                string witnessEvidenceId,
+                Color markerColor)
+            {
+                Id = id;
+                DisplayName = displayName;
+                DefaultLine = defaultLine;
+                EvidenceLine = evidenceLine;
+                RequiredEvidenceId = requiredEvidenceId;
+                WitnessEvidenceId = witnessEvidenceId;
+                MarkerColor = markerColor;
             }
         }
 
